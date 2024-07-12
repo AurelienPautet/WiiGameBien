@@ -1,5 +1,6 @@
 const { spawn } = require("child_process");
 const express = require("express");
+const { mime } = require("send");
 const app = express();
 
 app.use(express.static("public"));
@@ -20,6 +21,22 @@ io.on("connect", (socket) => {
     //someone is about to be added to players. Start tick-tocking
     //tick-tock - issue an event to EVERY connected socket, that is playing the game, 30 times per second
     tickTockInterval = setInterval(() => {
+      if (nbliving <= 1) {
+        players.forEach((player) => {
+          player.alive = true;
+          player.spawn();
+        });
+        nbliving = players.length;
+      }
+
+      for (let i = 0; i < mime.length; i++) {
+        mines[i].update();
+        if (mines[i].timealive > 300) {
+          mines.splice(i, 1);
+          i -= 1;
+        }
+      }
+
       for (let i = 0; i < bullets.length; i++) {
         bullets[i].update();
         if (bullets[i].bounce >= 3) {
@@ -29,12 +46,13 @@ io.on("connect", (socket) => {
           continue;
         }
         for (let e = 0; e < players.length; e++) {
-          if (players[e].BulletCollision(bullets[i])) {
+          if (players[e].BulletCollision(bullets[i]) && players[e].alive) {
             console.log("touh");
             bullets[i].emitter.bulletcount--;
             bullets.splice(i, 1);
             i -= 1;
-            players[e].spawn();
+            players[e].alive = false;
+            nbliving--;
             break;
           }
         }
@@ -43,6 +61,7 @@ io.on("connect", (socket) => {
     }, 16.67); //1000/30 = 33.33333, there are 33, 30's in 1000 milliseconds, 1/30th of a second, or 1 of 30fps
   }
   const player = new Player(spawns[players.length], socket.id);
+  nbliving += 1;
   player.spawnpos = spawns[players.length];
   players.push(player);
   socket.emit("id", players.length - 1);
@@ -111,13 +130,14 @@ class Player {
       x: 0,
       y: 0,
     };
+    this.alive = true;
   }
   spawn() {
     this.position = structuredClone(this.spawnpos);
   }
   shoot() {
     this.endofbarrel();
-    if (this.bulletcount < 5) {
+    if (this.bulletcount < 5 && this.alive) {
       this.bulletcount++;
       bullets.push(
         new Bullet({ x: this.endpos.x, y: this.endpos.y }, this.angle, 4, this)
@@ -125,7 +145,7 @@ class Player {
     }
   }
   plant() {
-    if (this.minecount < 3) {
+    if (this.minecount < 3 && this.alive) {
       this.minecount++;
       mines.push(
         new Mine(
@@ -172,9 +192,10 @@ class Player {
       this.velocity.x = this.velocity.x / Math.sqrt(2);
       this.velocity.y = this.velocity.y / Math.sqrt(2);
     }
-
-    this.position.x += this.velocity.x;
-    this.position.y += this.velocity.y;
+    if (this.alive) {
+      this.position.x += this.velocity.x;
+      this.position.y += this.velocity.y;
+    }
   }
   endofbarrel() {
     this.endpos.x = this.position.x + 2.5 * (this.size.w / 6);
@@ -310,22 +331,8 @@ class Mine {
     this.color = "yellow";
     this.emitter = emitter;
   }
-  draw() {
-    c.beginPath();
-    c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
-    c.fillStyle = this.color;
-    c.fill();
-    c.closePath();
-  }
+
   update() {
-    if (this.timealive > 240) {
-      if (this.timealive % 10 < 5) {
-        this.color = "yellow";
-      } else {
-        this.color = "red";
-      }
-    }
-    this.draw(this.color);
     this.timealive++;
   }
 }
@@ -338,7 +345,7 @@ Bcollision = [];
 bullets = [];
 mines = [];
 spawns = [];
-
+nbliving = 0;
 gamestate = { players, blocks, Bcollision, bullets, mines };
 let MouseX = 0;
 let MouseY = 0;

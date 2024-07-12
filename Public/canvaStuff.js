@@ -7,6 +7,9 @@ canvas.height = 800;
 debug = "rgba(255, 0, 0, 0)";
 //debug = "rgba(255, 0, 0, 0)";
 
+dead = new Image();
+dead.src = "image/dead.png";
+
 body = new Image();
 body.src = "image/tank_player/body.png";
 
@@ -14,10 +17,10 @@ turret = new Image();
 turret.src = "image/tank_player/turret.png";
 
 block1 = new Image();
-block1.src = "image/block1.png";
+block1.src = "image/block/block1.png";
 
 block2 = new Image();
-block2.src = "image/block2.png";
+block2.src = "image/block/block2.png";
 
 bullet1 = new Image();
 bullet1.src = "image/bullet/bullet.png";
@@ -25,13 +28,34 @@ bullet1.src = "image/bullet/bullet.png";
 bg = new Image();
 bg.src = "image/background_wood.png";
 
+var sound_tir = new Audio("sounds/tir.wav");
+var sound_kill = new Audio("sounds/kill.wav");
+var sound_plant = new Audio("sounds/plant.wav");
+var sound_ricochet = new Audio("sounds/ricochet.wav");
+var sound_fuse = new Audio("sounds/fuse.wav");
+
 draw();
 
 function draw() {
   window.requestAnimationFrame(draw);
 
   c.drawImage(bg, 0, 0, canvas.width, canvas.height);
-
+  mines.forEach((mine) => {
+    if (mine.timealive > 240) {
+      console.log(mine.timealive);
+      if (mine.timealive % 10 < 5) {
+        mine.color = "yellow";
+      } else {
+        sound_fuse.play();
+        mine.color = "red";
+      }
+    }
+    c.beginPath();
+    c.arc(mine.position.x, mine.position.y, mine.radius, 0, Math.PI * 2);
+    c.fillStyle = mine.color;
+    c.fill();
+    c.closePath();
+  });
   blocks.forEach((block) => {
     if (block.type == 1) {
       c.drawImage(
@@ -73,26 +97,36 @@ function draw() {
       player.size.w,
       player.size.h
     );
+    if (player.alive) {
+      //drawing the body
+      drawImageRot(
+        body,
+        player.position.x,
+        player.position.y,
+        player.size.w,
+        player.size.h,
+        player.rotation
+      );
 
-    //drawing the body
-    drawImageRot(
-      body,
-      player.position.x,
-      player.position.y,
-      player.size.w,
-      player.size.h,
-      player.rotation
-    );
-
-    //drawing the turet
-    drawTurretRot(
-      turret,
-      player.position.x,
-      player.position.y,
-      player.turretsize.w,
-      player.turretsize.h,
-      player.angle
-    );
+      //drawing the turet
+      drawTurretRot(
+        turret,
+        player.position.x,
+        player.position.y,
+        player.turretsize.w,
+        player.turretsize.h,
+        player.angle
+      );
+    } else {
+      drawImageRot(
+        dead,
+        player.position.x,
+        player.position.y,
+        player.size.w,
+        player.size.h,
+        player.rotation
+      );
+    }
   });
 }
 

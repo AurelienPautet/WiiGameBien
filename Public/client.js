@@ -7,12 +7,10 @@ socket.on("welcome", (data) => {
 
 socket.on("id", (data) => {
   playerid = data;
-  console.log(playerid);
 });
 
 setInterval(async () => {
   socket.emit("tock", { playerid, direction, plant, click, aim });
-  console.log(playerid);
   click = false;
   plant = false;
 }, 16.67);
@@ -23,6 +21,12 @@ blocks = [];
 Bcollision = [];
 bullets = [];
 mines = [];
+
+var sound_tir = new Audio("sounds/tir.wav");
+var sound_kill = new Audio("sounds/kill.wav");
+var sound_plant = new Audio("sounds/plant.wav");
+var sound_ricochet = new Audio("sounds/ricochet.wav");
+var sound_fuse = new Audio("sounds/fuse.wav");
 
 const mvtspeed = 5;
 
@@ -54,6 +58,7 @@ onmousemove = function (e) {
 
 window.addEventListener("click", (event) => {
   click = true;
+  sound_tir.play();
 });
 
 window.addEventListener("keydown", (event) => {
@@ -71,6 +76,7 @@ window.addEventListener("keydown", (event) => {
       direction.y = mvtspeed;
       break;
     case " ":
+      sound_plant.play();
       plant = true;
       break;
   }
