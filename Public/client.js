@@ -28,7 +28,7 @@ var sound_plant = new Audio("sounds/plant.wav");
 var sound_ricochet = new Audio("sounds/ricochet.wav");
 var sound_fuse = new Audio("sounds/fuse.wav");
 
-const mvtspeed = 5;
+const mvtspeed = 3;
 
 direction = {
   x: 0,

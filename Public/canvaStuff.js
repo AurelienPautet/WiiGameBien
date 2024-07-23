@@ -42,7 +42,6 @@ function draw() {
   c.drawImage(bg, 0, 0, canvas.width, canvas.height);
   mines.forEach((mine) => {
     if (mine.timealive > 240) {
-      console.log(mine.timealive);
       if (mine.timealive % 10 < 5) {
         mine.color = "yellow";
       } else {
@@ -76,7 +75,13 @@ function draw() {
       );
     }
   });
-
+  /* Bcollision.forEach((Bcol) => {
+    c.strokeStyle = "red";
+    c.rect(Bcol.position.x, Bcol.position.y, Bcol.size.w, Bcol.size.h);
+    c.strokeStyle = "black";
+    c.strokeRect(Bcol.position.x, Bcol.position.y, Bcol.size.w, Bcol.size.h);
+  });
+ */
   bullets.forEach((bullet) => {
     drawImageRot(
       bullet1,

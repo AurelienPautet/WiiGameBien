@@ -19,7 +19,7 @@ io.on("connect", (socket) => {
   }
   if (players.length === 0) {
     //someone is about to be added to players. Start tick-tocking
-    //tick-tock - issue an event to EVERY connected socket, that is playing the game, 30 times per second
+    //tick-tock - issue an event to EVERY connected socket, that is playing the game, 60 times per second
     tickTockInterval = setInterval(() => {
       if (nbliving <= 1) {
         players.forEach((player) => {
@@ -29,9 +29,43 @@ io.on("connect", (socket) => {
         nbliving = players.length;
       }
 
-      for (let i = 0; i < mime.length; i++) {
+      for (let i = 0; i < mines.length; i++) {
         mines[i].update();
         if (mines[i].timealive > 300) {
+          for (let m = 0; m < blocks.length; m++) {
+            if (blocks[m].type == 2) {
+              if (
+                distance(
+                  mines[i].position,
+                  { w: mines[i].radius, h: mines[i].radius },
+                  blocks[m].position,
+                  blocks[m].size
+                ) <= 15000
+              ) {
+                blocklist[
+                  (blocks[m].position.y / 50) * 23 + blocks[m].position.x / 50
+                ] = 10;
+                generateBcollision();
+                blocks.splice(m, 1);
+                m -= 1;
+              }
+            }
+          }
+          for (let m = 0; m < players.length; m++) {
+            if (
+              distance(
+                mines[i].position,
+                { w: mines[i].radius, h: mines[i].radius },
+                players[m].position,
+                players[m].size
+              ) <= 15000 &&
+              players[m].alive
+            ) {
+              players[m].alive = false;
+              nbliving--;
+            }
+          }
+          mines[i].emitter.minecount--;
           mines.splice(i, 1);
           i -= 1;
         }
@@ -47,7 +81,6 @@ io.on("connect", (socket) => {
         }
         for (let e = 0; e < players.length; e++) {
           if (players[e].BulletCollision(bullets[i]) && players[e].alive) {
-            console.log("touh");
             bullets[i].emitter.bulletcount--;
             bullets.splice(i, 1);
             i -= 1;
@@ -58,7 +91,7 @@ io.on("connect", (socket) => {
         }
       }
       io.emit("tick", players, blocks, Bcollision, bullets, mines); // send the event to the "game" room
-    }, 16.67); //1000/30 = 33.33333, there are 33, 30's in 1000 milliseconds, 1/30th of a second, or 1 of 30fps
+    }, 16.67);
   }
   const player = new Player(spawns[players.length], socket.id);
   nbliving += 1;
@@ -337,7 +370,7 @@ class Mine {
   }
 }
 
-const mvtspeed = 5;
+const mvtspeed = 3;
 
 players = [];
 blocks = [];
@@ -369,6 +402,10 @@ function loadlevel(name) {
       }
     }
   }
+  generateBcollision();
+}
+
+function generateBcollision() {
   boxed = [];
   i = 0;
   Bcollision = [];
@@ -480,7 +517,9 @@ function loadlevel(name) {
       }
     }
   }
+  console.log(Bcollision.length);
 }
+
 function rectRect(r1x, r1y, r1w, r1h, r2x, r2y, r2w, r2h) {
   // are the sides of one rectangle touching the other?
 
@@ -577,4 +616,11 @@ function colliderect(
     return "right";
   }
   return "";
+}
+
+function distance(position1, size1, position2, size2) {
+  return (
+    (position1.x + size1.w / 2 - position2.x - size2.w / 2) ** 2 +
+    (position1.y + size1.h / 2 - position2.y - size2.h / 2) ** 2
+  );
 }
