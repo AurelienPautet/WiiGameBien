@@ -1,6 +1,4 @@
-const { spawn } = require("child_process");
 const express = require("express");
-const { mime } = require("send");
 const app = express();
 
 app.use(express.static("public"));
