@@ -1,4 +1,4 @@
-const socket = io("http://localhost:9000");
+const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
 console.log(io);
 
 socket.on("welcome", (data) => {

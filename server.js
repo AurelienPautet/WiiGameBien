@@ -8,7 +8,10 @@ const expressServer = app.listen(PORT);
 
 const socketio = require("socket.io");
 const io = socketio(expressServer, {
-  cors: ["http://localhost:9000"],
+  cors: [
+    "http://localhost:9000",
+    "https://wiitank-2aacc4abc5cb.herokuapp.com/",
+  ],
 });
 
 io.on("connect", (socket) => {
