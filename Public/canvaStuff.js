@@ -132,8 +132,19 @@ function draw() {
         player.rotation
       );
     }
+    drawTextRot(
+      "c MOI",
+      player.position.x,
+      player.position.y,
+      player.turretsize.w,
+      player.turretsize.h,
+      player.angle
+    );
   });
+  drawTextRot("c MOI", 100, 100, 50, 50, 50);
+  c.fillText("Hello World", 10, 80);
 }
+c.font = "50px Arial";
 
 function drawImageRot(img, x, y, width, height, deg) {
   // Store the current context state (i.e. rotation, translation etc..)
@@ -146,6 +157,22 @@ function drawImageRot(img, x, y, width, height, deg) {
   c.rotate(rad);
   //draw the image
   c.drawImage(img, (width / 2) * -1, (height / 2) * -1, width, height);
+  // Restore canvas state as saved from above
+  c.restore();
+}
+
+function drawTextRot(text, x, y, width, height, deg) {
+  // Store the current context state (i.e. rotation, translation etc..)
+  c.save();
+  //Convert degrees to radian
+  var rad = (deg * Math.PI) / 180;
+  //Set the origin to the center of the image
+  c.translate(x + width / 2, y + height / 2);
+  //Rotate the canvas around the origin
+  c.rotate(rad);
+  //draw the image
+  c.fillText(text, (width / 2) * -1, (height / 2) * -1);
+
   // Restore canvas state as saved from above
   c.restore();
 }

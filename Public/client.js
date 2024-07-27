@@ -7,14 +7,26 @@ socket.on("welcome", (data) => {
 
 socket.on("id", (data) => {
   playerid = data;
+  document.getElementById("connect").style.display = "none";
+  playing = true;
+});
+
+document.getElementById("message-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const playerName = document.getElementById("user-message").value;
+  document.getElementById("user-message").value = "";
+  socket.emit("play", playerName);
 });
 
 setInterval(async () => {
-  socket.emit("tock", { playerid, direction, plant, click, aim });
+  if (playing) {
+    socket.emit("tock", { playerid, direction, plant, click, aim });
+  }
   click = false;
   plant = false;
 }, 16.67);
 
+playing = false;
 playerid = 0;
 players = [];
 blocks = [];
@@ -41,10 +53,10 @@ aim = {
 plant = false;
 click = false;
 
-socket.on("tick", (p, b, B, bu, m) => {
+socket.on("tick", (p, b, Bc, bu, m) => {
   players = p;
   blocks = b;
-  Bcollision = B;
+  Bcollision = Bc;
   bullets = bu;
   mines = m;
 });

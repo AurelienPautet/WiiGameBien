@@ -2,7 +2,9 @@ const express = require("express");
 const app = express();
 
 app.use(express.static("public"));
-const expressServer = app.listen(9000);
+const PORT = process.env.PORT || 9000;
+console.log(PORT);
+const expressServer = app.listen(PORT);
 
 const socketio = require("socket.io");
 const io = socketio(expressServer, {
@@ -12,6 +14,20 @@ const io = socketio(expressServer, {
 io.on("connect", (socket) => {
   console.log(socket.id, "has joined our server!");
   socket.emit("welcome", socket.id + "has joinded the server");
+
+  socket.on("disconnect", function () {
+    console.log(socket.id, "Got disconnect!");
+    var i = ids.indexOf(socket.id);
+    if ((i) => 0) {
+      for (let e = i + 1; e < players.length; e++) {
+        io.to(ids[e]).emit("id", e - 1);
+      }
+      players.splice(i, 1);
+      ids.splice(i, 1);
+      nbliving--;
+    }
+  });
+
   if (players.length == 0) {
     loadlevel("./level1.json");
   }
@@ -77,6 +93,33 @@ io.on("connect", (socket) => {
           i -= 1;
           continue;
         }
+        for (let e = 0; e < bullets.length; e++) {
+          if (
+            rectRect(
+              bullets[e].x,
+              bullets[e].y,
+              bullets[e].w,
+              bullets[e].h,
+              bullets[i].x,
+              bullets[i].y,
+              bullets[i].w,
+              bullets[i].h
+            ) &&
+            i != e
+          ) {
+            bullets[i].emitter.bulletcount--;
+            bullets[e].emitter.bulletcount--;
+            bullets.splice(i, 1);
+            bullets.splice(e, 1);
+            console.log("collisun");
+            if (e < i) {
+              i -= 1;
+            }
+            i -= 1;
+
+            break;
+          }
+        }
         for (let e = 0; e < players.length; e++) {
           if (players[e].BulletCollision(bullets[i]) && players[e].alive) {
             bullets[i].emitter.bulletcount--;
@@ -91,11 +134,18 @@ io.on("connect", (socket) => {
       io.emit("tick", players, blocks, Bcollision, bullets, mines); // send the event to the "game" room
     }, 16.67);
   }
-  const player = new Player(spawns[players.length], socket.id);
-  nbliving += 1;
-  player.spawnpos = spawns[players.length];
-  players.push(player);
-  socket.emit("id", players.length - 1);
+  socket.on("play", (playerName) => {
+    if (players.length < spawns.length) {
+      spawnid = Math.floor(Math.random() * spawns.length);
+      const player = new Player(spawns[spawnid], socket.id);
+      nbliving += 1;
+      player.spawnpos = spawns[spawnid];
+      players.push(player);
+      ids.push(socket.id);
+      socket.emit("id", ids.length - 1);
+    }
+  });
+
   socket.on("tock", (data) => {
     if (players[data.playerid] != undefined) {
       if (data.direction != undefined) {
@@ -197,6 +247,11 @@ class Player {
     this.velocity = this.direction;
     for (let i = 0; i < Bcollision.length; i++) {
       this.BodyCollision(Bcollision[i]);
+    }
+    for (let i = 0; i < players.length; i++) {
+      if (this != players[i]) {
+        this.BodyCollision(players[i]);
+      }
     }
     if (this.velocity.x == mvtspeed) {
       this.rotation = 0;
@@ -371,6 +426,7 @@ class Mine {
 const mvtspeed = 3;
 
 players = [];
+ids = [];
 blocks = [];
 Bcollision = [];
 bullets = [];
