@@ -1,6 +1,6 @@
 //
 const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
-//const socket = io("http://localhost:5000/");
+//const socket = io("http://localhost:7000/");
 
 console.log(io);
 
@@ -15,11 +15,8 @@ socket.on("id", (data) => {
   trying = false;
 });
 
-socket.on("id-fail", (data) => {
-  playerid = data;
-  document.getElementById("connect").style.display = "none";
-  playing = true;
-  trying = false;
+socket.on("id-fail", () => {
+  console.log("room full");
 });
 
 setInterval(async () => {

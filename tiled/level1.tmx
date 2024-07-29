@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="23" height="16" tilewidth="50" tileheight="50" infinite="0" nextlayerid="2" nextobjectid="1">
  <editorsettings>
-  <export target="../level1.json" format="json"/>
+  <export format="json"/>
  </editorsettings>
  <tileset firstgid="1" source="wii tanks.tsx"/>
  <layer id="1" name="Calque de Tuiles 1" width="23" height="16">

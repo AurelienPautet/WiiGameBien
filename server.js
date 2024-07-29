@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 
 app.use(express.static("Public"));
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 7000;
 console.log(PORT);
 const expressServer = app.listen(PORT);
 
@@ -11,8 +11,15 @@ const io = socketio(expressServer, {
   cors: [
     "http://localhost:7000",
     "https://wiitank-2aacc4abc5cb.herokuapp.com/",
+    "https://wiitank.pautet.net/",
   ],
 });
+
+const fs = require("fs");
+const path = require("path");
+const { spawn } = require("child_process");
+
+// Get the absulote path of the files
 
 io.on("connect", (socket) => {
   console.log(socket.id, "has joined our server!");
@@ -35,18 +42,52 @@ io.on("connect", (socket) => {
   });
 
   if (players.length == 0) {
-    loadlevel("./level1.json");
+    level = path.join(
+      __dirname,
+      "..",
+      "WiiGameBien",
+      "levels",
+      levels[levelid]
+    );
+    loadlevel(level);
   }
-  if (players.length === 0) {
+
+  if (players.length == 0) {
     //someone is about to be added to players. Start tick-tocking
     //tick-tock - issue an event to EVERY connected socket, that is playing the game, 60 times per second
+
     tickTockInterval = setInterval(() => {
+      if (players.length >= 2) {
+        atleast2 = true;
+      }
       if (nbliving <= 1) {
-        players.forEach((player) => {
-          player.alive = true;
-          player.spawn();
-        });
-        nbliving = players.length;
+        if (atleast2) {
+          bullets = [];
+          mines = [];
+          level = path.join(
+            __dirname,
+            "..",
+            "WiiGameBien",
+            "levels",
+            levels[levelid]
+          );
+          loadlevel(level);
+          players.forEach((player) => {
+            player.alive = true;
+            player.minecount = 0;
+            player.bulletcount = 0;
+            spawnid = Math.floor(Math.random() * spawns.length);
+            player.spawnpos = spawns[spawnid];
+            spawns.splice(spawnid, 1);
+            player.spawn();
+          });
+          nbliving = players.length;
+          if (levelid < levels.length - 1) {
+            levelid++;
+          } else {
+            levelid = 0;
+          }
+        }
       }
 
       for (let i = 0; i < mines.length; i++) {
@@ -61,7 +102,7 @@ io.on("connect", (socket) => {
                   blocks[m].position,
                   blocks[m].size
                 ) <=
-                150 ** 2
+                70 ** 2
               ) {
                 blocklist[
                   (blocks[m].position.y / 50) * 23 + blocks[m].position.x / 50
@@ -80,7 +121,7 @@ io.on("connect", (socket) => {
                 players[m].position,
                 players[m].size
               ) <=
-                150 ** 2 &&
+                70 ** 2 &&
               players[m].alive
             ) {
               kill(mines[i].emitter, players[m]);
@@ -158,6 +199,7 @@ io.on("connect", (socket) => {
       ids.push(socket.id);
       socket.emit("id", ids.length - 1);
       io.emit("player-connection", playerName);
+      console.log(players.length);
     } else {
       socket.emit("id-fail");
     }
@@ -269,7 +311,7 @@ class Player {
       this.BodyCollision(Bcollision[i]);
     }
     for (let i = 0; i < players.length; i++) {
-      if (this.alive && this != players[i]) {
+      if (players[i].alive && this != players[i]) {
         this.BodyCollision(players[i]);
       }
     }
@@ -444,9 +486,10 @@ class Mine {
 }
 
 const mvtspeed = 3;
-
+atleast2 = false;
 maxplayernb = 0;
-names = [];
+levels = ["level1.json", "level2.json", "level3.json"];
+levelid = 0;
 players = [];
 ids = [];
 blocks = [];
@@ -461,7 +504,8 @@ let MouseY = 0;
 
 function loadlevel(name) {
   var my_JSON_object = require(name);
-  blocklist = my_JSON_object["layers"][0]["data"];
+  blocklist_json = my_JSON_object["layers"][0]["data"];
+  blocklist = [...blocklist_json];
   blocks = [];
   spawns = [];
 

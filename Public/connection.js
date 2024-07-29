@@ -47,12 +47,12 @@ function turret_previous() {
 }
 
 function body_next() {
-  if (body == body_colors.length - 1) {
-    document.querySelector("#turret_slider_content").scrollLeft = 0;
+  if (body_id == body_colors.length - 1) {
+    document.querySelector("#body_slider_content").scrollLeft = 0;
     body_id = 0;
   } else {
-    const widthSlider = document.querySelector("#turret_slider").offsetWidth;
-    document.querySelector("#turret_slider_content").scrollLeft += widthSlider;
+    const widthSlider = document.querySelector("#body_slider").offsetWidth;
+    document.querySelector("#body_slider_content").scrollLeft += widthSlider;
     body_id++;
   }
 }
