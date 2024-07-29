@@ -1,6 +1,6 @@
 //
-const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
-//const socket = io("http://localhost:7000/");
+//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+const socket = io("http://localhost:5000/");
 
 console.log(io);
 
@@ -55,12 +55,15 @@ aim = {
 plant = false;
 click = false;
 
-socket.on("tick", (p, b, Bc, bu, m) => {
+socket.on("tick", (p, bu, m) => {
   players = p;
-  blocks = b;
-  Bcollision = Bc;
   bullets = bu;
   mines = m;
+});
+
+socket.on("level_change", (b, Bc) => {
+  blocks = b;
+  Bcollision = Bc;
 });
 
 onmousemove = function (e) {

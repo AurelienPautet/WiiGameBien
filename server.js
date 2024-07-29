@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 
 app.use(express.static("Public"));
-const PORT = process.env.PORT || 7000;
+const PORT = process.env.PORT || 5000;
 console.log(PORT);
 const expressServer = app.listen(PORT);
 
@@ -24,7 +24,9 @@ const { spawn } = require("child_process");
 io.on("connect", (socket) => {
   console.log(socket.id, "has joined our server!");
   socket.emit("welcome", socket.id + "has joinded the server");
-
+  if (blocks != []) {
+    socket.emit("level_change", blocks, Bcollision);
+  }
   socket.on("disconnect", function () {
     console.log(socket.id, "Got disconnect!");
     var i = ids.indexOf(socket.id);
@@ -50,6 +52,7 @@ io.on("connect", (socket) => {
       levels[levelid]
     );
     loadlevel(level);
+    io.emit("level_change", blocks, Bcollision);
   }
 
   if (players.length == 0) {
@@ -66,6 +69,7 @@ io.on("connect", (socket) => {
           mines = [];
           level = path.join(__dirname, "./", "levels", levels[levelid]);
           loadlevel(level);
+          io.emit("level_change", blocks, Bcollision);
           players.forEach((player) => {
             player.alive = true;
             player.minecount = 0;
@@ -103,6 +107,8 @@ io.on("connect", (socket) => {
                 ] = 10;
                 generateBcollision();
                 blocks.splice(m, 1);
+                io.emit("level_change", blocks, Bcollision);
+
                 m -= 1;
               }
             }
@@ -173,7 +179,22 @@ io.on("connect", (socket) => {
           }
         }
       }
-      io.emit("tick", players, blocks, Bcollision, bullets, mines); // send the event to the "game" room
+      frontend_players = [];
+      players.forEach((player) => {
+        frontend_players.push(
+          new Frontend_Player(
+            player.position,
+            player.socketid,
+            player.name,
+            player.turretc,
+            player.bodyc,
+            player.angle,
+            player.alive,
+            player.rotation
+          )
+        );
+      });
+      io.emit("tick", frontend_players, bullets, mines); // send the event to the "game" room
     }, 16.67);
   }
   socket.on("play", (playerName, turretc, bodyc) => {
@@ -186,6 +207,7 @@ io.on("connect", (socket) => {
         turretc,
         bodyc
       );
+
       nbliving += 1;
       player.spawnpos = spawns[spawnid];
       spawns.splice(spawnid, 1);
@@ -226,6 +248,36 @@ class Block {
       h: 50,
     };
     this.type = type;
+  }
+}
+
+class Frontend_Player {
+  constructor(
+    position,
+    socketid,
+    name,
+    turretc,
+    bodyc,
+    angle,
+    alive,
+    rotation
+  ) {
+    this.name = name;
+    this.bodyc = bodyc;
+    this.turretc = turretc;
+    this.position = position;
+    this.socketid = socketid;
+    this.size = {
+      w: 48,
+      h: 48,
+    };
+    this.turretsize = {
+      w: 70,
+      h: 40,
+    };
+    this.angle = angle;
+    this.alive = alive;
+    this.rotation = rotation;
   }
 }
 
@@ -485,6 +537,7 @@ maxplayernb = 0;
 levels = ["level1.json", "level2.json", "level3.json"];
 levelid = 0;
 players = [];
+frontend_players = [];
 ids = [];
 blocks = [];
 Bcollision = [];
