@@ -44,8 +44,8 @@ io.on("connect", (socket) => {
   if (players.length == 0) {
     level = path.join(
       __dirname,
-      "..",
-      "WiiGameBien",
+
+      "./",
       "levels",
       levels[levelid]
     );
@@ -64,13 +64,7 @@ io.on("connect", (socket) => {
         if (atleast2) {
           bullets = [];
           mines = [];
-          level = path.join(
-            __dirname,
-            "..",
-            "WiiGameBien",
-            "levels",
-            levels[levelid]
-          );
+          level = path.join(__dirname, "./", "levels", levels[levelid]);
           loadlevel(level);
           players.forEach((player) => {
             player.alive = true;
