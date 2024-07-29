@@ -83,8 +83,7 @@ io.on("connect", (socket) => {
                 150 ** 2 &&
               players[m].alive
             ) {
-              players[m].alive = false;
-              nbliving--;
+              kill(mines[i].emitter, players[m]);
             }
           }
           mines[i].emitter.minecount--;
@@ -131,10 +130,10 @@ io.on("connect", (socket) => {
         for (let e = 0; e < players.length; e++) {
           if (players[e].BulletCollision(bullets[i]) && players[e].alive) {
             bullets[i].emitter.bulletcount--;
+            kill(bullets[i].emitter, players[e]);
             bullets.splice(i, 1);
             i -= 1;
-            players[e].alive = false;
-            nbliving--;
+
             break;
           }
         }
@@ -690,4 +689,10 @@ function distance(position1, size1, position2, size2) {
     (position1.x + size1.w / 2 - position2.x - size2.w / 2) ** 2 +
     (position1.y + size1.h / 2 - position2.y - size2.h / 2) ** 2
   );
+}
+
+function kill(killer, killed) {
+  killed.alive = false;
+  nbliving--;
+  io.emit("player-kill", [killer.name, killed.name]);
 }

@@ -1,5 +1,5 @@
-const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
-//const socket = io("http://localhost:7000/");
+//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+const socket = io("http://localhost:7000/");
 
 console.log(io);
 

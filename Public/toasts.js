@@ -22,3 +22,7 @@ socket.on("player-disconnection", (name) => {
   console.log(name);
   createToast("disconnection", "Disconnection", name + " disconnected");
 });
+
+socket.on("player-kill", (li) => {
+  createToast("kill", "Kill", li[0] + " killed " + li[1]);
+});
