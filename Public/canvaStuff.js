@@ -10,11 +10,28 @@ debug = "rgba(255, 0, 0, 0)";
 dead = new Image();
 dead.src = "image/dead.png";
 
-body = new Image();
-body.src = "image/tank_player/body.png";
+//BLUE
+body_blue = new Image();
+body_blue.src = "image/tank_player/body_blue.png";
+turret_blue = new Image();
+turret_blue.src = "image/tank_player/turret_blue.png";
 
-turret = new Image();
-turret.src = "image/tank_player/turret.png";
+//ORANGE
+body_orange = new Image();
+body_orange.src = "image/tank_player/body_orange.png";
+turret_orange = new Image();
+turret_orange.src = "image/tank_player/turret_orange.png";
+
+//GREEN
+body_green = new Image();
+body_green.src = "image/tank_player/body_green.png";
+turret_green = new Image();
+turret_green.src = "image/tank_player/turret_green.png";
+//RED
+body_red = new Image();
+body_red.src = "image/tank_player/body_red.png";
+turret_red = new Image();
+turret_red.src = "image/tank_player/turret_red.png";
 
 block1 = new Image();
 block1.src = "image/block/block1.png";
@@ -105,7 +122,7 @@ function draw() {
     if (player.alive) {
       //drawing the body
       drawImageRot(
-        body,
+        eval("body_" + player.bodyc),
         player.position.x,
         player.position.y,
         player.size.w,
@@ -115,7 +132,7 @@ function draw() {
 
       //drawing the turet
       drawTurretRot(
-        turret,
+        eval("turret_" + player.turretc),
         player.position.x,
         player.position.y,
         player.turretsize.w,

@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 
 app.use(express.static("Public"));
-const PORT = process.env.PORT || 7000;
+const PORT = process.env.PORT || 5000;
 console.log(PORT);
 const expressServer = app.listen(PORT);
 
@@ -141,10 +141,16 @@ io.on("connect", (socket) => {
       io.emit("tick", players, blocks, Bcollision, bullets, mines); // send the event to the "game" room
     }, 16.67);
   }
-  socket.on("play", (playerName) => {
+  socket.on("play", (playerName, turretc, bodyc) => {
     if (ids.includes(socket.id) == false && players.length < maxplayernb) {
       spawnid = Math.floor(Math.random() * spawns.length);
-      const player = new Player(spawns[spawnid], socket.id, playerName);
+      const player = new Player(
+        spawns[spawnid],
+        socket.id,
+        playerName,
+        turretc,
+        bodyc
+      );
       nbliving += 1;
       player.spawnpos = spawns[spawnid];
       spawns.splice(spawnid, 1);
@@ -188,8 +194,10 @@ class Block {
 }
 
 class Player {
-  constructor(position, socketid, name) {
+  constructor(position, socketid, name, turretc, bodyc) {
     this.name = name;
+    this.bodyc = bodyc;
+    this.turretc = turretc;
     this.position = position;
     this.socketid = socketid;
     this.spawnpos = {
@@ -261,7 +269,7 @@ class Player {
       this.BodyCollision(Bcollision[i]);
     }
     for (let i = 0; i < players.length; i++) {
-      if (this != players[i]) {
+      if (this.alive && this != players[i]) {
         this.BodyCollision(players[i]);
       }
     }

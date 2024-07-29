@@ -1,0 +1,144 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
+
+#notif {
+  user-select: none; /* Propriété standard */
+
+  position: absolute;
+  left: 40%;
+  top: 0%;
+  height: 100%;
+  display: flex;
+  flex-direction: column-reverse;
+  -webkit-mask-image: -webkit-gradient(
+    linear,
+    left top,
+    left bottom,
+    from(rgba(0, 0, 0, 0)),
+    color-stop(0.7, rgba(0, 0, 0, 0)),
+    to(rgba(0, 0, 0, 1))
+  );
+}
+
+.toast {
+  width: 230px;
+  height: 80px;
+  border-radius: 10px;
+  margin: 3px;
+  color: white;
+  padding-left: 10px;
+}
+.toast .title {
+  font-size: 30px;
+  font-weight: bold;
+  text-align: left;
+}
+#connection {
+  background-color: rgba(0, 255, 81, 0.453);
+}
+
+#disconnection {
+  background-color: rgba(255, 0, 0, 0.453);
+}
+#kill {
+  background-color: rgba(47, 0, 255, 0.453);
+}
+.row {
+  display: flex;
+  flex-direction: column-reverse;
+}
+.everything {
+  position: absolute;
+  width: 1150px;
+  height: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+#connect {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(80, 80, 80, 0.377);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+canvas {
+  user-select: none; /* Propriété standard */
+}
+body {
+  font-family: "Poppins", sans-serif;
+
+  background: white;
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  zoom: 100%;
+}
+canvas {
+  cursor: crosshair;
+}
+
+.slider_nav {
+  position: absolute;
+}
+.slider_nav_button {
+  background-color: transparent;
+  border: none;
+}
+
+.slider_nav_button_next {
+  position: absolute;
+  right: -20px;
+  top: 20px;
+}
+
+.slider_nav_button_previous {
+  position: absolute;
+  left: 130px;
+  top: 20px;
+}
+
+.slider_nav_button svg {
+  width: 50px;
+  height: 50px;
+}
+
+.slider_nav_button svg path {
+  stroke: white;
+}
+
+.slider {
+  border: 10px;
+  padding: 10px;
+  height: 100px;
+  width: 150px;
+  position: relative;
+}
+
+.slider_nav {
+  position: absolute;
+}
+
+.slider_content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  overflow: hidden;
+}
+
+.slider_item {
+  min-width: 100%;
+  height: 100%;
+}
+
+.slider_item img {
+  width: 100%;
+  height: 100%;
+}
