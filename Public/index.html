@@ -13,6 +13,7 @@
   <body>
     <canvas class="everything"></canvas>
     <div id="ui" class="everything">
+      <div id="notif"></div>
       <div id="connect">
         <form class="row" id="message-form">
           <input id="user-message" type="text" placeholder="ouiii ecrit" />
@@ -22,11 +23,57 @@
     </div>
   </body>
   <script src="./client.js"></script>
+  <script src="./toasts.js"></script>
 
   <script src="./canvaStuff.js"></script>
 </html>
 
 <style>
+  @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
+
+  #notif {
+    user-select: none; /* Propriété standard */
+
+    position: absolute;
+    left: 40%;
+    top: 0%;
+    height: 100%;
+    display: flex;
+    flex-direction: column-reverse;
+    -webkit-mask-image: -webkit-gradient(
+      linear,
+      left top,
+      left bottom,
+      from(rgba(0, 0, 0, 0)),
+      color-stop(0.7, rgba(0, 0, 0, 0)),
+      to(rgba(0, 0, 0, 1))
+    );
+  }
+
+  .toast {
+    width: 230px;
+    height: 80px;
+    border-radius: 10px;
+    margin: 3px;
+    color: white;
+    padding-left: 10px;
+  }
+  .toast .title {
+    font-size: 30px;
+    font-weight: bold;
+    text-align: left;
+  }
+  #connection {
+    background-color: rgba(0, 255, 81, 0.453);
+  }
+
+  #disconnection {
+    background-color: rgba(255, 0, 0, 0.453);
+  }
+  .row {
+    display: flex;
+    flex-direction: column-reverse;
+  }
   .everything {
     position: absolute;
     width: 1150px;
@@ -41,12 +88,14 @@
     width: 100%;
     height: 100%;
     background-color: rgba(80, 80, 80, 0.377);
+    position: relative;
     display: flex;
-    justify-content: center;
     align-items: center;
-    flex-direction: column;
+    justify-content: center;
   }
   body {
+    font-family: "Poppins", sans-serif;
+
     background: white;
     height: 100vh;
     width: 100vw;

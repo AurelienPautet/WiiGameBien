@@ -1,4 +1,6 @@
 const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+//const socket = io("http://localhost:7000/");
+
 console.log(io);
 
 socket.on("welcome", (data) => {
@@ -9,13 +11,24 @@ socket.on("id", (data) => {
   playerid = data;
   document.getElementById("connect").style.display = "none";
   playing = true;
+  trying = false;
+});
+
+socket.on("id-fail", (data) => {
+  playerid = data;
+  document.getElementById("connect").style.display = "none";
+  playing = true;
+  trying = false;
 });
 
 document.getElementById("message-form").addEventListener("submit", (e) => {
   e.preventDefault();
   const playerName = document.getElementById("user-message").value;
   document.getElementById("user-message").value = "";
-  socket.emit("play", playerName);
+  if (trying == false) {
+    socket.emit("play", playerName);
+    trying = true;
+  }
 });
 
 setInterval(async () => {
@@ -26,6 +39,7 @@ setInterval(async () => {
   plant = false;
 }, 16.67);
 
+trying = false;
 playing = false;
 playerid = 0;
 players = [];

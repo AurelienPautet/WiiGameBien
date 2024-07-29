@@ -2,14 +2,14 @@ const express = require("express");
 const app = express();
 
 app.use(express.static("Public"));
-const PORT = process.env.PORT || 9000;
+const PORT = process.env.PORT || 7000;
 console.log(PORT);
 const expressServer = app.listen(PORT);
 
 const socketio = require("socket.io");
 const io = socketio(expressServer, {
   cors: [
-    "http://localhost:9000",
+    "http://localhost:7000",
     "https://wiitank-2aacc4abc5cb.herokuapp.com/",
   ],
 });
@@ -21,12 +21,15 @@ io.on("connect", (socket) => {
   socket.on("disconnect", function () {
     console.log(socket.id, "Got disconnect!");
     var i = ids.indexOf(socket.id);
-    if ((i) => 0) {
+    if (i > -1) {
       for (let e = i + 1; e < players.length; e++) {
         io.to(ids[e]).emit("id", e - 1);
       }
+      io.emit("player-disconnection", players[i].name);
+
       players.splice(i, 1);
       ids.splice(i, 1);
+
       nbliving--;
     }
   });
@@ -57,7 +60,8 @@ io.on("connect", (socket) => {
                   { w: mines[i].radius, h: mines[i].radius },
                   blocks[m].position,
                   blocks[m].size
-                ) <= 15000
+                ) <=
+                150 ** 2
               ) {
                 blocklist[
                   (blocks[m].position.y / 50) * 23 + blocks[m].position.x / 50
@@ -75,7 +79,8 @@ io.on("connect", (socket) => {
                 { w: mines[i].radius, h: mines[i].radius },
                 players[m].position,
                 players[m].size
-              ) <= 15000 &&
+              ) <=
+                150 ** 2 &&
               players[m].alive
             ) {
               players[m].alive = false;
@@ -138,14 +143,17 @@ io.on("connect", (socket) => {
     }, 16.67);
   }
   socket.on("play", (playerName) => {
-    if (players.length < spawns.length) {
+    if (ids.includes(socket.id) == false && players.length < spawns.length) {
       spawnid = Math.floor(Math.random() * spawns.length);
-      const player = new Player(spawns[spawnid], socket.id);
+      const player = new Player(spawns[spawnid], socket.id, playerName);
       nbliving += 1;
       player.spawnpos = spawns[spawnid];
       players.push(player);
       ids.push(socket.id);
       socket.emit("id", ids.length - 1);
+      io.emit("player-connection", playerName);
+    } else {
+      socket.emit("id-fail");
     }
   });
 
@@ -180,7 +188,8 @@ class Block {
 }
 
 class Player {
-  constructor(position, socketid) {
+  constructor(position, socketid, name) {
+    this.name = name;
     this.position = position;
     this.socketid = socketid;
     this.spawnpos = {
@@ -428,6 +437,7 @@ class Mine {
 
 const mvtspeed = 3;
 
+names = [];
 players = [];
 ids = [];
 blocks = [];
