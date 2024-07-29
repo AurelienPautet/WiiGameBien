@@ -142,11 +142,12 @@ io.on("connect", (socket) => {
     }, 16.67);
   }
   socket.on("play", (playerName) => {
-    if (ids.includes(socket.id) == false && players.length < spawns.length) {
+    if (ids.includes(socket.id) == false && players.length < maxplayernb) {
       spawnid = Math.floor(Math.random() * spawns.length);
       const player = new Player(spawns[spawnid], socket.id, playerName);
       nbliving += 1;
       player.spawnpos = spawns[spawnid];
+      spawns.splice(spawnid, 1);
       players.push(player);
       ids.push(socket.id);
       socket.emit("id", ids.length - 1);
@@ -436,6 +437,7 @@ class Mine {
 
 const mvtspeed = 3;
 
+maxplayernb = 0;
 names = [];
 players = [];
 ids = [];
@@ -468,6 +470,7 @@ function loadlevel(name) {
       }
     }
   }
+  maxplayernb = spawns.length;
   generateBcollision();
 }
 

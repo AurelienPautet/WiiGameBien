@@ -24,10 +24,14 @@ socket.on("id-fail", (data) => {
 document.getElementById("message-form").addEventListener("submit", (e) => {
   e.preventDefault();
   const playerName = document.getElementById("user-message").value;
-  document.getElementById("user-message").value = "";
-  if (trying == false) {
-    socket.emit("play", playerName);
-    trying = true;
+  if (playerName != "") {
+    document.getElementById("user-message").value = "";
+    if (trying == false) {
+      socket.emit("play", playerName);
+      trying = true;
+    }
+  } else {
+    console.log("Please enter a name");
   }
 });
 
