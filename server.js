@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 
 app.use(express.static("Public"));
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 7000;
 console.log(PORT);
 const expressServer = app.listen(PORT);
 
@@ -106,31 +106,45 @@ tickTockInterval = setTimeout(function toocking() {
   if (players.length >= 2) {
     atleast2 = true;
   }
-  if (players.length == 0) {
+  if (players.length <= 1) {
     atleast2 = false;
   }
-  if (nbliving <= 1) {
+  if (waitingrepawn == false && nbliving <= 1) {
     if (atleast2) {
-      bullets = [];
-      mines = [];
-      level = path.join(__dirname, "./", "levels", levels[levelid]);
-      loadlevel(level);
-      io.emit("level_change", blocks, Bcollision);
-      players.forEach((player) => {
-        player.alive = true;
-        player.minecount = 0;
-        player.bulletcount = 0;
-        spawnid = Math.floor(Math.random() * spawns.length);
-        player.spawnpos = spawns[spawnid];
-        spawns.splice(spawnid, 1);
-        player.spawn();
-      });
-      nbliving = players.length;
-      if (levelid < levels.length - 1) {
-        levelid++;
+      if (nbliving == 1) {
+        players.forEach((player) => {
+          if (player.alive) {
+            io.emit("winner", player.name, waitingtime);
+          }
+        });
       } else {
-        levelid = 0;
+        io.emit("draw", waitingtime);
       }
+      waitingrepawn = true;
+      respawnwait = setTimeout(() => {
+        bullets = [];
+        mines = [];
+        level = path.join(__dirname, "./", "levels", levels[levelid]);
+        loadlevel(level);
+        io.emit("level_change", blocks, Bcollision);
+        players.forEach((player) => {
+          player.alive = true;
+          player.minecount = 0;
+          player.bulletcount = 0;
+          spawnid = Math.floor(Math.random() * spawns.length);
+          player.spawnpos = spawns[spawnid];
+          spawns.splice(spawnid, 1);
+          player.spawn();
+        });
+        nbliving = players.length;
+        waitingrepawn = false;
+
+        if (levelid < levels.length - 1) {
+          levelid++;
+        } else {
+          levelid = 0;
+        }
+      }, waitingtime);
     }
   }
 
@@ -551,6 +565,8 @@ class Mine {
 }
 
 const mvtspeed = 3;
+const waitingtime = 1000;
+waitingrepawn = false;
 atleast2 = false;
 maxplayernb = 0;
 levels = ["level1.json", "level2.json", "level3.json"];

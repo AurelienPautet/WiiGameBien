@@ -69,3 +69,13 @@ function body_previous() {
     body_id--;
   }
 }
+
+socket.on("winner", (name, wait) => {
+  console.log(name);
+  document.getElementById("winner").style.display = "block";
+  document.getElementById("player_name").innerHTML = name;
+
+  setTimeout(() => {
+    document.getElementById("winner").style.display = "none";
+  }, wait);
+});
