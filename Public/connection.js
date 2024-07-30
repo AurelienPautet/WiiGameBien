@@ -17,17 +17,18 @@ document.getElementById("message-form").addEventListener("submit", (e) => {
   }
 });
 
-turret_colors = ["blue", "orange", "red", "green"];
-body_colors = ["blue", "orange", "red", "green"];
+turret_colors = ["blue", "orange", "red", "green", "violet", "yellow"];
+body_colors = ["blue", "orange", "red", "green", "violet", "yellow"];
 turret_id = 0;
 body_id = 0;
+const widthSlider = 150;
+console.log("widtg", widthSlider);
 
 function turret_next() {
   if (turret_id == turret_colors.length - 1) {
     document.querySelector(".slider_content").scrollLeft = 0;
     turret_id = 0;
   } else {
-    const widthSlider = document.querySelector(".slider").offsetWidth;
     document.querySelector(".slider_content").scrollLeft += widthSlider;
     turret_id++;
   }
@@ -35,12 +36,10 @@ function turret_next() {
 
 function turret_previous() {
   if (turret_id == 0) {
-    const widthSlider = document.querySelector("#turret_slider").offsetWidth;
     document.querySelector("#turret_slider_content").scrollLeft =
       widthSlider * (turret_colors.length - 1);
     turret_id = turret_colors.length - 1;
   } else {
-    const widthSlider = document.querySelector(".slider").offsetWidth;
     document.querySelector("#turret_slider_content").scrollLeft -= widthSlider;
     turret_id--;
   }
@@ -51,7 +50,6 @@ function body_next() {
     document.querySelector("#body_slider_content").scrollLeft = 0;
     body_id = 0;
   } else {
-    const widthSlider = document.querySelector("#body_slider").offsetWidth;
     document.querySelector("#body_slider_content").scrollLeft += widthSlider;
     body_id++;
   }
@@ -59,12 +57,10 @@ function body_next() {
 
 function body_previous() {
   if (body_id == 0) {
-    const widthSlider = document.querySelector("#body_slider").offsetWidth;
     document.querySelector("#body_slider_content").scrollLeft =
       widthSlider * (body_colors.length - 1);
     body_id = body_colors.length - 1;
   } else {
-    const widthSlider = document.querySelector("#body_slider").offsetWidth;
     document.querySelector("#body_slider_content").scrollLeft -= widthSlider;
     body_id--;
   }

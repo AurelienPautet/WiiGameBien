@@ -32,6 +32,16 @@ body_red = new Image();
 body_red.src = "image/tank_player/body_red.png";
 turret_red = new Image();
 turret_red.src = "image/tank_player/turret_red.png";
+//VIOLET
+body_violet = new Image();
+body_violet.src = "image/tank_player/body_violet.png";
+turret_violet = new Image();
+turret_violet.src = "image/tank_player/turret_violet.png";
+//YELLOW
+body_yellow = new Image();
+body_yellow.src = "image/tank_player/body_yellow.png";
+turret_yellow = new Image();
+turret_yellow.src = "image/tank_player/turret_yellow.png";
 
 block1 = new Image();
 block1.src = "image/block/block1.png";
