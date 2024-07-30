@@ -318,8 +318,8 @@ class Player {
       y: 0,
     };
     this.size = {
-      w: 48,
-      h: 48,
+      w: 45,
+      h: 45,
     };
     this.turretsize = {
       w: 70,
@@ -565,7 +565,7 @@ class Mine {
 }
 
 const mvtspeed = 3;
-const waitingtime = 1000;
+const waitingtime = 3000;
 waitingrepawn = false;
 atleast2 = false;
 maxplayernb = 0;

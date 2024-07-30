@@ -67,11 +67,17 @@ function body_previous() {
 }
 
 socket.on("winner", (name, wait) => {
-  console.log(name);
   document.getElementById("winner").style.display = "block";
   document.getElementById("player_name").innerHTML = name;
 
   setTimeout(() => {
     document.getElementById("winner").style.display = "none";
+  }, wait);
+});
+
+socket.on("draw", (wait) => {
+  document.getElementById("draw").style.display = "block";
+  setTimeout(() => {
+    document.getElementById("draw").style.display = "none";
   }, wait);
 });
