@@ -181,6 +181,8 @@ io.on("connect", (socket) => {
       }
       frontend_players = [];
       players.forEach((player) => {
+        player.update();
+
         frontend_players.push(
           new Frontend_Player(
             player.position,
@@ -229,7 +231,7 @@ io.on("connect", (socket) => {
       if (data.aim != undefined) {
         players[data.playerid].aim = data.aim;
       }
-      players[data.playerid].update();
+      // players[data.playerid].update();
       if (data.click) {
         players[data.playerid].shoot();
       }
