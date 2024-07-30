@@ -1,6 +1,6 @@
 //
-const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
-//const socket = io("http://localhost:3000/");
+//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+const socket = io("http://localhost:8000/");
 
 console.log(io);
 
@@ -36,12 +36,6 @@ Bcollision = [];
 bullets = [];
 mines = [];
 
-var sound_tir = new Audio("sounds/tir.wav");
-var sound_kill = new Audio("sounds/kill.wav");
-var sound_plant = new Audio("sounds/plant.wav");
-var sound_ricochet = new Audio("sounds/ricochet.wav");
-var sound_fuse = new Audio("sounds/fuse.wav");
-
 const mvtspeed = 3;
 
 direction = {
@@ -75,7 +69,6 @@ onmousemove = function (e) {
 
 window.addEventListener("click", (event) => {
   click = true;
-  sound_tir.play();
 });
 
 window.addEventListener("keydown", (event) => {
@@ -93,7 +86,6 @@ window.addEventListener("keydown", (event) => {
       direction.y = mvtspeed;
       break;
     case " ":
-      sound_plant.play();
       plant = true;
       break;
   }

@@ -45,10 +45,6 @@ bullet1.src = "image/bullet/bullet.png";
 bg = new Image();
 bg.src = "image/background_wood.png";
 
-var sound_tir = new Audio("sounds/tir.wav");
-var sound_kill = new Audio("sounds/kill.wav");
-var sound_plant = new Audio("sounds/plant.wav");
-var sound_ricochet = new Audio("sounds/ricochet.wav");
 var sound_fuse = new Audio("sounds/fuse.wav");
 
 draw();
@@ -58,12 +54,20 @@ function draw() {
 
   c.drawImage(bg, 0, 0, canvas.width, canvas.height);
   mines.forEach((mine) => {
-    if (mine.timealive > 240) {
+    if (mine.timealive > 220) {
       if (mine.timealive % 10 < 5) {
         mine.color = "yellow";
       } else {
-        sound_fuse.play();
+        sound_fuse.cloneNode().play();
         mine.color = "red";
+      }
+      if (mine.timealive > 260) {
+        if (mine.timealive % 6 < 3) {
+          mine.color = "yellow";
+        } else {
+          sound_fuse.cloneNode().play();
+          mine.color = "red";
+        }
       }
     }
     c.beginPath();
@@ -158,8 +162,6 @@ function draw() {
       player.angle
     );
   });
-  drawTextRot("c MOI", 100, 100, 50, 50, 50);
-  c.fillText("Hello World", 10, 80);
 }
 c.font = "50px Arial";
 

@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 
 app.use(express.static("Public"));
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 console.log(PORT);
 const expressServer = app.listen(PORT);
 
@@ -76,7 +76,6 @@ io.on("connect", (socket) => {
       ids.push(socket.id);
       socket.emit("id", ids.length - 1);
       io.emit("player-connection", playerName);
-      console.log(players.length);
     } else {
       socket.emit("id-fail");
     }
@@ -244,6 +243,8 @@ tickTockInterval = setTimeout(function toocking() {
     );
   });
   io.emit("tick", frontend_players, bullets, mines); // send the event to the "game" room
+  io.emit("tick_sounds", sounds);
+  sounds = { plant: false, kill: false, shoot: false, ricochet: false };
 }, 16.67);
 
 class Block {
@@ -333,6 +334,8 @@ class Player {
   shoot() {
     this.endofbarrel();
     if (this.bulletcount < 5 && this.alive) {
+      sounds.shoot = true;
+
       this.bulletcount++;
       bullets.push(
         new Bullet({ x: this.endpos.x, y: this.endpos.y }, this.angle, 4, this)
@@ -341,6 +344,8 @@ class Player {
   }
   plant() {
     if (this.minecount < 3 && this.alive) {
+      sounds.plant = true;
+
       this.minecount++;
       mines.push(
         new Mine(
@@ -501,21 +506,29 @@ class Bullet {
       4
     );
     if (this.side == "right") {
+      sounds.ricochet = true;
+
       this.bounce += 1;
       this.velocity.x = -this.velocity.x;
       this.angle = 180 - this.angle;
     }
     if (this.side == "left") {
+      sounds.ricochet = true;
+
       this.bounce += 1;
       this.velocity.x = -this.velocity.x;
       this.angle = 180 - this.angle;
     }
     if (this.side == "up") {
+      sounds.ricochet = true;
+
       this.bounce += 1;
       this.velocity.y = -this.velocity.y;
       this.angle = -this.angle;
     }
     if (this.side == "down") {
+      sounds.ricochet = true;
+
       this.bounce += 1;
       this.velocity.y = -this.velocity.y;
       this.angle = -this.angle;
@@ -541,6 +554,7 @@ const mvtspeed = 3;
 atleast2 = false;
 maxplayernb = 0;
 levels = ["level1.json", "level2.json", "level3.json"];
+sounds = { plant: false, kill: false, shoot: false, ricochet: false };
 levelid = 0;
 players = [];
 frontend_players = [];
@@ -802,5 +816,6 @@ function distance(position1, size1, position2, size2) {
 function kill(killer, killed) {
   killed.alive = false;
   nbliving--;
+  sounds.kill = true;
   io.emit("player-kill", [killer.name, killed.name]);
 }
