@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 
 app.use(express.static("Public"));
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 console.log(PORT);
 const expressServer = app.listen(PORT);
 
@@ -55,150 +55,9 @@ io.on("connect", (socket) => {
     io.emit("level_change", blocks, Bcollision);
   }
 
-  if (players.length == 0) {
-    //someone is about to be added to players. Start tick-tocking
-    //tick-tock - issue an event to EVERY connected socket, that is playing the game, 60 times per second
+  //someone is about to be added to players. Start tick-tocking
+  //tick-tock - issue an event to EVERY connected socket, that is playing the game, 60 times per second
 
-    tickTockInterval = setInterval(() => {
-      if (players.length >= 2) {
-        atleast2 = true;
-      }
-      if (nbliving <= 1) {
-        if (atleast2) {
-          bullets = [];
-          mines = [];
-          level = path.join(__dirname, "./", "levels", levels[levelid]);
-          loadlevel(level);
-          io.emit("level_change", blocks, Bcollision);
-          players.forEach((player) => {
-            player.alive = true;
-            player.minecount = 0;
-            player.bulletcount = 0;
-            spawnid = Math.floor(Math.random() * spawns.length);
-            player.spawnpos = spawns[spawnid];
-            spawns.splice(spawnid, 1);
-            player.spawn();
-          });
-          nbliving = players.length;
-          if (levelid < levels.length - 1) {
-            levelid++;
-          } else {
-            levelid = 0;
-          }
-        }
-      }
-
-      for (let i = 0; i < mines.length; i++) {
-        mines[i].update();
-        if (mines[i].timealive > 300) {
-          for (let m = 0; m < blocks.length; m++) {
-            if (blocks[m].type == 2) {
-              if (
-                distance(
-                  mines[i].position,
-                  { w: mines[i].radius, h: mines[i].radius },
-                  blocks[m].position,
-                  blocks[m].size
-                ) <=
-                70 ** 2
-              ) {
-                blocklist[
-                  (blocks[m].position.y / 50) * 23 + blocks[m].position.x / 50
-                ] = 10;
-                generateBcollision();
-                blocks.splice(m, 1);
-                io.emit("level_change", blocks, Bcollision);
-
-                m -= 1;
-              }
-            }
-          }
-          for (let m = 0; m < players.length; m++) {
-            if (
-              distance(
-                mines[i].position,
-                { w: mines[i].radius, h: mines[i].radius },
-                players[m].position,
-                players[m].size
-              ) <=
-                70 ** 2 &&
-              players[m].alive
-            ) {
-              kill(mines[i].emitter, players[m]);
-            }
-          }
-          mines[i].emitter.minecount--;
-          mines.splice(i, 1);
-          i -= 1;
-        }
-      }
-
-      for (let i = 0; i < bullets.length; i++) {
-        bullets[i].update();
-        if (bullets[i].bounce >= 3) {
-          bullets[i].emitter.bulletcount--;
-          bullets.splice(i, 1);
-          i -= 1;
-          continue;
-        }
-        for (let e = 0; e < bullets.length; e++) {
-          if (
-            rectRect(
-              bullets[e].x,
-              bullets[e].y,
-              bullets[e].w,
-              bullets[e].h,
-              bullets[i].x,
-              bullets[i].y,
-              bullets[i].w,
-              bullets[i].h
-            ) &&
-            i != e
-          ) {
-            bullets[i].emitter.bulletcount--;
-            bullets[e].emitter.bulletcount--;
-            bullets.splice(i, 1);
-            bullets.splice(e, 1);
-            console.log("collisun");
-            if (e < i) {
-              i -= 1;
-            }
-            i -= 1;
-
-            break;
-          }
-        }
-        for (let e = 0; e < players.length; e++) {
-          if (players[e].BulletCollision(bullets[i]) && players[e].alive) {
-            bullets[i].emitter.bulletcount--;
-            kill(bullets[i].emitter, players[e]);
-            bullets.splice(i, 1);
-            i -= 1;
-
-            break;
-          }
-        }
-      }
-      frontend_players = [];
-      players.forEach((player) => {
-        player.update();
-
-        frontend_players.push(
-          new Frontend_Player(
-            player.position,
-            player.socketid,
-            player.name,
-            player.turretc,
-            player.bodyc,
-            player.angle,
-            player.alive,
-            player.rotation
-          )
-        );
-      });
-      io.emit("tick", frontend_players, bullets, mines); // send the event to the "game" room
-    }, 16.67);
-  }
   socket.on("play", (playerName, turretc, bodyc) => {
     if (ids.includes(socket.id) == false && players.length < maxplayernb) {
       spawnid = Math.floor(Math.random() * spawns.length);
@@ -241,6 +100,151 @@ io.on("connect", (socket) => {
     }
   });
 });
+
+tickTockInterval = setTimeout(function toocking() {
+  func = setTimeout(toocking, 16.67);
+
+  if (players.length >= 2) {
+    atleast2 = true;
+  }
+  if (players.length == 0) {
+    atleast2 = false;
+  }
+  if (nbliving <= 1) {
+    if (atleast2) {
+      bullets = [];
+      mines = [];
+      level = path.join(__dirname, "./", "levels", levels[levelid]);
+      loadlevel(level);
+      io.emit("level_change", blocks, Bcollision);
+      players.forEach((player) => {
+        player.alive = true;
+        player.minecount = 0;
+        player.bulletcount = 0;
+        spawnid = Math.floor(Math.random() * spawns.length);
+        player.spawnpos = spawns[spawnid];
+        spawns.splice(spawnid, 1);
+        player.spawn();
+      });
+      nbliving = players.length;
+      if (levelid < levels.length - 1) {
+        levelid++;
+      } else {
+        levelid = 0;
+      }
+    }
+  }
+
+  for (let i = 0; i < mines.length; i++) {
+    mines[i].update();
+    if (mines[i].timealive > 300) {
+      for (let m = 0; m < blocks.length; m++) {
+        if (blocks[m].type == 2) {
+          if (
+            distance(
+              mines[i].position,
+              { w: mines[i].radius, h: mines[i].radius },
+              blocks[m].position,
+              blocks[m].size
+            ) <=
+            70 ** 2
+          ) {
+            blocklist[
+              (blocks[m].position.y / 50) * 23 + blocks[m].position.x / 50
+            ] = 10;
+            generateBcollision();
+            blocks.splice(m, 1);
+            io.emit("level_change", blocks, Bcollision);
+
+            m -= 1;
+          }
+        }
+      }
+      for (let m = 0; m < players.length; m++) {
+        if (
+          distance(
+            mines[i].position,
+            { w: mines[i].radius, h: mines[i].radius },
+            players[m].position,
+            players[m].size
+          ) <=
+            70 ** 2 &&
+          players[m].alive
+        ) {
+          kill(mines[i].emitter, players[m]);
+        }
+      }
+      mines[i].emitter.minecount--;
+      mines.splice(i, 1);
+      i -= 1;
+    }
+  }
+
+  for (let i = 0; i < bullets.length; i++) {
+    bullets[i].update();
+    if (bullets[i].bounce >= 3) {
+      bullets[i].emitter.bulletcount--;
+      bullets.splice(i, 1);
+      i -= 1;
+      continue;
+    }
+    for (let e = 0; e < bullets.length; e++) {
+      if (
+        rectRect(
+          bullets[e].x,
+          bullets[e].y,
+          bullets[e].w,
+          bullets[e].h,
+          bullets[i].x,
+          bullets[i].y,
+          bullets[i].w,
+          bullets[i].h
+        ) &&
+        i != e
+      ) {
+        bullets[i].emitter.bulletcount--;
+        bullets[e].emitter.bulletcount--;
+        bullets.splice(i, 1);
+        bullets.splice(e, 1);
+        console.log("collisun");
+        if (e < i) {
+          i -= 1;
+        }
+        i -= 1;
+
+        break;
+      }
+    }
+    for (let e = 0; e < players.length; e++) {
+      if (players[e].BulletCollision(bullets[i]) && players[e].alive) {
+        bullets[i].emitter.bulletcount--;
+        kill(bullets[i].emitter, players[e]);
+        bullets.splice(i, 1);
+        i -= 1;
+
+        break;
+      }
+    }
+  }
+  frontend_players = [];
+  players.forEach((player) => {
+    player.update();
+
+    frontend_players.push(
+      new Frontend_Player(
+        player.position,
+        player.socketid,
+        player.name,
+        player.turretc,
+        player.bodyc,
+        player.angle,
+        player.alive,
+        player.rotation
+      )
+    );
+  });
+  io.emit("tick", frontend_players, bullets, mines); // send the event to the "game" room
+}, 16.67);
 
 class Block {
   constructor(position, type) {
