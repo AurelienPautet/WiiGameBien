@@ -11,6 +11,7 @@ function createToast(type, icon, title, text) {
                 <span>${text}</span>
             </div>`;
   notifications.prepend(newToast);
+
   newToast.timeOut = setTimeout(() => newToast.remove(), 5000);
 }
 

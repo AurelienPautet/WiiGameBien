@@ -1,6 +1,6 @@
 //
-const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
-//const socket = io("http://localhost:5000/");
+//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+const socket = io("http://localhost:5000/");
 
 socket.on("welcome", (data) => {});
 
@@ -16,13 +16,14 @@ socket.on("id-fail", () => {
 });
 
 setInterval(async () => {
-  if (playing) {
-    socket.emit("tock", { playerid, direction, plant, click, aim });
+  if (playing && room_name != 0) {
+    socket.emit("tock", { playerid, direction, plant, click, aim, room_name });
   }
   click = false;
   plant = false;
 }, 16.67);
 
+room_name = 0;
 trying = false;
 playing = false;
 playerid = 0;
@@ -45,15 +46,19 @@ aim = {
 plant = false;
 click = false;
 
-socket.on("tick", (p, bu, m) => {
+socket.on("tick", (p, bu, m, r) => {
+  console.log((p, bu, m, r));
   players = p;
   bullets = bu;
   mines = m;
+  room_name = r;
+  console.log("player", players);
 });
 
 socket.on("level_change", (b, Bc) => {
   blocks = b;
   Bcollision = Bc;
+  console.log(b);
 });
 
 onmousemove = function (e) {

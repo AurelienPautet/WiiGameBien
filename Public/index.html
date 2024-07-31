@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>WIITANK</title>
+    <link rel="icon" href="/image/icon.ico" />
+
     <script src="/socket.io/socket.io.min.js"></script>
     <meta
       name="viewport"
@@ -18,9 +20,25 @@
       <div id="notif"></div>
 
       <div class="fullscreen_message" id="connect">
+        <div class="connect_buttons">
+          <button id="join_button" onclick="show_join()">JOIN</button>
+          <button id="connect_button" onclick="show_create()">CREATE</button>
+        </div>
+        <div id="connect_create">
+          <label for="user-message">Room name:</label>
+
+          <input id="room_imput" type="text" placeholder="Room name" />
+        </div>
+        <div id="connect_join">
+          <label for="room-select">Choose a room:</label>
+
+          <select name="rooms" id="room-select"></select>
+        </div>
         <form class="row" id="message-form">
-          <input id="user-message" type="text" placeholder="ouiii ecrit" />
           <input class="send button" type="submit" value="JOUER" />
+
+          <input id="user-message" type="text" placeholder="ouiii ecrit" />
+          <label for="user-message">Choose a name:</label>
         </form>
         <div class="slider" id="turret_slider">
           <div class="slider_nav">
@@ -161,11 +179,11 @@
       </div>
     </div>
   </body>
+
   <script src="./client.js"></script>
   <script src="./toasts.js"></script>
   <script src="./connection.js"></script>
   <script src="./sounds_system.js"></script>
-
   <script src="./canvaStuff.js"></script>
 </html>
 

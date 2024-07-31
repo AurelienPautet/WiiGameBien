@@ -26,7 +26,10 @@
   margin: 3px;
   color: white;
   padding: 10px;
+  animation: entrance 2s ease 0s 1 normal forwards,
+    exit 2s ease 3s 1 normal forwards;
 }
+
 .toast .header {
   display: flex;
 }
@@ -39,6 +42,7 @@
   font-weight: bold;
   text-align: left;
 }
+
 #connection {
   background-color: rgba(0, 255, 81, 0.453);
 }
@@ -49,6 +53,31 @@
 #kill {
   background-color: rgba(47, 0, 255, 0.453);
 }
+
+@keyframes entrance {
+  0% {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes exit {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+}
+
 .row {
   display: flex;
   flex-direction: column-reverse;
@@ -92,8 +121,10 @@ canvas {
 }
 body {
   font-family: "Poppins", sans-serif;
-  user-select: none; /* Propriété standard */
-
+  -user-select: none;
+  -webkit-user-select: none; /* Chrome/Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+ */
   background: white;
   height: 100vh;
   width: 100vw;
@@ -105,6 +136,10 @@ body {
 }
 canvas {
   cursor: crosshair;
+}
+
+#connect_create {
+  display: none;
 }
 
 .slider_nav {

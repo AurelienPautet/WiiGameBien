@@ -4,13 +4,30 @@ document.getElementById("message-form").addEventListener("submit", (e) => {
   if (playerName != "") {
     document.getElementById("user-message").value = "";
     if (trying == false) {
-      socket.emit(
-        "play",
-        playerName,
-        turret_colors[turret_id],
-        body_colors[body_id]
-      );
-      trying = true;
+      if (connection_case === "create") {
+        roomname = document.getElementById("room_imput").value;
+        console.log("roomana", roomname);
+        socket.emit("new-room", roomname);
+        socket.emit(
+          "play",
+          playerName,
+          turret_colors[turret_id],
+          body_colors[body_id],
+          roomname
+        );
+        trying = true;
+      }
+      if (connection_case === "join") {
+        roomname = document.getElementById("room-select").value;
+        socket.emit(
+          "play",
+          playerName,
+          turret_colors[turret_id],
+          body_colors[body_id],
+          roomname
+        );
+        trying = true;
+      }
     }
   } else {
     console.log("Please enter a name");
@@ -21,6 +38,40 @@ turret_colors = ["blue", "orange", "red", "green", "violet", "yellow"];
 body_colors = ["blue", "orange", "red", "green", "violet", "yellow"];
 turret_id = 0;
 body_id = 0;
+var connection_case = "join";
+
+function show_join() {
+  document.getElementById("connect_join").style.display = "block";
+  document.getElementById("connect_create").style.display = "none";
+  connection_case = "join";
+}
+
+function show_create() {
+  document.getElementById("connect_join").style.display = "none";
+  document.getElementById("connect_create").style.display = "block";
+  connection_case = "create";
+}
+
+select = document.getElementById("room-select");
+function add_select(value, inner) {
+  opt = document.createElement("option");
+  opt.value = value;
+  opt.innerHTML = inner;
+  select.appendChild(opt);
+}
+
+socket.on("room_list", (lname, lplayers) => {
+  for (a in select.options) {
+    select.options.remove(0);
+  }
+
+  for (let i = 0; i < lname.length; i++) {
+    console.log(lname[i], lname[i] + ": (", lplayers[i], ")");
+    nstr = ` ${lname[i]}: (${lplayers[i]})`;
+    add_select(lname[i], nstr);
+  }
+});
+
 const widthSlider = 150;
 
 function turret_next() {

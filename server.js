@@ -18,79 +18,90 @@ const io = socketio(expressServer, {
 const path = require("path");
 
 io.on("connect", (socket) => {
+  room_list(socket);
+
   console.log(socket.id, "has joined our server!");
   socket.emit("welcome", socket.id + "has joinded the server");
-  if (blocks != []) {
-    socket.emit("level_change", blocks, Bcollision);
-  }
   socket.on("disconnect", function () {
     console.log(socket.id, "Got disconnect!");
-    var i = ids.indexOf(socket.id);
-    if (i > -1) {
-      for (let e = i + 1; e < players.length; e++) {
-        io.to(ids[e]).emit("id", e - 1);
+    rooms.forEach((r) => {
+      e = r.ids.indexOf(socket.id);
+      if (e > -1) {
+        i = e;
+        room = r;
       }
-      io.emit("player-disconnection", players[i].name);
+    });
+    if (i != undefined && i > -1 && room != undefined) {
+      console.log("room", room, "i", i, "e", e);
+      for (let e = i + 1; e < room.players.length; e++) {
+        io.to(room.ids[e]).emit("id", e - 1);
+      }
+      io.to(room.name).emit("player-disconnection", room.players[i].name);
 
-      players.splice(i, 1);
-      ids.splice(i, 1);
+      room.players.splice(i, 1);
+      room.ids.splice(i, 1);
 
-      nbliving--;
+      room.nbliving--;
     }
   });
 
-  if (players.length == 0) {
-    level = path.join(
-      __dirname,
-
-      "./",
-      "levels",
-      levels[levelid]
-    );
-    loadlevel(level);
-    io.emit("level_change", blocks, Bcollision);
-  }
+  socket.on("new-room", (name) => {
+    console.log("new room name", name);
+    room = new Room(name);
+    rooms.push(room);
+    level = path.join(__dirname, "./", "levels", room.levels[0]);
+    loadlevel(level, room);
+    room_list(0);
+  });
 
   //someone is about to be added to players. Start tick-tocking
   //tick-tock - issue an event to EVERY connected socket, that is playing the game, 60 times per second
 
-  socket.on("play", (playerName, turretc, bodyc) => {
-    if (ids.includes(socket.id) == false && players.length < maxplayernb) {
-      spawnid = Math.floor(Math.random() * spawns.length);
+  socket.on("play", (playerName, turretc, bodyc, room_name) => {
+    room = rooms.find((item) => item.name === room_name);
+
+    if (
+      room.ids.includes(socket.id) == false &&
+      room.players.length < room.maxplayernb
+    ) {
+      spawnid = Math.floor(Math.random() * room.spawns.length);
       const player = new Player(
-        spawns[spawnid],
+        room.spawns[spawnid],
         socket.id,
         playerName,
         turretc,
         bodyc
       );
-
-      nbliving += 1;
-      player.spawnpos = spawns[spawnid];
-      spawns.splice(spawnid, 1);
-      players.push(player);
-      ids.push(socket.id);
-      socket.emit("id", ids.length - 1);
-      io.emit("player-connection", playerName);
+      room.nbliving += 1;
+      player.spawnpos = room.spawns[spawnid];
+      room.spawns.splice(spawnid, 1);
+      room.players.push(player);
+      room.ids.push(socket.id);
+      socket.emit("id", room.ids.length - 1);
+      socket.join(room.name);
+      io.to(room.name).emit("player-connection", playerName);
+      socket.emit("level_change", room.blocks, room.Bcollision);
     } else {
       socket.emit("id-fail");
     }
   });
 
   socket.on("tock", (data) => {
-    if (players[data.playerid] != undefined) {
+    room = rooms.find((item) => item.name === data.room_name);
+    //console.log("name", room.players);
+    if (room.players[data.playerid] != undefined) {
       if (data.direction != undefined) {
-        players[data.playerid].direction = data.direction;
+        room.players[data.playerid].direction = data.direction;
       }
       if (data.aim != undefined) {
-        players[data.playerid].aim = data.aim;
+        room.players[data.playerid].aim = data.aim;
       }
       // players[data.playerid].update();
       if (data.click) {
-        players[data.playerid].shoot();
+        room.players[data.playerid].shoot(room);
       }
       if (data.plant) {
-        players[data.playerid].plant();
+        room.players[data.playerid].plant(room);
       }
     }
   });
@@ -98,201 +109,277 @@ io.on("connect", (socket) => {
 
 tickTockInterval = setTimeout(function toocking() {
   func = setTimeout(toocking, 16.67);
-
-  if (players.length >= 2) {
-    atleast2 = true;
-  }
-  if (players.length <= 1) {
-    atleast2 = false;
-  }
-  if (waitingrepawn == false && nbliving <= 1) {
-    if (atleast2) {
-      if (nbliving == 1) {
-        players.forEach((player) => {
-          if (player.alive) {
-            io.emit("winner", player.name, waitingtime);
-          }
-        });
-      } else {
-        io.emit("draw", waitingtime);
-      }
-      waitingrepawn = true;
-      respawnwait = setTimeout(() => {
-        bullets = [];
-        mines = [];
-        level = path.join(__dirname, "./", "levels", levels[levelid]);
-        loadlevel(level);
-        io.emit("level_change", blocks, Bcollision);
-        players.forEach((player) => {
-          player.alive = true;
-          player.minecount = 0;
-          player.bulletcount = 0;
-          spawnid = Math.floor(Math.random() * spawns.length);
-          player.spawnpos = spawns[spawnid];
-          spawns.splice(spawnid, 1);
-          player.spawn();
-        });
-        nbliving = players.length;
-        waitingrepawn = false;
-
-        if (levelid < levels.length - 1) {
-          levelid++;
-        } else {
-          levelid = 0;
-        }
-      }, waitingtime);
+  rooms.forEach((room) => {
+    if (room.players.length >= 2) {
+      room.atleast2 = true;
     }
-  }
+    if (room.players.length <= 1) {
+      room.atleast2 = false;
+    }
+    if (room.waitingrepawn == false && room.nbliving <= 1) {
+      if (room.atleast2) {
+        if (room.nbliving == 1) {
+          room.players.forEach((player) => {
+            if (player.alive) {
+              io.to(room.name).emit("winner", player.name, waitingtime);
+            }
+          });
+        } else {
+          io.to(room.name).emit("draw", waitingtime);
+        }
+        room.waitingrepawn = true;
+        respawnwait = setTimeout(() => {
+          room.bullets = [];
+          room.mines = [];
+          level = path.join(
+            __dirname,
+            "./",
+            "levels",
+            room.levels[room.levelid]
+          );
+          loadlevel(level, room);
+          io.to(room.name).emit("level_change", room.blocks, room.Bcollision);
+          room.players.forEach((player) => {
+            player.alive = true;
+            player.minecount = 0;
+            player.bulletcount = 0;
+            spawnid = Math.floor(Math.random() * room.spawns.length);
+            player.spawnpos = room.spawns[spawnid];
+            room.spawns.splice(spawnid, 1);
+            player.spawn();
+          });
+          room.nbliving = room.players.length;
+          room.waitingrepawn = false;
 
-  mining: for (let i = 0; i < mines.length; i++) {
-    mines[i].update();
-    if (mines[i].timealive > timetoeplode) {
-      for (let m = 0; m < blocks.length; m++) {
-        if (blocks[m].type == 2) {
+          if (room.levelid < room.levels.length - 1) {
+            room.levelid++;
+          } else {
+            room.levelid = 0;
+          }
+        }, waitingtime);
+      }
+    }
+
+    mining: for (let i = 0; i < room.mines.length; i++) {
+      room.mines[i].update();
+      if (room.mines[i].timealive > timetoeplode) {
+        for (let m = 0; m < room.blocks.length; m++) {
+          if (room.blocks[m].type == 2) {
+            if (
+              distance(
+                room.mines[i].position,
+                { w: room.mines[i].radius, h: room.mines[i].radius },
+                room.blocks[m].position,
+                room.blocks[m].size
+              ) <=
+              70 ** 2
+            ) {
+              room.blocklist[
+                (room.blocks[m].position.y / 50) * 23 +
+                  room.blocks[m].position.x / 50
+              ] = 10;
+              generateBcollision(room);
+              room.blocks.splice(m, 1);
+              io.to(room.name).emit(
+                "level_change",
+                room.blocks,
+                room.Bcollision
+              );
+
+              m -= 1;
+            }
+          }
+        }
+        for (let e = 0; e < room.mines.length; e++) {
           if (
             distance(
-              mines[i].position,
-              { w: mines[i].radius, h: mines[i].radius },
-              blocks[m].position,
-              blocks[m].size
+              room.mines[i].position,
+              { w: room.mines[i].radius, h: room.mines[i].radius },
+              room.mines[e].position,
+              { w: room.mines[e].radius, h: room.mines[e].radius }
             ) <=
             70 ** 2
           ) {
-            blocklist[
-              (blocks[m].position.y / 50) * 23 + blocks[m].position.x / 50
-            ] = 10;
-            generateBcollision();
-            blocks.splice(m, 1);
-            io.emit("level_change", blocks, Bcollision);
-
-            m -= 1;
+            room.mines[e].timealive = timetoeplode;
           }
         }
-      }
-      for (let e = 0; e < mines.length; e++) {
-        if (
-          distance(
-            mines[i].position,
-            { w: mines[i].radius, h: mines[i].radius },
-            mines[e].position,
-            { w: mines[e].radius, h: mines[e].radius }
-          ) <=
-          70 ** 2
-        ) {
-          mines[e].timealive = timetoeplode;
+        for (let m = 0; m < room.players.length; m++) {
+          if (
+            distance(
+              room.mines[i].position,
+              { w: room.mines[i].radius, h: room.mines[i].radius },
+              room.players[m].position,
+              room.players[m].size
+            ) <=
+              70 ** 2 &&
+            room.players[m].alive
+          ) {
+            kill(room.mines[i].emitter, room.players[m], room);
+          }
         }
+        room.mines[i].emitter.minecount--;
+        room.mines.splice(i, 1);
+        i -= 1;
+        continue mining;
       }
-      for (let m = 0; m < players.length; m++) {
-        if (
-          distance(
-            mines[i].position,
-            { w: mines[i].radius, h: mines[i].radius },
-            players[m].position,
-            players[m].size
-          ) <=
-            70 ** 2 &&
-          players[m].alive
-        ) {
-          kill(mines[i].emitter, players[m]);
-        }
-      }
-      mines[i].emitter.minecount--;
-      mines.splice(i, 1);
-      i -= 1;
-      continue mining;
     }
-  }
 
-  bulleting: for (let i = 0; i < bullets.length; i++) {
-    bullets[i].update();
-    if (bullets[i].bounce >= 3) {
-      bullets[i].emitter.bulletcount--;
-      bullets.splice(i, 1);
-      i -= 1;
-      continue bulleting;
-    }
-    for (let e = 0; e < mines.length; e++) {
-      if (
-        rectanglesSeTouchent(
-          mines[e].position.x,
-          mines[e].position.y,
-          mines[e].radius,
-          mines[e].radius,
-          bullets[i].position.x,
-          bullets[i].position.y,
-          bullets[i].size.w,
-          bullets[i].size.h
-        )
-      ) {
-        mines[e].timealive = timetoeplode;
-        bullets[i].emitter.bulletcount--;
-        bullets.splice(i, 1);
+    bulleting: for (let i = 0; i < room.bullets.length; i++) {
+      room.bullets[i].update(room);
+      if (room.bullets[i].bounce >= 3) {
+        room.bullets[i].emitter.bulletcount--;
+        room.bullets.splice(i, 1);
         i -= 1;
         continue bulleting;
       }
-    }
-    for (let e = 0; e < bullets.length; e++) {
-      if (
-        rectRect(
-          bullets[i].position.x,
-          bullets[i].position.y,
-          bullets[i].size.w,
-          bullets[i].size.h,
-          bullets[e].position.x,
-          bullets[e].position.y,
-          bullets[e].size.w,
-          bullets[e].size.h
-        ) &&
-        i != e
-      ) {
-        bullets[i].emitter.bulletcount--;
-        bullets[e].emitter.bulletcount--;
-        console.log("collisun");
-        if (e < i) {
-          bullets.splice(i, 1);
-          bullets.splice(e, 1);
-          i -= 2;
-        } else {
-          bullets.splice(e, 1);
-          bullets.splice(i, 1);
+      for (let e = 0; e < room.mines.length; e++) {
+        if (
+          rectanglesSeTouchent(
+            room.mines[e].position.x,
+            room.mines[e].position.y,
+            room.mines[e].radius,
+            room.mines[e].radius,
+            room.bullets[i].position.x,
+            room.bullets[i].position.y,
+            room.bullets[i].size.w,
+            room.bullets[i].size.h
+          )
+        ) {
+          room.mines[e].timealive = timetoeplode;
+          room.bullets[i].emitter.bulletcount--;
+          room.bullets.splice(i, 1);
           i -= 1;
+          continue bulleting;
         }
+      }
+      for (let e = 0; e < room.bullets.length; e++) {
+        if (
+          rectRect(
+            room.bullets[i].position.x,
+            room.bullets[i].position.y,
+            room.bullets[i].size.w,
+            room.bullets[i].size.h,
+            room.bullets[e].position.x,
+            room.bullets[e].position.y,
+            room.bullets[e].size.w,
+            room.bullets[e].size.h
+          ) &&
+          i != e
+        ) {
+          room.bullets[i].emitter.bulletcount--;
+          room.bullets[e].emitter.bulletcount--;
+          console.log("collisun");
+          if (e < i) {
+            room.bullets.splice(i, 1);
+            room.bullets.splice(e, 1);
+            i -= 2;
+          } else {
+            room.bullets.splice(e, 1);
+            room.bullets.splice(i, 1);
+            i -= 1;
+          }
 
-        continue bulleting;
+          continue bulleting;
+        }
+      }
+      for (let e = 0; e < room.players.length; e++) {
+        if (
+          room.players[e].BulletCollision(room.bullets[i]) &&
+          room.players[e].alive
+        ) {
+          room.bullets[i].emitter.bulletcount--;
+          kill(room.bullets[i].emitter, room.players[e], room);
+          room.bullets.splice(i, 1);
+          i -= 1;
+
+          continue bulleting;
+        }
       }
     }
-    for (let e = 0; e < players.length; e++) {
-      if (players[e].BulletCollision(bullets[i]) && players[e].alive) {
-        bullets[i].emitter.bulletcount--;
-        kill(bullets[i].emitter, players[e]);
-        bullets.splice(i, 1);
-        i -= 1;
+    room.frontend_players = [];
+    room.players.forEach((player) => {
+      player.update(room);
 
-        continue bulleting;
-      }
-    }
-  }
-  frontend_players = [];
-  players.forEach((player) => {
-    player.update();
-
-    frontend_players.push(
-      new Frontend_Player(
-        player.position,
-        player.socketid,
-        player.name,
-        player.turretc,
-        player.bodyc,
-        player.angle,
-        player.alive,
-        player.rotation
-      )
-    );
+      room.frontend_players.push(
+        new Frontend_Player(
+          player.position,
+          player.socketid,
+          player.name,
+          player.turretc,
+          player.bodyc,
+          player.angle,
+          player.alive,
+          player.rotation
+        )
+      );
+    });
+    io.to(room.name).emit(
+      "tick",
+      room.frontend_players,
+      room.bullets,
+      room.mines,
+      room.name
+    ); // send the event to the "game" room
+    io.to(room.name).emit("tick_sounds", room.sounds);
+    room.sounds = { plant: false, kill: false, shoot: false, ricochet: false };
   });
-  io.emit("tick", frontend_players, bullets, mines); // send the event to the "game" room
-  io.emit("tick_sounds", sounds);
-  sounds = { plant: false, kill: false, shoot: false, ricochet: false };
 }, 16.67);
+
+function room_list(socket) {
+  room_names = [];
+  room_players = [];
+  rooms.forEach((room) => {
+    room_names.push(room.name);
+    room_players.push(room.players.length + "/" + room.maxplayernb);
+  });
+  console.log("room_list");
+  if (socket != 0) {
+    socket.emit("room_list", room_names, room_players);
+  } else {
+    io.emit("room_list", room_names, room_players);
+  }
+}
+
+const mvtspeed = 3;
+const waitingtime = 3000;
+const timetoeplode = 300;
+
+class Room {
+  constructor(name) {
+    this.name = name;
+    this.waitingrepawn = false;
+    this.atleast2 = false;
+    this.maxplayernb = 0;
+    this.levels = ["level1.json", "level2.json", "level3.json"];
+    this.sounds = { plant: false, kill: false, shoot: false, ricochet: false };
+    this.levelid = 0;
+    this.players = [];
+    this.frontend_players = [];
+    this.ids = [];
+    this.blocks = [];
+    this.Bcollision = [];
+    this.bullets = [];
+    this.mines = [];
+    this.spawns = [];
+    this.nbliving = 0;
+  }
+}
+
+/* waitingrepawn = false;
+atleast2 = false;
+maxplayernb = 0;
+levels = ["level4.json", "level2.json", "level3.json", "level4.json"];
+sounds = { plant: false, kill: false, shoot: false, ricochet: false };
+levelid = 0;
+players = [];
+frontend_players = [];
+ids = [];
+blocks = [];
+Bcollision = [];
+bullets = [];
+room.mines = [];
+spawns = [];
+nbliving = 0; */
 
 class Block {
   constructor(position, type) {
@@ -378,23 +465,23 @@ class Player {
   spawn() {
     this.position = structuredClone(this.spawnpos);
   }
-  shoot() {
+  shoot(room) {
     this.endofbarrel();
     if (this.bulletcount < 5 && this.alive) {
-      sounds.shoot = true;
+      room.sounds.shoot = true;
 
       this.bulletcount++;
-      bullets.push(
+      room.bullets.push(
         new Bullet({ x: this.endpos.x, y: this.endpos.y }, this.angle, 6, this)
       );
     }
   }
-  plant() {
+  plant(room) {
     if (this.minecount < 3 && this.alive) {
-      sounds.plant = true;
+      room.sounds.plant = true;
 
       this.minecount++;
-      mines.push(
+      room.mines.push(
         new Mine(
           {
             x: this.position.x + this.size.w / 2,
@@ -406,17 +493,17 @@ class Player {
     }
   }
 
-  update() {
+  update(room) {
     this.CalculateAngle();
 
     //change the angle of the image depending on the mvt direction
     this.velocity = this.direction;
-    for (let i = 0; i < Bcollision.length; i++) {
-      this.BodyCollision(Bcollision[i]);
+    for (let i = 0; i < room.Bcollision.length; i++) {
+      this.BodyCollision(room.Bcollision[i]);
     }
-    for (let i = 0; i < players.length; i++) {
-      if (players[i].alive && this != players[i]) {
-        this.BodyCollision(players[i]);
+    for (let i = 0; i < room.players.length; i++) {
+      if (room.players[i].alive && this != room.players[i]) {
+        this.BodyCollision(room.players[i]);
       }
     }
     if (this.velocity.x == mvtspeed) {
@@ -533,14 +620,14 @@ class Bullet {
     this.bounce = 0;
     this.emitter = emitter;
   }
-  update() {
-    for (let i = 0; i < Bcollision.length; i++) {
-      this.collision_walls(Bcollision[i]);
+  update(room) {
+    for (let i = 0; i < room.Bcollision.length; i++) {
+      this.collision_walls(room.Bcollision[i], room);
     }
     this.position.x += this.velocity.x;
     this.position.y += this.velocity.y;
   }
-  collision_walls(obj) {
+  collision_walls(obj, room) {
     this.side = colliderect(
       this.position.y + this.velocity.y,
       this.position.x + this.velocity.x,
@@ -553,28 +640,28 @@ class Bullet {
       4
     );
     if (this.side == "right") {
-      sounds.ricochet = true;
+      room.sounds.ricochet = true;
 
       this.bounce += 1;
       this.velocity.x = -this.velocity.x;
       this.angle = 180 - this.angle;
     }
     if (this.side == "left") {
-      sounds.ricochet = true;
+      room.sounds.ricochet = true;
 
       this.bounce += 1;
       this.velocity.x = -this.velocity.x;
       this.angle = 180 - this.angle;
     }
     if (this.side == "up") {
-      sounds.ricochet = true;
+      room.sounds.ricochet = true;
 
       this.bounce += 1;
       this.velocity.y = -this.velocity.y;
       this.angle = -this.angle;
     }
     if (this.side == "down") {
-      sounds.ricochet = true;
+      room.sounds.ricochet = true;
 
       this.bounce += 1;
       this.velocity.y = -this.velocity.y;
@@ -597,89 +684,51 @@ class Mine {
   }
 }
 
-const mvtspeed = 3;
-const waitingtime = 3000;
-
-class Room {
-  constructor() {
-    this.waitingrepawn = false;
-    this.atleast2 = false;
-    this.maxplayernb = 0;
-    this.levels = ["level1.json", "level2.json", "level3.json"];
-    this.sounds = { plant: false, kill: false, shoot: false, ricochet: false };
-    this.levelid = 0;
-    this.players = [];
-    this.frontend_players = [];
-    this.ids = [];
-    this.blocks = [];
-    this.Bcollision = [];
-    this.bullets = [];
-    this.mines = [];
-    this.spawns = [];
-    this.nbliving = 0;
-  }
-}
-waitingrepawn = false;
-atleast2 = false;
-maxplayernb = 0;
-levels = ["level4.json", "level2.json", "level3.json", "level4.json"];
-sounds = { plant: false, kill: false, shoot: false, ricochet: false };
-levelid = 0;
-players = [];
-frontend_players = [];
-ids = [];
-blocks = [];
-Bcollision = [];
-bullets = [];
-mines = [];
-spawns = [];
-nbliving = 0;
-timetoeplode = 300;
-
-function loadlevel(name) {
+function loadlevel(name, room) {
   var my_JSON_object = require(name);
   blocklist_json = my_JSON_object["layers"][0]["data"];
-  blocklist = [...blocklist_json];
-  blocks = [];
-  spawns = [];
+  room.blocklist = [...blocklist_json];
+  room.blocks = [];
+  room.spawns = [];
 
   for (let l = 0; l <= 16; l++) {
     for (let c = 0; c <= 23; c++) {
-      if (blocklist[l * 23 + c] == 1) {
-        blocks.push(new Block({ x: c * 50, y: l * 50 }, 1));
+      if (room.blocklist[l * 23 + c] == 1) {
+        room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 1));
       }
-      if (blocklist[l * 23 + c] == 2) {
-        blocks.push(new Block({ x: c * 50, y: l * 50 }, 2));
+      if (room.blocklist[l * 23 + c] == 2) {
+        room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 2));
       }
-      if (blocklist[l * 23 + c] == 3) {
-        spawns.push({ x: c * 50, y: l * 50 });
+      if (room.blocklist[l * 23 + c] == 3) {
+        room.spawns.push({ x: c * 50, y: l * 50 });
       }
     }
   }
-  maxplayernb = spawns.length;
-  generateBcollision();
+  room.maxplayernb = room.spawns.length;
+  generateBcollision(room);
 }
 
-function generateBcollision() {
+function generateBcollision(room) {
   boxed = [];
   i = 0;
-  Bcollision = [];
-  while (i < blocklist.length) {
+  room.Bcollision = [];
+  while (i < room.blocklist.length) {
     l = 1;
     col = 1;
     if (
-      (blocklist[i] == 1 || blocklist[i] == 2) &&
+      (room.blocklist[i] == 1 || room.blocklist[i] == 2) &&
       boxed.includes(i) == false
     ) {
       while (
-        (blocklist[i + l] == 1 || blocklist[i + l] == 2) &&
+        (room.blocklist[i + l] == 1 || room.blocklist[i + l] == 2) &&
         (i % 23) + l < 23 &&
         boxed.includes(i + 1) == false
       ) {
         l++;
       }
       while (
-        (blocklist[i + 23 * col] == 1 || blocklist[i + 23 * col] == 2) &&
+        (room.blocklist[i + 23 * col] == 1 ||
+          room.blocklist[i + 23 * col] == 2) &&
         Math.floor(i / 23) + col < 16 &&
         boxed.includes(i + 23 * col) == false
       ) {
@@ -696,7 +745,7 @@ function generateBcollision() {
           boxed.push(i + b);
         }
       }
-      Bcollision.push(
+      room.Bcollision.push(
         new CollisonsBox(
           { x: (i % 23) * 50, y: Math.floor(i / 23) * 50 },
           { w: l * 50, h: col * 50 }
@@ -706,73 +755,72 @@ function generateBcollision() {
     i++;
   }
   boxed = [];
-  for (let i = 0; i < Bcollision.length; i++) {
-    for (let e = 0; e < Bcollision.length; e++) {
+  for (let i = 0; i < room.Bcollision.length; i++) {
+    for (let e = 0; e < room.Bcollision.length; e++) {
       if (
         i != e &&
-        Bcollision[i].position.x === Bcollision[e].position.x &&
-        Bcollision[i].position.y + Bcollision[i].size.h ===
-          Bcollision[e].position.y &&
-        Bcollision[i].size.w === Bcollision[e].size.w
+        room.Bcollision[i].position.x === room.Bcollision[e].position.x &&
+        room.Bcollision[i].position.y + room.Bcollision[i].size.h ===
+          room.Bcollision[e].position.y &&
+        room.Bcollision[i].size.w === room.Bcollision[e].size.w
       ) {
-        Bcollision.push(
+        room.Bcollision.push(
           new CollisonsBox(
             {
-              x: Bcollision[i].position.x,
-              y: Bcollision[i].position.y,
+              x: room.Bcollision[i].position.x,
+              y: room.Bcollision[i].position.y,
             },
             {
-              w: Bcollision[i].size.w,
-              h: Bcollision[i].size.h + Bcollision[e].size.h,
+              w: room.Bcollision[i].size.w,
+              h: room.Bcollision[i].size.h + room.Bcollision[e].size.h,
             }
           )
         );
         if (i > e) {
-          Bcollision.splice(i, 1);
-          Bcollision.splice(e, 1);
+          room.Bcollision.splice(i, 1);
+          room.Bcollision.splice(e, 1);
         } else {
-          Bcollision.splice(e, 1);
-          Bcollision.splice(i, 1);
+          room.Bcollision.splice(e, 1);
+          room.Bcollision.splice(i, 1);
         }
         i = 0;
         e = 0;
       }
     }
   }
-  for (let i = 0; i < Bcollision.length; i++) {
-    for (let e = 0; e < Bcollision.length; e++) {
+  for (let i = 0; i < room.Bcollision.length; i++) {
+    for (let e = 0; e < room.Bcollision.length; e++) {
       if (
         i != e &&
-        Bcollision[i].position.y === Bcollision[e].position.y &&
-        Bcollision[i].position.x + Bcollision[e].size.w ===
-          Bcollision[e].position.x &&
-        Bcollision[i].size.h === Bcollision[e].size.h
+        room.Bcollision[i].position.y === room.Bcollision[e].position.y &&
+        room.Bcollision[i].position.x + room.Bcollision[e].size.w ===
+          room.Bcollision[e].position.x &&
+        room.Bcollision[i].size.h === room.Bcollision[e].size.h
       ) {
-        Bcollision.push(
+        room.Bcollision.push(
           new CollisonsBox(
             {
-              x: Bcollision[i].position.x,
-              y: Bcollision[i].position.y,
+              x: room.Bcollision[i].position.x,
+              y: room.Bcollision[i].position.y,
             },
             {
-              w: Bcollision[i].size.w + Bcollision[e].size.w,
-              h: Bcollision[i].size.h,
+              w: room.Bcollision[i].size.w + room.Bcollision[e].size.w,
+              h: room.Bcollision[i].size.h,
             }
           )
         );
         if (i > e) {
-          Bcollision.splice(i, 1);
-          Bcollision.splice(e, 1);
+          room.Bcollision.splice(i, 1);
+          room.Bcollision.splice(e, 1);
         } else {
-          Bcollision.splice(e, 1);
-          Bcollision.splice(i, 1);
+          room.Bcollision.splice(e, 1);
+          room.Bcollision.splice(i, 1);
         }
         i = 0;
         e = 0;
       }
     }
   }
-  console.log(Bcollision.length);
 }
 
 function rectRect(r1x, r1y, r1w, r1h, r2x, r2y, r2w, r2h) {
@@ -879,11 +927,11 @@ function distance(position1, size1, position2, size2) {
   );
 }
 
-function kill(killer, killed) {
+function kill(killer, killed, room) {
   killed.alive = false;
-  nbliving--;
-  sounds.kill = true;
-  io.emit("player-kill", [killer.name, killed.name]);
+  room.nbliving--;
+  room.sounds.kill = true;
+  io.to(room.name).emit("player-kill", [killer.name, killed.name]);
 }
 
 function rectanglesSeTouchent(
@@ -902,3 +950,8 @@ function rectanglesSeTouchent(
 
   return horizontale && verticale;
 }
+
+base_room = new Room("Public");
+rooms = [base_room];
+level = path.join(__dirname, "./", "levels", base_room.levels[0]);
+loadlevel(level, base_room);
