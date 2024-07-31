@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 
 app.use(express.static("Public"));
-const PORT = process.env.PORT || 7000;
+const PORT = process.env.PORT || 5000;
 console.log(PORT);
 const expressServer = app.listen(PORT);
 
@@ -150,7 +150,7 @@ tickTockInterval = setTimeout(function toocking() {
 
   for (let i = 0; i < mines.length; i++) {
     mines[i].update();
-    if (mines[i].timealive > 300) {
+    if (mines[i].timealive > timetoeplode) {
       for (let m = 0; m < blocks.length; m++) {
         if (blocks[m].type == 2) {
           if (
@@ -193,39 +193,62 @@ tickTockInterval = setTimeout(function toocking() {
     }
   }
 
-  for (let i = 0; i < bullets.length; i++) {
+  bulleting: for (let i = 0; i < bullets.length; i++) {
     bullets[i].update();
     if (bullets[i].bounce >= 3) {
       bullets[i].emitter.bulletcount--;
       bullets.splice(i, 1);
       i -= 1;
-      continue;
+      continue bulleting;
+    }
+    for (let e = 0; e < mines.length; e++) {
+      if (
+        rectanglesSeTouchent(
+          mines[e].position.x,
+          mines[e].position.y,
+          mines[e].radius,
+          mines[e].radius,
+          bullets[i].position.x,
+          bullets[i].position.y,
+          bullets[i].size.w,
+          bullets[i].size.h
+        )
+      ) {
+        mines[e].timealive = timetoeplode;
+        bullets[i].emitter.bulletcount--;
+        bullets.splice(i, 1);
+        i -= 1;
+        continue bulleting;
+      }
     }
     for (let e = 0; e < bullets.length; e++) {
       if (
         rectRect(
-          bullets[e].x,
-          bullets[e].y,
-          bullets[e].w,
-          bullets[e].h,
-          bullets[i].x,
-          bullets[i].y,
-          bullets[i].w,
-          bullets[i].h
+          bullets[i].position.x,
+          bullets[i].position.y,
+          bullets[i].size.w,
+          bullets[i].size.h,
+          bullets[e].position.x,
+          bullets[e].position.y,
+          bullets[e].size.w,
+          bullets[e].size.h
         ) &&
         i != e
       ) {
         bullets[i].emitter.bulletcount--;
         bullets[e].emitter.bulletcount--;
-        bullets.splice(i, 1);
-        bullets.splice(e, 1);
         console.log("collisun");
         if (e < i) {
+          bullets.splice(i, 1);
+          bullets.splice(e, 1);
+          i -= 2;
+        } else {
+          bullets.splice(e, 1);
+          bullets.splice(i, 1);
           i -= 1;
         }
-        i -= 1;
 
-        break;
+        continue bulleting;
       }
     }
     for (let e = 0; e < players.length; e++) {
@@ -235,7 +258,7 @@ tickTockInterval = setTimeout(function toocking() {
         bullets.splice(i, 1);
         i -= 1;
 
-        break;
+        continue bulleting;
       }
     }
   }
@@ -566,6 +589,26 @@ class Mine {
 
 const mvtspeed = 3;
 const waitingtime = 3000;
+
+class Room {
+  constructor() {
+    this.waitingrepawn = false;
+    this.atleast2 = false;
+    this.maxplayernb = 0;
+    this.levels = ["level1.json", "level2.json", "level3.json"];
+    this.sounds = { plant: false, kill: false, shoot: false, ricochet: false };
+    this.levelid = 0;
+    this.players = [];
+    this.frontend_players = [];
+    this.ids = [];
+    this.blocks = [];
+    this.Bcollision = [];
+    this.bullets = [];
+    this.mines = [];
+    this.spawns = [];
+    this.nbliving = 0;
+  }
+}
 waitingrepawn = false;
 atleast2 = false;
 maxplayernb = 0;
@@ -581,9 +624,7 @@ bullets = [];
 mines = [];
 spawns = [];
 nbliving = 0;
-gamestate = { players, blocks, Bcollision, bullets, mines };
-let MouseX = 0;
-let MouseY = 0;
+timetoeplode = 300;
 
 function loadlevel(name) {
   var my_JSON_object = require(name);
@@ -733,7 +774,6 @@ function rectRect(r1x, r1y, r1w, r1h, r2x, r2y, r2w, r2h) {
     r1y + r1h >= r2y && // r1 top edge past r2 bottom
     r1y <= r2y + r2h
   ) {
-    // r1 bottom edge past r2 top
     return true;
   }
   return false;
@@ -834,4 +874,21 @@ function kill(killer, killed) {
   nbliving--;
   sounds.kill = true;
   io.emit("player-kill", [killer.name, killed.name]);
+}
+
+function rectanglesSeTouchent(
+  x1,
+  y1,
+  width1,
+  height1,
+  x2,
+  y2,
+  width2,
+  height2
+) {
+  // Vérifier les conditions d'intersection directe
+  const horizontale = x1 < x2 + width2 && x1 + width1 > x2;
+  const verticale = y1 < y2 + height2 && y1 + height1 > y2;
+
+  return horizontale && verticale;
 }

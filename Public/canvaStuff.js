@@ -68,15 +68,22 @@ function draw() {
       if (mine.timealive % 10 < 5) {
         mine.color = "yellow";
       } else {
-        sound_fuse.cloneNode().play();
         mine.color = "red";
+      }
+      if (mine.timealive % 10 == 5) {
+        playaudio("sounds/fuse.wav");
       }
       if (mine.timealive > 260) {
         if (mine.timealive % 6 < 3) {
           mine.color = "yellow";
         } else {
-          sound_fuse.cloneNode().play();
           mine.color = "red";
+        }
+        if (mine.timealive % 6 == 3) {
+          playaudio("sounds/fuse.wav");
+        }
+        if (mine.timealive == 300) {
+          playaudio("sounds/eplose.wav");
         }
       }
     }

@@ -5,15 +5,29 @@ var sound_ricochet = new Audio("sounds/ricochet.wav");
 
 socket.on("tick_sounds", (sounds) => {
   if (sounds.plant) {
-    sound_plant.cloneNode().play();
+    //sound_plant.cloneNode().play();
+    playaudio("sounds/plant.wav");
   }
   if (sounds.ricochet) {
-    sound_ricochet.cloneNode().play();
+    //sound_ricochet.cloneNode().play();
+    playaudio("sounds/ricochet.wav");
   }
   if (sounds.kill) {
-    sound_kill.cloneNode().play();
+    //sound_kill.cloneNode().play();
+    playaudio("sounds/kill.wav");
   }
   if (sounds.shoot) {
-    sound_tir.cloneNode().play();
+    //sound_tir.cloneNode().play();
+    playaudio("sounds/tir.wav");
   }
 });
+
+function playaudio(source) {
+  var audioElement;
+  audioElement = document.createElement("audio");
+  audioElement.innerHTML = '<source src="' + source + '" type="audio/mpeg" />';
+  audioElement.play();
+  setTimeout(() => {
+    audioElement.remove();
+  }, 200);
+}
