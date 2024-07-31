@@ -24,24 +24,34 @@ io.on("connect", (socket) => {
   socket.emit("welcome", socket.id + "has joinded the server");
   socket.on("disconnect", function () {
     console.log(socket.id, "Got disconnect!");
+    let roomsf = 0;
+    let i = -1;
+
     rooms.forEach((r) => {
       e = r.ids.indexOf(socket.id);
       if (e > -1) {
         i = e;
-        room = r;
+        roomsf = r;
       }
     });
-    if (i != undefined && i > -1 && room != undefined) {
-      console.log("room", room, "i", i, "e", e);
-      for (let e = i + 1; e < room.players.length; e++) {
-        io.to(room.ids[e]).emit("id", e - 1);
+    if (roomsf === 0) {
+      console.log("fuck");
+    } else {
+    }
+    if (i != undefined && i > -1 && roomsf != undefined) {
+      console.log("i", i, "e", e);
+
+      console.log(console.log(roomsf.player));
+
+      for (let e = i + 1; e < roomsf.players.length; e++) {
+        io.to(roomsf.ids[e]).emit("id", e - 1);
       }
-      io.to(room.name).emit("player-disconnection", room.players[i].name);
+      io.to(roomsf.name).emit("player-disconnection", roomsf.players[i].name);
 
-      room.players.splice(i, 1);
-      room.ids.splice(i, 1);
+      roomsf.players.splice(i, 1);
+      roomsf.ids.splice(i, 1);
 
-      room.nbliving--;
+      roomsf.nbliving--;
     }
   });
 
