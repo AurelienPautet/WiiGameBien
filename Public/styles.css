@@ -44,14 +44,18 @@
 }
 
 #connection {
-  background-color: rgba(0, 255, 81, 0.453);
+  background-color: rgba(0, 255, 81, 0.6);
 }
 
 #disconnection {
-  background-color: rgba(255, 0, 0, 0.453);
+  background-color: rgba(255, 0, 0, 0.6);
 }
 #kill {
-  background-color: rgba(47, 0, 255, 0.453);
+  background-color: rgba(255, 0, 200, 0.6);
+}
+
+#info {
+  background-color: rgba(25, 0, 255, 0.6);
 }
 
 @keyframes entrance {

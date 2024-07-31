@@ -6,16 +6,28 @@ document.getElementById("message-form").addEventListener("submit", (e) => {
     if (trying == false) {
       if (connection_case === "create") {
         roomname = document.getElementById("room_imput").value;
-        console.log("roomana", roomname);
-        socket.emit("new-room", roomname);
-        socket.emit(
-          "play",
-          playerName,
-          turret_colors[turret_id],
-          body_colors[body_id],
-          roomname
-        );
-        trying = true;
+        if (roomname === "") {
+          createToast("info", "/image/info.svg", "Error", "Enter a room name ");
+        } else if (list_name.includes(roomname) == false) {
+          console.log("roomana", roomname);
+          socket.emit("new-room", roomname);
+          socket.emit(
+            "play",
+            playerName,
+            turret_colors[turret_id],
+            body_colors[body_id],
+            roomname
+          );
+          trying = true;
+        } else {
+          document.getElementById("room_imput").value = "";
+          createToast(
+            "info",
+            "/image/info.svg",
+            "Error",
+            "Room name already exist"
+          );
+        }
       }
       if (connection_case === "join") {
         roomname = document.getElementById("room-select").value;
@@ -31,6 +43,7 @@ document.getElementById("message-form").addEventListener("submit", (e) => {
     }
   } else {
     console.log("Please enter a name");
+    createToast("info", "/image/info.svg", "Error", "Please enter a name");
   }
 });
 
@@ -60,7 +73,10 @@ function add_select(value, inner) {
   select.appendChild(opt);
 }
 
+list_name = [];
+
 socket.on("room_list", (lname, lplayers) => {
+  list_name = lname;
   for (a in select.options) {
     select.options.remove(0);
   }

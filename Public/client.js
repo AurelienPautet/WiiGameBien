@@ -1,6 +1,6 @@
 //
-const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
-//const socket = io("http://localhost:5000/");
+//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+const socket = io("http://localhost:5000/");
 
 socket.on("welcome", (data) => {});
 
