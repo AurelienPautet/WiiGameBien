@@ -1,12 +1,8 @@
 //
-//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
-const socket = io("http://localhost:5000/");
+const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+//const socket = io("http://localhost:5000/");
 
-console.log(io);
-
-socket.on("welcome", (data) => {
-  console.log(data);
-});
+socket.on("welcome", (data) => {});
 
 socket.on("id", (data) => {
   playerid = data;

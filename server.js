@@ -15,11 +15,7 @@ const io = socketio(expressServer, {
   ],
 });
 
-const fs = require("fs");
 const path = require("path");
-const { spawn } = require("child_process");
-
-// Get the absulote path of the files
 
 io.on("connect", (socket) => {
   console.log(socket.id, "has joined our server!");
@@ -148,7 +144,7 @@ tickTockInterval = setTimeout(function toocking() {
     }
   }
 
-  for (let i = 0; i < mines.length; i++) {
+  mining: for (let i = 0; i < mines.length; i++) {
     mines[i].update();
     if (mines[i].timealive > timetoeplode) {
       for (let m = 0; m < blocks.length; m++) {
@@ -173,6 +169,19 @@ tickTockInterval = setTimeout(function toocking() {
           }
         }
       }
+      for (let e = 0; e < mines.length; e++) {
+        if (
+          distance(
+            mines[i].position,
+            { w: mines[i].radius, h: mines[i].radius },
+            mines[e].position,
+            { w: mines[e].radius, h: mines[e].radius }
+          ) <=
+          70 ** 2
+        ) {
+          mines[e].timealive = timetoeplode;
+        }
+      }
       for (let m = 0; m < players.length; m++) {
         if (
           distance(
@@ -190,6 +199,7 @@ tickTockInterval = setTimeout(function toocking() {
       mines[i].emitter.minecount--;
       mines.splice(i, 1);
       i -= 1;
+      continue mining;
     }
   }
 
@@ -375,7 +385,7 @@ class Player {
 
       this.bulletcount++;
       bullets.push(
-        new Bullet({ x: this.endpos.x, y: this.endpos.y }, this.angle, 4, this)
+        new Bullet({ x: this.endpos.x, y: this.endpos.y }, this.angle, 6, this)
       );
     }
   }
@@ -612,7 +622,7 @@ class Room {
 waitingrepawn = false;
 atleast2 = false;
 maxplayernb = 0;
-levels = ["level1.json", "level2.json", "level3.json"];
+levels = ["level4.json", "level2.json", "level3.json", "level4.json"];
 sounds = { plant: false, kill: false, shoot: false, ricochet: false };
 levelid = 0;
 players = [];

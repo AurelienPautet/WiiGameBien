@@ -1,5 +1,4 @@
 let notifications = document.getElementById("notif");
-console.log(notifications);
 
 function createToast(type, icon, title, text) {
   let newToast = document.createElement("div");

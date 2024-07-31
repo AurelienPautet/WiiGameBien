@@ -22,7 +22,6 @@ body_colors = ["blue", "orange", "red", "green", "violet", "yellow"];
 turret_id = 0;
 body_id = 0;
 const widthSlider = 150;
-console.log("widtg", widthSlider);
 
 function turret_next() {
   if (turret_id == turret_colors.length - 1) {
