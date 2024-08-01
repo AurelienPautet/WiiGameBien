@@ -56,12 +56,18 @@ var connection_case = "join";
 function show_join() {
   document.getElementById("connect_join").style.display = "block";
   document.getElementById("connect_create").style.display = "none";
+
+  document.getElementById("connection_rest_container").style.backgroundColor =
+    "var(--join_color)";
+
   connection_case = "join";
 }
 
 function show_create() {
   document.getElementById("connect_join").style.display = "none";
   document.getElementById("connect_create").style.display = "block";
+  document.getElementById("connection_rest_container").style.backgroundColor =
+    "var(--create_color)";
   connection_case = "create";
 }
 

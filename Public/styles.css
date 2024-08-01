@@ -1,5 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
 
+:root {
+  --join_color: #5e73fe85;
+  --create_color: #0828fe85;
+  --join_color_hoover: #ff0000d5;
+  --create_color_hoover: #0828fed5;
+}
+
 #notif {
   user-select: none; /* Propriété standard */
 
@@ -85,9 +92,78 @@
   }
 }
 
+#connection_container {
+  color: white;
+
+  height: 400px;
+  width: 250px;
+  display: flex;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  border-radius: 19px;
+}
+
+#join_button {
+  background-color: var(--join_color);
+}
+
+#join_button::hover {
+  background-color: var(--join_color_hoover);
+}
+
+#create_button {
+  background-color: var(--create_color);
+}
+
+#create_button::hover {
+  background-color: var(--create_color_hoover);
+}
+
+#connection_rest_container {
+  padding: 5%;
+  height: 100%;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  border-radius: 0 0 19px 19px;
+  background-color: var(--join_color);
+}
+
+#connection_rest_container input {
+  border-radius: 5px;
+}
+#connection_rest_container select {
+  border-radius: 5px;
+}
+.connect_buttons {
+  display: flex;
+  flex-direction: row;
+}
+
+.connect_buttons button {
+  color: white;
+
+  margin: 0 auto;
+  height: 40px;
+  width: 125px;
+  border: none;
+
+  border-radius: 19px 19px 0 0;
+}
+
 .row {
   display: flex;
+  width: 40%;
+  justify-content: stretch;
   flex-direction: column-reverse;
+}
+.row input {
+  margin: 5px;
 }
 .everything {
   position: absolute;
@@ -125,6 +201,7 @@
 }
 canvas {
   user-select: none;
+  z-index: -1;
 }
 body {
   font-family: "Poppins", sans-serif;

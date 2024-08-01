@@ -28,7 +28,6 @@ socket.on("wrongserver", () => {
 
 setInterval(async () => {
   if (playing && room_name != 0) {
-    console.log(io);
     socket.emit("tock", {
       serverid,
       playerid,
