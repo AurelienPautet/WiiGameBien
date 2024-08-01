@@ -56,6 +56,8 @@ bg = new Image();
 bg.src = "image/background_wood.png";
 
 var sound_fuse = new Audio("sounds/fuse.wav");
+const source_fuse = audioCtx.createMediaElementSource(sound_fuse);
+source_plant.connect(audioCtx.destination);
 
 draw();
 
@@ -71,7 +73,7 @@ function draw() {
         mine.color = "red";
       }
       if (mine.timealive % 10 == 5) {
-        playaudio("sounds/fuse.wav");
+        sound_fuse.play();
       }
       if (mine.timealive > 260) {
         if (mine.timealive % 6 < 3) {
@@ -80,10 +82,10 @@ function draw() {
           mine.color = "red";
         }
         if (mine.timealive % 6 == 3) {
-          playaudio("sounds/fuse.wav");
+          sound_fuse.play();
         }
         if (mine.timealive == 300) {
-          playaudio("sounds/eplose.wav");
+          sound_fuse.play();
         }
       }
     }

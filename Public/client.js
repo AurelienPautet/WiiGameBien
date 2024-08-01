@@ -12,6 +12,7 @@ socket.on("id", (data) => {
 });
 
 socket.on("id-fail", () => {
+  createToast("info", "/image/info.svg", "Error", "Room full");
   console.log("room full");
 });
 
@@ -47,24 +48,22 @@ plant = false;
 click = false;
 
 socket.on("tick", (p, bu, m, r) => {
-  console.log((p, bu, m, r));
   players = p;
   bullets = bu;
   mines = m;
   room_name = r;
-  console.log("player", players);
 });
 
 socket.on("level_change", (b, Bc) => {
   blocks = b;
   Bcollision = Bc;
-  console.log(b);
 });
 
 onmousemove = function (e) {
   var rect = canvas.getBoundingClientRect();
   MouseX = e.clientX - rect.left;
   MouseY = e.clientY - rect.top;
+
   aim = { x: MouseX, y: MouseY };
 };
 
@@ -73,42 +72,46 @@ window.addEventListener("click", (event) => {
 });
 
 window.addEventListener("keydown", (event) => {
-  switch (event.key) {
-    case "d":
+  switch (event.code) {
+    case "KeyD":
       direction.x = mvtspeed;
       break;
-    case "q":
+    case "KeyQ":
+    case "KeyA":
       direction.x = -mvtspeed;
       break;
-    case "z":
+    case "KeyZ":
+    case "KeyW":
       direction.y = -mvtspeed;
       break;
-    case "s":
+    case "KeyS":
       direction.y = mvtspeed;
       break;
-    case " ":
+    case "Space":
       plant = true;
       break;
   }
 });
 window.addEventListener("keyup", (event) => {
-  switch (event.key) {
-    case "d":
+  switch (event.code) {
+    case "KeyD":
       if (direction.x > 0) {
         direction.x = 0;
       }
       break;
-    case "q":
+    case "KeyQ":
+    case "KeyA":
       if (direction.x < 0) {
         direction.x = 0;
       }
       break;
-    case "z":
+    case "KeyZ":
+    case "KeyW":
       if (direction.y < 0) {
         direction.y = 0;
       }
       break;
-    case "s":
+    case "KeyS":
       if (direction.y > 0) {
         direction.y = 0;
       }
