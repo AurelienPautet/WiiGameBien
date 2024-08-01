@@ -16,12 +16,15 @@ const io = socketio(expressServer, {
 });
 
 const path = require("path");
+const { serialize } = require("v8");
 
 io.on("connect", (socket) => {
   room_list(socket);
 
   console.log(socket.id, "has joined our server!");
   socket.emit("welcome", socket.id + "has joinded the server");
+  socket.emit("serverid", serverid);
+
   socket.on("disconnect", function () {
     console.log(socket.id, "Got disconnect!");
     let roomsf = 0;
@@ -98,21 +101,24 @@ io.on("connect", (socket) => {
 
   socket.on("tock", (data) => {
     room = rooms.find((item) => item.name === data.room_name);
-    //console.log("name", room.players);
-    if (room.players[data.playerid] != undefined) {
-      if (data.direction != undefined) {
-        room.players[data.playerid].direction = data.direction;
+    if ((data.serverid = serverid)) {
+      if (room.players[data.playerid] != undefined) {
+        if (data.direction != undefined) {
+          room.players[data.playerid].direction = data.direction;
+        }
+        if (data.aim != undefined) {
+          room.players[data.playerid].aim = data.aim;
+        }
+        // players[data.playerid].update();
+        if (data.click) {
+          room.players[data.playerid].shoot(room);
+        }
+        if (data.plant) {
+          room.players[data.playerid].plant(room);
+        }
       }
-      if (data.aim != undefined) {
-        room.players[data.playerid].aim = data.aim;
-      }
-      // players[data.playerid].update();
-      if (data.click) {
-        room.players[data.playerid].shoot(room);
-      }
-      if (data.plant) {
-        room.players[data.playerid].plant(room);
-      }
+    } else {
+      socket.emit("wrongserver");
     }
   });
 });
@@ -965,3 +971,19 @@ base_room = new Room("Public");
 rooms = [base_room];
 level = path.join(__dirname, "./", "levels", base_room.levels[0]);
 loadlevel(level, base_room);
+
+function makeid(length) {
+  let result = "";
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const charactersLength = characters.length;
+  let counter = 0;
+  while (counter < length) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    counter += 1;
+  }
+  return result;
+}
+
+serverid = makeid(15);
+console.log(serverid);

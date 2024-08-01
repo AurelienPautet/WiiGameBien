@@ -1,8 +1,13 @@
 //
-const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
-//const socket = io("http://localhost:7000/");
+//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+const socket = io("http://localhost:7000/");
 
 socket.on("welcome", (data) => {});
+
+socket.on("serverid", (data) => {
+  serverid = data;
+  console.log(serverid);
+});
 
 socket.on("id", (data) => {
   playerid = data;
@@ -16,14 +21,29 @@ socket.on("id-fail", () => {
   console.log("room full");
 });
 
+socket.on("wrongserver", () => {
+  console.log("wrong server");
+  window.location.reload();
+});
+
 setInterval(async () => {
   if (playing && room_name != 0) {
-    socket.emit("tock", { playerid, direction, plant, click, aim, room_name });
+    console.log(io);
+    socket.emit("tock", {
+      serverid,
+      playerid,
+      direction,
+      plant,
+      click,
+      aim,
+      room_name,
+    });
   }
   click = false;
   plant = false;
 }, 16.67);
 
+serverid = "";
 room_name = 0;
 trying = false;
 playing = false;
