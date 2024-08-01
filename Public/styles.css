@@ -50,8 +50,11 @@
 #disconnection {
   background-color: rgba(255, 0, 0, 0.6);
 }
-#kill {
+#bullet {
   background-color: rgba(255, 0, 200, 0.6);
+}
+#mine {
+  background-color: rgba(255, 247, 0, 0.6);
 }
 
 #info {

@@ -35,6 +35,20 @@ socket.on("player-disconnection", (name) => {
   );
 });
 
-socket.on("player-kill", (li) => {
-  createToast("kill", "/image/bullet.svg", "Kill", li[0] + " killed " + li[1]);
+socket.on("player-kill", (li, type) => {
+  if (type == "bullet") {
+    createToast(
+      "bullet",
+      `/image/${type}.svg`,
+      `Kill`,
+      ` ${li[0]} killed ${li[1]}`
+    );
+  } else if (type == "mine") {
+    createToast(
+      "mine",
+      `/image/${type}.svg`,
+      `Kill`,
+      ` ${li[0]} exploded ${li[1]}`
+    );
+  }
 });

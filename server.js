@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 
 app.use(express.static("Public"));
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 7000;
 console.log(PORT);
 const expressServer = app.listen(PORT);
 
@@ -224,7 +224,7 @@ tickTockInterval = setTimeout(function toocking() {
               70 ** 2 &&
             room.players[m].alive
           ) {
-            kill(room.mines[i].emitter, room.players[m], room);
+            kill(room.mines[i].emitter, room.players[m], room, "mine");
           }
         }
         room.mines[i].emitter.minecount--;
@@ -298,7 +298,7 @@ tickTockInterval = setTimeout(function toocking() {
           room.players[e].alive
         ) {
           room.bullets[i].emitter.bulletcount--;
-          kill(room.bullets[i].emitter, room.players[e], room);
+          kill(room.bullets[i].emitter, room.players[e], room, "bullet");
           room.bullets.splice(i, 1);
           i -= 1;
 
@@ -937,11 +937,11 @@ function distance(position1, size1, position2, size2) {
   );
 }
 
-function kill(killer, killed, room) {
+function kill(killer, killed, room, type) {
   killed.alive = false;
   room.nbliving--;
   room.sounds.kill = true;
-  io.to(room.name).emit("player-kill", [killer.name, killed.name]);
+  io.to(room.name).emit("player-kill", [killer.name, killed.name], type);
 }
 
 function rectanglesSeTouchent(
