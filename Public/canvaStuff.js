@@ -42,6 +42,21 @@ body_yellow = new Image();
 body_yellow.src = "image/tank_player/body_yellow.png";
 turret_yellow = new Image();
 turret_yellow.src = "image/tank_player/turret_yellow.png";
+//BLUEF
+body_blueF = new Image();
+body_blueF.src = "image/tank_player/body_blueF.png";
+turret_blueF = new Image();
+turret_blueF.src = "image/tank_player/turret_blueF.png";
+//TURQUOISE
+body_turquoise = new Image();
+body_turquoise.src = "image/tank_player/body_turquoise.png";
+turret_turquoise = new Image();
+turret_turquoise.src = "image/tank_player/turret_turquoise.png";
+//VIOLETF
+body_violetF = new Image();
+body_violetF.src = "image/tank_player/body_violetF.png";
+turret_violetF = new Image();
+turret_violetF.src = "image/tank_player/turret_violetF.png";
 
 block1 = new Image();
 block1.src = "image/block/block1.png";

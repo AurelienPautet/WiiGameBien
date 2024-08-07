@@ -49,8 +49,28 @@ document.getElementById("message-form").addEventListener("submit", (e) => {
 });
 
 problem = false;
-turret_colors = ["blue", "orange", "red", "green", "violet", "yellow"];
-body_colors = ["blue", "orange", "red", "green", "violet", "yellow"];
+turret_colors = [
+  "blue",
+  "orange",
+  "red",
+  "green",
+  "violet",
+  "yellow",
+  "blueF",
+  "turquoise",
+  "violetF",
+];
+body_colors = [
+  "blue",
+  "orange",
+  "red",
+  "green",
+  "violet",
+  "yellow",
+  "blueF",
+  "turquoise",
+  "violetF",
+];
 turret_id = 0;
 body_id = 0;
 var connection_case = "join";
