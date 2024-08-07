@@ -991,9 +991,9 @@ function rectanglesSeTouchent(
 }
 
 base_room = new Room(
-  "Public",
+  "Default",
   ["level1.json", "level2.json", "level3.json", "level4.json", "level5.json"],
-  "1joueur"
+  "Cartes 2 Joueurs"
 );
 rooms = [base_room];
 level = path.join(
