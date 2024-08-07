@@ -102,7 +102,10 @@ io.on("connect", (socket) => {
   socket.on("tock", (data) => {
     room = rooms.find((item) => item.name === data.room_name);
     if ((data.serverid = serverid)) {
-      if (room.players[data.playerid] != undefined) {
+      if (
+        room.players != undefined &&
+        room.players[data.playerid] != undefined
+      ) {
         if (data.direction != undefined) {
           room.players[data.playerid].direction = data.direction;
         }
