@@ -1,6 +1,8 @@
 const express = require("express");
 const app = express();
 
+const fs = require("fs");
+
 app.use(express.static("Public"));
 const PORT = process.env.PORT || 7000;
 console.log(PORT);
@@ -24,6 +26,7 @@ io.on("connect", (socket) => {
   console.log(socket.id, "has joined our server!");
   socket.emit("welcome", socket.id + "has joinded the server");
   socket.emit("serverid", serverid);
+  socket.emit("levelset", levelssetnames);
 
   socket.on("disconnect", function () {
     console.log(socket.id, "Got disconnect!");
@@ -42,10 +45,6 @@ io.on("connect", (socket) => {
     } else {
     }
     if (i != undefined && i > -1 && roomsf != undefined) {
-      console.log("i", i, "e", e);
-
-      console.log(console.log(roomsf.player));
-
       for (let e = i + 1; e < roomsf.players.length; e++) {
         io.to(roomsf.ids[e]).emit("id", e - 1);
       }
@@ -58,11 +57,12 @@ io.on("connect", (socket) => {
     }
   });
 
-  socket.on("new-room", (name) => {
-    console.log("new room name", name);
-    room = new Room(name);
+  socket.on("new-room", (name, set) => {
+    res = levelsset.find((item) => item.levelset === set);
+
+    room = new Room(name, res.levelslist, res.levelset);
     rooms.push(room);
-    level = path.join(__dirname, "./", "levels", room.levels[0]);
+    level = path.join(__dirname, "./", "levels", room.leveldir, room.levels[0]);
     loadlevel(level, room);
     room_list(0);
   });
@@ -151,6 +151,7 @@ tickTockInterval = setTimeout(function toocking() {
             __dirname,
             "./",
             "levels",
+            room.leveldir,
             room.levels[room.levelid]
           );
           loadlevel(level, room);
@@ -284,7 +285,6 @@ tickTockInterval = setTimeout(function toocking() {
         ) {
           room.bullets[i].emitter.bulletcount--;
           room.bullets[e].emitter.bulletcount--;
-          console.log("collisun");
           if (e < i) {
             room.bullets.splice(i, 1);
             room.bullets.splice(e, 1);
@@ -361,18 +361,14 @@ const waitingtime = 3000;
 const timetoeplode = 300;
 
 class Room {
-  constructor(name) {
+  constructor(name, levels, leveldir) {
     this.name = name;
     this.waitingrepawn = false;
     this.atleast2 = false;
     this.maxplayernb = 0;
-    this.levels = [
-      "level1.json",
-      "level2.json",
-      "level3.json",
-      "level4.json",
-      "level5.json",
-    ];
+    this.levels = levels;
+    this.leveldir = leveldir;
+
     this.sounds = { plant: false, kill: false, shoot: false, ricochet: false };
     this.levelid = 0;
     this.players = [];
@@ -386,7 +382,28 @@ class Room {
     this.nbliving = 0;
   }
 }
-
+levelsset = [];
+levelssetnames = [];
+fs.readdir(path.join(__dirname, "./", "levels"), (err, files) => {
+  if (err) console.log(err);
+  else {
+    files.forEach((file) => {
+      levelssetnames.push(file);
+      fs.readdir(
+        path.join(__dirname, "./", "levels", file),
+        (levelerr, levelfiles) => {
+          if (levelerr) console.log(levelerr);
+          else {
+            levelsset.push({
+              levelset: file,
+              levelslist: levelfiles,
+            });
+          }
+        }
+      );
+    });
+  }
+});
 /* waitingrepawn = false;
 atleast2 = false;
 maxplayernb = 0;
@@ -973,9 +990,19 @@ function rectanglesSeTouchent(
   return horizontale && verticale;
 }
 
-base_room = new Room("Public");
+base_room = new Room(
+  "Public",
+  ["level1.json", "level2.json", "level3.json", "level4.json", "level5.json"],
+  "1joueur"
+);
 rooms = [base_room];
-level = path.join(__dirname, "./", "levels", base_room.levels[0]);
+level = path.join(
+  __dirname,
+  "./",
+  "levels",
+  base_room.leveldir,
+  base_room.levels[0]
+);
 loadlevel(level, base_room);
 
 function makeid(length) {

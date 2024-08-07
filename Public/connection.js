@@ -9,8 +9,9 @@ document.getElementById("message-form").addEventListener("submit", (e) => {
         if (roomname === "") {
           createToast("info", "/image/info.svg", "Error", "Enter a room name ");
         } else if (list_name.includes(roomname) == false) {
+          levelsset = document.getElementById("levelsset-select").value;
           console.log("roomana", roomname);
-          socket.emit("new-room", roomname);
+          socket.emit("new-room", roomname, levelsset);
           socket.emit(
             "play",
             playerName,
@@ -47,6 +48,7 @@ document.getElementById("message-form").addEventListener("submit", (e) => {
   }
 });
 
+problem = false;
 turret_colors = ["blue", "orange", "red", "green", "violet", "yellow"];
 body_colors = ["blue", "orange", "red", "green", "violet", "yellow"];
 turret_id = 0;
@@ -71,8 +73,8 @@ function show_create() {
   connection_case = "create";
 }
 
-select = document.getElementById("room-select");
-function add_select(value, inner) {
+room_select = document.getElementById("room-select");
+function add_select(value, inner, select) {
   opt = document.createElement("option");
   opt.value = value;
   opt.innerHTML = inner;
@@ -83,14 +85,27 @@ list_name = [];
 
 socket.on("room_list", (lname, lplayers) => {
   list_name = lname;
-  for (a in select.options) {
-    select.options.remove(0);
+  for (a in room_select.options) {
+    room_select.options.remove(0);
   }
 
   for (let i = 0; i < lname.length; i++) {
     console.log(lname[i], lname[i] + ": (", lplayers[i], ")");
     nstr = ` ${lname[i]}: (${lplayers[i]})`;
-    add_select(lname[i], nstr);
+    add_select(lname[i], nstr, room_select);
+  }
+});
+
+levelsset_select = document.getElementById("levelsset-select");
+
+socket.on("levelset", (levelsset) => {
+  console.log(levelsset);
+  for (a in levelsset_select.options) {
+    levelsset_select.options.remove(0);
+  }
+
+  for (let i = 0; i < levelsset.length; i++) {
+    add_select(levelsset[i], levelsset[i], levelsset_select);
   }
 });
 
