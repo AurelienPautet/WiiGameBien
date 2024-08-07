@@ -103,6 +103,7 @@ io.on("connect", (socket) => {
     room = rooms.find((item) => item.name === data.room_name);
     if ((data.serverid = serverid)) {
       if (
+        room != undefined &&
         room.players != undefined &&
         room.players[data.playerid] != undefined
       ) {
