@@ -56,8 +56,6 @@ bg = new Image();
 bg.src = "image/background_wood.png";
 
 var sound_fuse = new Audio("sounds/fuse.wav");
-const source_fuse = audioCtx.createMediaElementSource(sound_fuse);
-source_plant.connect(audioCtx.destination);
 
 draw();
 

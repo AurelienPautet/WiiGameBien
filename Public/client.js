@@ -93,16 +93,20 @@ window.addEventListener("click", (event) => {
 window.addEventListener("keydown", (event) => {
   switch (event.code) {
     case "KeyD":
+    case "ArrowRight":
       direction.x = mvtspeed;
       break;
     case "KeyQ":
     case "KeyA":
+    case "ArrowLeft":
       direction.x = -mvtspeed;
       break;
     case "KeyZ":
     case "KeyW":
+    case "ArrowUp":
       direction.y = -mvtspeed;
       break;
+    case "ArrowDown":
     case "KeyS":
       direction.y = mvtspeed;
       break;
@@ -114,23 +118,28 @@ window.addEventListener("keydown", (event) => {
 window.addEventListener("keyup", (event) => {
   switch (event.code) {
     case "KeyD":
+    case "ArrowRight":
       if (direction.x > 0) {
         direction.x = 0;
       }
       break;
     case "KeyQ":
     case "KeyA":
+    case "ArrowLeft":
       if (direction.x < 0) {
         direction.x = 0;
       }
       break;
     case "KeyZ":
+    case "ArrowUp":
+
     case "KeyW":
       if (direction.y < 0) {
         direction.y = 0;
       }
       break;
     case "KeyS":
+    case "ArrowDown":
       if (direction.y > 0) {
         direction.y = 0;
       }

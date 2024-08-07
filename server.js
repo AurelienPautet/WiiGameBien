@@ -366,7 +366,13 @@ class Room {
     this.waitingrepawn = false;
     this.atleast2 = false;
     this.maxplayernb = 0;
-    this.levels = ["level1.json", "level2.json", "level3.json"];
+    this.levels = [
+      "level1.json",
+      "level2.json",
+      "level3.json",
+      "level4.json",
+      "level5.json",
+    ];
     this.sounds = { plant: false, kill: false, shoot: false, ricochet: false };
     this.levelid = 0;
     this.players = [];
