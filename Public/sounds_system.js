@@ -17,6 +17,7 @@ function playsound(typelist, baseaudio) {
     }
   }
   audio = baseaudio.cloneNode();
+  audio.load();
   typelist.push({ sound: audio, playing: true });
   playpause(typelist, typelist.length - 1);
 }
@@ -28,7 +29,7 @@ function playpause(typelist, e) {
     typelist[e].sound.pause();
     typelist[e].sound.currentTime = 0;
     typelist[e].playing = false;
-  }, 1600);
+  }, typelist[e].duration);
 }
 
 socket.on("tick_sounds", (sounds) => {
