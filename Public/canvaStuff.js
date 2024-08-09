@@ -86,7 +86,7 @@ function draw() {
         mine.color = "red";
       }
       if (mine.timealive % 10 == 5) {
-        sound_fuse.play();
+        playsound(fuses, sound_fuse);
       }
       if (mine.timealive > 260) {
         if (mine.timealive % 6 < 3) {
@@ -95,10 +95,10 @@ function draw() {
           mine.color = "red";
         }
         if (mine.timealive % 6 == 3) {
-          sound_fuse.play();
+          playsound(fuses, sound_fuse);
         }
         if (mine.timealive == 300) {
-          sound_fuse.play();
+          playsound(fuses, sound_fuse);
         }
       }
     }
