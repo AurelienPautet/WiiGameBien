@@ -1,7 +1,7 @@
-var sound_tir = new Audio("sounds/tir.wav");
-var sound_kill = new Audio("sounds/kill.wav");
-var sound_plant = new Audio("sounds/plant.wav");
-var sound_ricochet = new Audio("sounds/ricochet.wav");
+var sound_tir = new Audio("sounds/tir.mp3");
+var sound_kill = new Audio("sounds/kill.mp3");
+var sound_plant = new Audio("sounds/plant.mp3");
+var sound_ricochet = new Audio("sounds/ricochet.mp3");
 
 tirs = [];
 plants = [];
@@ -29,7 +29,7 @@ function playpause(typelist, e) {
     typelist[e].sound.pause();
     typelist[e].sound.currentTime = 0;
     typelist[e].playing = false;
-  }, typelist[e].sound.duration + 500);
+  }, typelist[e].sound.duration * 1000);
 }
 
 socket.on("tick_sounds", (sounds) => {
