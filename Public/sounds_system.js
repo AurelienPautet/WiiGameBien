@@ -29,7 +29,7 @@ function playpause(typelist, e) {
     typelist[e].sound.pause();
     typelist[e].sound.currentTime = 0;
     typelist[e].playing = false;
-  }, typelist[e].duration + 100);
+  }, typelist[e].sound.duration + 100);
 }
 
 socket.on("tick_sounds", (sounds) => {
