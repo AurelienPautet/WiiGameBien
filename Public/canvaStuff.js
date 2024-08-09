@@ -70,7 +70,7 @@ bullet1.src = "image/bullet/bullet.png";
 bg = new Image();
 bg.src = "image/background_wood.png";
 
-var sound_fuse = new Audio("sounds/fuse.wav");
+var sound_fuse = new Audio("sounds/fuse.mp3");
 
 draw();
 
