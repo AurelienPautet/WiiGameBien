@@ -1,6 +1,6 @@
 //
-const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
-//const socket = io("http://localhost:7000/");
+//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+const socket = io("http://localhost:7000/");
 
 socket.on("welcome", (data) => {});
 
@@ -52,6 +52,7 @@ blocks = [];
 Bcollision = [];
 bullets = [];
 mines = [];
+debug_visual = false;
 
 const mvtspeed = 3;
 
@@ -113,6 +114,9 @@ window.addEventListener("keydown", (event) => {
     case "Space":
       plant = true;
       break;
+    case "ControlLeft":
+      debug_visual = true;
+      break;
   }
 });
 window.addEventListener("keyup", (event) => {
@@ -143,6 +147,9 @@ window.addEventListener("keyup", (event) => {
       if (direction.y > 0) {
         direction.y = 0;
       }
+      break;
+    case "ControlLeft":
+      debug_visual = false;
       break;
   }
 });

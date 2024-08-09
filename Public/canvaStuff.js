@@ -128,13 +128,20 @@ function draw() {
       );
     }
   });
-  /* Bcollision.forEach((Bcol) => {
+  if (debug_visual) {
+    c.beginPath();
+
     c.strokeStyle = "red";
-    c.rect(Bcol.position.x, Bcol.position.y, Bcol.size.w, Bcol.size.h);
-    c.strokeStyle = "black";
-    c.strokeRect(Bcol.position.x, Bcol.position.y, Bcol.size.w, Bcol.size.h);
-  });
- */
+
+    c.fillStyle = "rgba(255, 0, 0, 0.01)";
+
+    Bcollision.forEach((Bcol) => {
+      c.rect(Bcol.position.x, Bcol.position.y, Bcol.size.w, Bcol.size.h);
+      c.fill();
+      c.stroke();
+    });
+  }
+
   bullets.forEach((bullet) => {
     drawImageRot(
       bullet1,
@@ -241,4 +248,13 @@ function drawTurretRot(img, x, y, width, height, deg) {
   c.drawImage(img, -2 * (width / 3), (height / 2) * -1, width, height);
   // Restore canvas state as saved from above
   c.restore();
+}
+
+function getRandomColor() {
+  var letters = "0123456789ABCDEF";
+  var color = "#";
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
 }

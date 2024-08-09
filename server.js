@@ -18,10 +18,10 @@ const io = socketio(expressServer, {
 });
 
 const path = require("path");
-const { serialize } = require("v8");
 
 io.on("connect", (socket) => {
   room_list(socket);
+  socket.join("lobby" + serverid);
 
   console.log(socket.id, "has joined our server!");
   socket.emit("welcome", socket.id + "has joinded the server");
@@ -32,6 +32,7 @@ io.on("connect", (socket) => {
     console.log(socket.id, "Got disconnect!");
     let roomsf = 0;
     let i = -1;
+    room_list(0);
 
     rooms.forEach((r) => {
       e = r.ids.indexOf(socket.id);
@@ -91,9 +92,11 @@ io.on("connect", (socket) => {
       room.players.push(player);
       room.ids.push(socket.id);
       socket.emit("id", room.ids.length - 1);
+      socket.leave("lobby" + serverid);
       socket.join(room.name);
       io.to(room.name).emit("player-connection", playerName);
       socket.emit("level_change", room.blocks, room.Bcollision);
+      room_list(0);
     } else {
       socket.emit("id-fail");
     }
@@ -356,7 +359,7 @@ function room_list(socket) {
   if (socket != 0) {
     socket.emit("room_list", room_names, room_players);
   } else {
-    io.emit("room_list", room_names, room_players);
+    io.to("lobby" + serverid).emit("room_list", room_names, room_players);
   }
 }
 
@@ -765,7 +768,7 @@ function generateBcollision(room) {
       while (
         (room.blocklist[i + l] == 1 || room.blocklist[i + l] == 2) &&
         (i % 23) + l < 23 &&
-        boxed.includes(i + 1) == false
+        boxed.includes(i + l) == false
       ) {
         l++;
       }
@@ -836,7 +839,7 @@ function generateBcollision(room) {
       if (
         i != e &&
         room.Bcollision[i].position.y === room.Bcollision[e].position.y &&
-        room.Bcollision[i].position.x + room.Bcollision[e].size.w ===
+        room.Bcollision[i].position.x + room.Bcollision[i].size.w ===
           room.Bcollision[e].position.x &&
         room.Bcollision[i].size.h === room.Bcollision[e].size.h
       ) {
@@ -852,6 +855,27 @@ function generateBcollision(room) {
             }
           )
         );
+        if (i > e) {
+          room.Bcollision.splice(i, 1);
+          room.Bcollision.splice(e, 1);
+        } else {
+          room.Bcollision.splice(e, 1);
+          room.Bcollision.splice(i, 1);
+        }
+        i = 0;
+        e = 0;
+      }
+    }
+  }
+  for (let i = 0; i < room.Bcollision.length; i++) {
+    for (let e = 0; e < room.Bcollision.length; e++) {
+      if (
+        i != e &&
+        room.Bcollision[i].position.x === room.Bcollision[e].position.x &&
+        room.Bcollision[i].position.y === room.Bcollision[e].position.y &&
+        room.Bcollision[i].size.w === room.Bcollision[e].size.w &&
+        room.Bcollision[i].size.h === room.Bcollision[e].size.h
+      ) {
         if (i > e) {
           room.Bcollision.splice(i, 1);
           room.Bcollision.splice(e, 1);

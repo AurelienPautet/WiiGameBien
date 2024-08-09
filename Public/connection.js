@@ -8,6 +8,9 @@ document.getElementById("message-form").addEventListener("submit", (e) => {
         roomname = document.getElementById("room_imput").value;
         if (roomname === "") {
           createToast("info", "/image/info.svg", "Error", "Enter a room name ");
+        } else if (roomname.length >= 15) {
+          createToast("info", "/image/info.svg", "Error", "Room name too long");
+          document.getElementById("room_imput").value = "";
         } else if (list_name.includes(roomname) == false) {
           levelsset = document.getElementById("levelsset-select").value;
           console.log("roomana", roomname);
