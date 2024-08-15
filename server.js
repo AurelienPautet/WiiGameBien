@@ -660,8 +660,8 @@ class Bullet {
     };
     this.angle = angle;
     this.size = {
-      w: 17,
-      h: 12,
+      w: 15,
+      h: 10,
     };
     this.bounce = 0;
     this.emitter = emitter;
@@ -674,23 +674,25 @@ class Bullet {
     this.position.y += this.velocity.y;
   }
   collision_walls(obj, room) {
-    this.side = colliderect(
-      this.position.y + this.velocity.y,
-      this.position.x + this.velocity.x,
+    /*this.side = colliderect(
+      this.position.y + 2 * this.velocity.y,
+      this.position.x + 2 * this.velocity.x,
       this.size.w,
       this.size.h,
       obj.position.y,
       obj.position.x,
       obj.size.w,
       obj.size.h,
-      4
-    );
+      0
+    );*/
+    this.side = detectCollision(this, obj, this.velocity);
     if (this.side == "right") {
       room.sounds.ricochet = true;
 
       this.bounce += 1;
       this.velocity.x = -this.velocity.x;
       this.angle = 180 - this.angle;
+      return;
     }
     if (this.side == "left") {
       room.sounds.ricochet = true;
@@ -698,6 +700,7 @@ class Bullet {
       this.bounce += 1;
       this.velocity.x = -this.velocity.x;
       this.angle = 180 - this.angle;
+      return;
     }
     if (this.side == "up") {
       room.sounds.ricochet = true;
@@ -705,6 +708,7 @@ class Bullet {
       this.bounce += 1;
       this.velocity.y = -this.velocity.y;
       this.angle = -this.angle;
+      return;
     }
     if (this.side == "down") {
       room.sounds.ricochet = true;
@@ -712,6 +716,7 @@ class Bullet {
       this.bounce += 1;
       this.velocity.y = -this.velocity.y;
       this.angle = -this.angle;
+      return;
     }
   }
 }
@@ -902,6 +907,47 @@ function rectRect(r1x, r1y, r1w, r1h, r2x, r2y, r2w, r2h) {
     return true;
   }
   return false;
+}
+
+function detectCollision(rect1, rect2, velocity1) {
+  // Vérifier s'il position.y a une collision
+  if (
+    rect1.position.x + velocity1.x + velocity1.x <
+      rect2.position.x + rect2.size.w &&
+    rect1.position.x + velocity1.x + rect1.size.w > rect2.position.x &&
+    rect1.position.y + velocity1.y < rect2.position.y + rect2.size.h &&
+    rect1.position.y + velocity1.y + rect1.size.h > rect2.position.y
+  ) {
+    // Calculer les distances entre les bords des rectangles
+    let overlapLeft = rect2.position.x + rect2.size.w - rect1.position.x;
+    let overlapRight =
+      rect1.position.x + velocity1.x + rect1.size.w - rect2.position.x;
+    let overlapTop =
+      rect2.position.y + rect2.size.h - rect1.position.y + velocity1.y;
+    let overlapBottom =
+      rect1.position.y + velocity1.y + rect1.size.h - rect2.position.y;
+
+    // Déterminer le côté de collision en trouvant la plus petite distance de chevauchement
+    let minOverlap = Math.min(
+      overlapLeft,
+      overlapRight,
+      overlapTop,
+      overlapBottom
+    );
+
+    if (minOverlap === overlapLeft) {
+      return "left";
+    } else if (minOverlap === overlapRight) {
+      return "right";
+    } else if (minOverlap === overlapTop) {
+      return "up";
+    } else {
+      return "down";
+    }
+  }
+
+  // S'il n't a pas de collision, retourner null
+  return null;
 }
 
 function colliderect(

@@ -96,6 +96,28 @@ function show_create() {
   connection_case = "create";
 }
 
+function hover_join() {
+  if (connection_case != "join") {
+    document.getElementById("join_button").style.backgroundColor =
+      "var(--join_color_hoover)";
+  }
+}
+function normal_join() {
+  document.getElementById("join_button").style.backgroundColor =
+    "var(--join_color)";
+}
+
+function hover_create() {
+  if (connection_case != "create") {
+    document.getElementById("create_button").style.backgroundColor =
+      "var(--create_color_hoover)";
+  }
+}
+function normal_create() {
+  document.getElementById("create_button").style.backgroundColor =
+    "var(--create_color)";
+}
+
 room_select = document.getElementById("room-select");
 function add_select(value, inner, select) {
   opt = document.createElement("option");

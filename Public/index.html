@@ -19,171 +19,217 @@
     <div id="ui" class="everything">
       <div id="notif"></div>
       <div class="fullscreen_message" id="connect">
-        <div id="connection_container">
-          <div class="connect_buttons">
-            <button id="join_button" onclick="show_join()">JOIN</button>
-            <button id="create_button" onclick="show_create()">CREATE</button>
-          </div>
-          <div id="connection_rest_container">
-            <div id="connect_create">
-              <label for="user-message">Room name:</label>
-              <input id="room_imput" type="text" placeholder="Room name" />
-              <label for="levelsset-select">Choose a levelset:</label>
-
-              <select name="levelsset" id="levelsset-select"></select>
+        <div id="lobby_container">
+          <div id="profile_container">
+            <div class="card_buttons" id="login_buttons">
+              <button
+                onmouseout="normal_guest()"
+                onmouseover="hover_guest()"
+                id="guest_button"
+                onclick="show_guest()"
+              >
+                GUEST
+              </button>
+              <button
+                onmouseout="normal_account()"
+                onmouseover="hover_account()"
+                id="account_button"
+                onclick="show_account()"
+              >
+                ACCOUNT
+              </button>
             </div>
-            <div id="connect_join">
-              <label for="room-select">Choose a room:</label>
-
-              <select name="rooms" id="room-select"></select>
-            </div>
-            <form class="row" id="message-form">
-              <input class="send button" type="submit" value="JOUER" />
+            <div id="profile_rest_container" class="rest_container">
+              <div id="profile_guest"></div>
+              <div id="profile_account"></div>
 
               <input id="user-message" type="text" placeholder="ouiii ecrit" />
               <label for="user-message">Choose a name:</label>
-            </form>
-            <div class="slider" id="turret_slider">
-              <div class="slider_nav">
-                <button
-                  onclick="turret_next()"
-                  class="slider_nav_button slider_nav_button_next"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="size-6"
+
+              <div class="slider" id="turret_slider">
+                <div class="slider_nav">
+                  <button
+                    onclick="turret_next()"
+                    class="slider_nav_button slider_nav_button_next"
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="m11.25 9-3 3m0 0 3 3m-3-3h7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                    />
-                  </svg>
-                </button>
-                <button
-                  onclick="turret_previous()"
-                  class="slider_nav_button slider_nav_button_previous"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="size-6"
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="size-6"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="m11.25 9-3 3m0 0 3 3m-3-3h7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onclick="turret_previous()"
+                    class="slider_nav_button slider_nav_button_previous"
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                    />
-                  </svg>
-                </button>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="size-6"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <div class="slider_content" id="turret_slider_content">
+                  <div class="slider_item">
+                    <img src="/image/tank_player/turret_blue.png" alt="" />
+                  </div>
+                  <div class="slider_item">
+                    <img src="/image/tank_player/turret_orange.png" alt="" />
+                  </div>
+                  <div class="slider_item">
+                    <img src="/image/tank_player/turret_red.png" alt="" />
+                  </div>
+                  <div class="slider_item">
+                    <img src="/image/tank_player/turret_green.png" alt="" />
+                  </div>
+                  <div class="slider_item">
+                    <img src="/image/tank_player/turret_violet.png" alt="" />
+                  </div>
+                  <div class="slider_item">
+                    <img src="/image/tank_player/turret_yellow.png" alt="" />
+                  </div>
+                  <div class="slider_item">
+                    <img src="/image/tank_player/turret_blueF.png" alt="" />
+                  </div>
+                  <div class="slider_item">
+                    <img src="/image/tank_player/turret_turquoise.png" alt="" />
+                  </div>
+                  <div class="slider_item">
+                    <img src="/image/tank_player/turret_violetF.png" alt="" />
+                  </div>
+                </div>
               </div>
-              <div class="slider_content" id="turret_slider_content">
-                <div class="slider_item">
-                  <img src="/image/tank_player/turret_blue.png" alt="" />
+              <div class="slider" id="body_slider">
+                <div class="slider_nav">
+                  <button
+                    onclick="body_next()"
+                    class="slider_nav_button slider_nav_button_next"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="size-6"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="m11.25 9-3 3m0 0 3 3m-3-3h7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onclick="body_previous()"
+                    class="slider_nav_button slider_nav_button_previous"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="size-6"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                      />
+                    </svg>
+                  </button>
                 </div>
-                <div class="slider_item">
-                  <img src="/image/tank_player/turret_orange.png" alt="" />
-                </div>
-                <div class="slider_item">
-                  <img src="/image/tank_player/turret_red.png" alt="" />
-                </div>
-                <div class="slider_item">
-                  <img src="/image/tank_player/turret_green.png" alt="" />
-                </div>
-                <div class="slider_item">
-                  <img src="/image/tank_player/turret_violet.png" alt="" />
-                </div>
-                <div class="slider_item">
-                  <img src="/image/tank_player/turret_yellow.png" alt="" />
-                </div>
-                <div class="slider_item">
-                  <img src="/image/tank_player/turret_blueF.png" alt="" />
-                </div>
-                <div class="slider_item">
-                  <img src="/image/tank_player/turret_turquoise.png" alt="" />
-                </div>
-                <div class="slider_item">
-                  <img src="/image/tank_player/turret_violetF.png" alt="" />
+                <div class="slider_content" id="body_slider_content">
+                  <div class="slider_item">
+                    <img src="/image/tank_player/body_blue.png" alt="" />
+                  </div>
+                  <div class="slider_item">
+                    <img src="/image/tank_player/body_orange.png" alt="" />
+                  </div>
+                  <div class="slider_item">
+                    <img src="/image/tank_player/body_red.png" alt="" />
+                  </div>
+                  <div class="slider_item">
+                    <img src="/image/tank_player/body_green.png" alt="" />
+                  </div>
+                  <div class="slider_item">
+                    <img src="/image/tank_player/body_violet.png" alt="" />
+                  </div>
+                  <div class="slider_item">
+                    <img src="/image/tank_player/body_yellow.png" alt="" />
+                  </div>
+                  <div class="slider_item">
+                    <img src="/image/tank_player/body_blueF.png" alt="" />
+                  </div>
+                  <div class="slider_item">
+                    <img src="/image/tank_player/body_turquoise.png" alt="" />
+                  </div>
+                  <div class="slider_item">
+                    <img src="/image/tank_player/body_violetF.png" alt="" />
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="slider" id="body_slider">
-              <div class="slider_nav">
-                <button
-                  onclick="body_next()"
-                  class="slider_nav_button slider_nav_button_next"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="size-6"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="m11.25 9-3 3m0 0 3 3m-3-3h7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                    />
-                  </svg>
-                </button>
-                <button
-                  onclick="body_previous()"
-                  class="slider_nav_button slider_nav_button_previous"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="size-6"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                    />
-                  </svg>
-                </button>
+          </div>
+
+          <!-- JOIN CREATE ROOM-->
+
+          <div id="connection_container">
+            <div class="card_buttons" id="login_buttons">
+              <button
+                onmouseout="normal_join()"
+                onmouseover="hover_join()"
+                id="join_button"
+                onclick="show_join()"
+              >
+                JOIN
+              </button>
+              <button
+                onmouseout="normal_create()"
+                onmouseover="hover_create()"
+                id="create_button"
+                onclick="show_create()"
+              >
+                CREATE
+              </button>
+            </div>
+            <div id="connection_rest_container" class="rest_container">
+              <div id="connect_create">
+                <label for="user-message">Room name:</label>
+                <input id="room_imput" type="text" placeholder="Room name" />
+                <label for="levelsset-select">Choose a levelset:</label>
+
+                <select name="levelsset" id="levelsset-select"></select>
               </div>
-              <div class="slider_content" id="body_slider_content">
-                <div class="slider_item">
-                  <img src="/image/tank_player/body_blue.png" alt="" />
-                </div>
-                <div class="slider_item">
-                  <img src="/image/tank_player/body_orange.png" alt="" />
-                </div>
-                <div class="slider_item">
-                  <img src="/image/tank_player/body_red.png" alt="" />
-                </div>
-                <div class="slider_item">
-                  <img src="/image/tank_player/body_green.png" alt="" />
-                </div>
-                <div class="slider_item">
-                  <img src="/image/tank_player/body_violet.png" alt="" />
-                </div>
-                <div class="slider_item">
-                  <img src="/image/tank_player/body_yellow.png" alt="" />
-                </div>
-                <div class="slider_item">
-                  <img src="/image/tank_player/body_blueF.png" alt="" />
-                </div>
-                <div class="slider_item">
-                  <img src="/image/tank_player/body_turquoise.png" alt="" />
-                </div>
-                <div class="slider_item">
-                  <img src="/image/tank_player/body_violetF.png" alt="" />
-                </div>
+              <div id="connect_join">
+                <label for="room-select">Choose a room:</label>
+
+                <select name="rooms" id="room-select"></select>
               </div>
+              <form class="row" id="message-form">
+                <input class="send button" type="submit" value="JOUER" />
+
+                <label for="user-message">Choose a name:</label>
+              </form>
             </div>
           </div>
         </div>
