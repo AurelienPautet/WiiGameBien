@@ -78,6 +78,7 @@ function draw() {
   window.requestAnimationFrame(draw);
 
   c.drawImage(bg, 0, 0, canvas.width, canvas.height);
+
   mines.forEach((mine) => {
     if (mine.timealive > 220) {
       if (mine.timealive % 10 < 5) {
@@ -108,6 +109,7 @@ function draw() {
     c.fill();
     c.closePath();
   });
+
   blocks.forEach((block) => {
     if (block.type == 1) {
       c.drawImage(
@@ -201,6 +203,22 @@ function draw() {
       player.angle
     );
   });
+  for (let e = 0; e < particles.length; e++) {
+    if (particles[e].timealive < particles[e].timelife) {
+      particles[e].update();
+    } else {
+      particles.splice(e, 1);
+      e -= 1;
+    }
+  }
+  for (let e = 0; e < chockwaves.length; e++) {
+    if (chockwaves[e].timealive < chockwaves[e].timelife) {
+      chockwaves[e].update();
+    } else {
+      chockwaves.splice(e, 1);
+      e -= 1;
+    }
+  }
 }
 c.font = "50px Arial";
 

@@ -222,7 +222,7 @@ tickTockInterval = setTimeout(function toocking() {
               room.mines[e].position,
               { w: room.mines[e].radius, h: room.mines[e].radius }
             ) <=
-            70 ** 2
+            80 ** 2
           ) {
             room.mines[e].timealive = timetoeplode;
           }
@@ -241,6 +241,11 @@ tickTockInterval = setTimeout(function toocking() {
             kill(room.mines[i].emitter, room.players[m], room, "mine");
           }
         }
+
+        io.to(room.name).emit("mine_explosion", {
+          x: room.mines[i].position.x + room.mines[i].radius / 2,
+          y: room.mines[i].position.y + room.mines[i].radius / 2,
+        });
         room.mines[i].emitter.minecount--;
         room.mines.splice(i, 1);
         i -= 1;
@@ -519,6 +524,14 @@ class Player {
       this.bulletcount++;
       room.bullets.push(
         new Bullet({ x: this.endpos.x, y: this.endpos.y }, this.angle, 6, this)
+      );
+      io.to(room.name).emit(
+        "shoot_explosion",
+        {
+          x: this.endpos.x,
+          y: this.endpos.y,
+        },
+        this.angle
       );
     }
   }
@@ -1045,6 +1058,10 @@ function kill(killer, killed, room, type) {
   room.nbliving--;
   room.sounds.kill = true;
   io.to(room.name).emit("player-kill", [killer.name, killed.name], type);
+  io.to(room.name).emit("player_explosion", {
+    x: killed.position.x + killed.size.w / 2,
+    y: killed.position.y + killed.size.h / 2,
+  });
 }
 
 function rectanglesSeTouchent(
