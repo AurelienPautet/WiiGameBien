@@ -196,7 +196,7 @@ tickTockInterval = setTimeout(function toocking() {
                 room.blocks[m].position,
                 room.blocks[m].size
               ) <=
-              70 ** 2
+              90 ** 2
             ) {
               room.blocklist[
                 (room.blocks[m].position.y / 50) * 23 +
@@ -222,7 +222,7 @@ tickTockInterval = setTimeout(function toocking() {
               room.mines[e].position,
               { w: room.mines[e].radius, h: room.mines[e].radius }
             ) <=
-            80 ** 2
+            90 ** 2
           ) {
             room.mines[e].timealive = timetoeplode;
           }
@@ -235,7 +235,7 @@ tickTockInterval = setTimeout(function toocking() {
               room.players[m].position,
               room.players[m].size
             ) <=
-              70 ** 2 &&
+              90 ** 2 &&
             room.players[m].alive
           ) {
             kill(room.mines[i].emitter, room.players[m], room, "mine");

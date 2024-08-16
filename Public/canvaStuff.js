@@ -59,16 +59,16 @@ turret_violetF = new Image();
 turret_violetF.src = "image/tank_player/turret_violetF.png";
 
 block1 = new Image();
-block1.src = "image/block/block1.png";
+block1.src = "image/block/block1_solid.png";
 
 block2 = new Image();
-block2.src = "image/block/block2.png";
+block2.src = "image/block/block2_solid.png";
 
 bullet1 = new Image();
 bullet1.src = "image/bullet/bullet.png";
 
 bg = new Image();
-bg.src = "image/background_wood.png";
+bg.src = "image/background_solid.png";
 
 var sound_fuse = new Audio("sounds/fuse.mp3");
 
