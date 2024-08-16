@@ -58,17 +58,24 @@ body_violetF.src = "image/tank_player/body_violetF.png";
 turret_violetF = new Image();
 turret_violetF.src = "image/tank_player/turret_violetF.png";
 
+let theme = 5;
+let maxtheme = 5;
+
 block1 = new Image();
-block1.src = "image/block/block1_solid.png";
 
 block2 = new Image();
-block2.src = "image/block/block2_solid.png";
 
 bullet1 = new Image();
-bullet1.src = "image/bullet/bullet.png";
 
 bg = new Image();
-bg.src = "image/background_solid.png";
+
+loadtheme(theme);
+function loadtheme(themnb) {
+  block1.src = `image/block/Cube${theme}-1.png`;
+  block2.src = `image/block/Cube${theme}-2.png`;
+  bullet1.src = `image/bullet/bullet-${theme}.png`;
+  bg.src = `image/bg${theme}.png`;
+}
 
 var sound_fuse = new Audio("sounds/fuse.mp3");
 

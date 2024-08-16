@@ -1,6 +1,6 @@
 //
-const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
-//const socket = io("http://localhost:7000/");
+//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+const socket = io("http://localhost:7000/");
 
 socket.on("welcome", (data) => {});
 
@@ -116,6 +116,14 @@ window.addEventListener("keydown", (event) => {
       break;
     case "ControlLeft":
       debug_visual = true;
+      break;
+    case "KeyT":
+      if (theme < maxtheme) {
+        theme++;
+      } else {
+        theme = 1;
+      }
+      loadtheme(theme);
       break;
   }
 });

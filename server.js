@@ -246,6 +246,7 @@ tickTockInterval = setTimeout(function toocking() {
           x: room.mines[i].position.x + room.mines[i].radius / 2,
           y: room.mines[i].position.y + room.mines[i].radius / 2,
         });
+        room.sounds.explose = true;
         room.mines[i].emitter.minecount--;
         room.mines.splice(i, 1);
         i -= 1;
@@ -357,7 +358,13 @@ tickTockInterval = setTimeout(function toocking() {
       room.name
     ); // send the event to the "game" room
     io.to(room.name).emit("tick_sounds", room.sounds);
-    room.sounds = { plant: false, kill: false, shoot: false, ricochet: false };
+    room.sounds = {
+      plant: false,
+      kill: false,
+      shoot: false,
+      ricochet: false,
+      explose: false,
+    };
   });
 }, 16.67);
 
@@ -389,7 +396,13 @@ class Room {
     this.levels = levels;
     this.leveldir = leveldir;
 
-    this.sounds = { plant: false, kill: false, shoot: false, ricochet: false };
+    this.sounds = {
+      plant: false,
+      kill: false,
+      shoot: false,
+      ricochet: false,
+      explose: false,
+    };
     this.levelid = 0;
     this.players = [];
     this.frontend_players = [];

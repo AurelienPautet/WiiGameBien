@@ -88,7 +88,7 @@ socket.on("bullet_explosion", (position) => {
 });
 
 socket.on("shoot_explosion", (position, angle) => {
-  shoot_explosion(position, angle, 10);
+  shoot_explosion(position, angle, 30);
 });
 
 socket.on("player_explosion", (position) => {
@@ -188,15 +188,15 @@ function shoot_explosion(position, angle, num) {
       2,
       { red: 255, green: 220, blue: 0 },
       { red: 255, green: 220, blue: 0 },
-      30
+      5
     )
   );
   for (let e = 0; e < num; e++) {
     particles.push(
       new Particle(
         structuredClone(position),
-        angle + getRandomNormal(-50, 50),
-        getRandomArbitrary(2.5, 4),
+        angle + getRandomNormal(-60, 60),
+        getRandomArbitrary(0.3, 3),
         getRandomArbitrary(5, 10),
         [
           {
@@ -290,6 +290,24 @@ function explosion(position, num) {
             },
             percent: 1,
           },
+        ],
+        40
+      )
+    );
+  }
+  for (let e = 0; e < Math.floor(num / 10); e++) {
+    particles.push(
+      new Particle(
+        structuredClone(position),
+        getRandomArbitrary(0, 360),
+        getRandomArbitrary(4, 7),
+        getRandomArbitrary(1.5, 2),
+        [
+          { color: { red: 245, green: 251, blue: 0 }, percent: 0 },
+          { color: { red: 240, green: 251, blue: 249 }, percent: 0.31 },
+          { color: { red: 255, green: 255, blue: 255 }, percent: 0.52 },
+          { color: { red: 252, green: 255, blue: 182 }, percent: 0.8 },
+          { color: { red: 255, green: 239, blue: 90 }, percent: 1 },
         ],
         40
       )

@@ -1,5 +1,7 @@
 var sound_tir = new Audio("sounds/tir.mp3");
 var sound_kill = new Audio("sounds/kill.mp3");
+var sound_explose = new Audio("sounds/eplose.mp3");
+
 var sound_plant = new Audio("sounds/plant.mp3");
 var sound_ricochet = new Audio("sounds/ricochet.mp3");
 
@@ -8,6 +10,7 @@ plants = [];
 kills = [];
 ricochets = [];
 fuses = [];
+exploses = [];
 
 function playsound(typelist, baseaudio) {
   for (let e = 0; e < typelist.length; e++) {
@@ -18,11 +21,13 @@ function playsound(typelist, baseaudio) {
   }
   audio = baseaudio.cloneNode();
   audio.load();
+  audio.preservesPitch = false;
   typelist.push({ sound: audio, playing: true });
   playpause(typelist, typelist.length - 1);
 }
 
 function playpause(typelist, e) {
+  typelist[e].playbackRate = Number(getRandomArbitrary(0.9, 5));
   typelist[e].sound.play();
   typelist[e].playing = true;
   setTimeout(() => {
@@ -49,6 +54,13 @@ socket.on("tick_sounds", (sounds) => {
   }
   if (sounds.shoot) {
     playsound(tirs, sound_tir);
+
+    //sound_tir.cloneNode().play();
+    //playaudio("sounds/tir.wav");
+  }
+  if (sounds.explose) {
+    console.log("boom");
+    playsound(exploses, sound_explose);
 
     //sound_tir.cloneNode().play();
     //playaudio("sounds/tir.wav");
