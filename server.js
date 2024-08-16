@@ -256,6 +256,10 @@ tickTockInterval = setTimeout(function toocking() {
     bulleting: for (let i = 0; i < room.bullets.length; i++) {
       room.bullets[i].update(room);
       if (room.bullets[i].bounce >= 3) {
+        io.to(room.name).emit("bullet_explosion", {
+          x: room.bullets[i].position.x,
+          y: room.bullets[i].position.y,
+        });
         room.bullets[i].emitter.bulletcount--;
         room.bullets.splice(i, 1);
         i -= 1;
@@ -297,6 +301,10 @@ tickTockInterval = setTimeout(function toocking() {
         ) {
           room.bullets[i].emitter.bulletcount--;
           room.bullets[e].emitter.bulletcount--;
+          io.to(room.name).emit("bullet_explosion", {
+            x: room.bullets[i].position.x,
+            y: room.bullets[i].position.y,
+          });
           if (e < i) {
             room.bullets.splice(i, 1);
             room.bullets.splice(e, 1);
@@ -699,37 +707,62 @@ class Bullet {
       0
     );*/
     this.side = detectCollision(this, obj, this.velocity);
+    if (this.side != "") {
+      room.sounds.ricochet = true;
+      this.bounce += 1;
+    }
     if (this.side == "right") {
-      room.sounds.ricochet = true;
-
-      this.bounce += 1;
       this.velocity.x = -this.velocity.x;
       this.angle = 180 - this.angle;
-      return;
-    }
-    if (this.side == "left") {
-      room.sounds.ricochet = true;
-
-      this.bounce += 1;
+      if (this.bounce < 3) {
+        io.to(room.name).emit(
+          "ricochet_explosion",
+          {
+            x: this.position.x + this.size.w,
+            y: this.position.y,
+          },
+          this.angle
+        );
+      }
+    } else if (this.side == "left") {
       this.velocity.x = -this.velocity.x;
       this.angle = 180 - this.angle;
-      return;
-    }
-    if (this.side == "up") {
-      room.sounds.ricochet = true;
-
-      this.bounce += 1;
+      if (this.bounce < 3) {
+        io.to(room.name).emit(
+          "ricochet_explosion",
+          {
+            x: this.position.x,
+            y: this.position.y,
+          },
+          this.angle
+        );
+      }
+    } else if (this.side == "up") {
       this.velocity.y = -this.velocity.y;
       this.angle = -this.angle;
-      return;
-    }
-    if (this.side == "down") {
-      room.sounds.ricochet = true;
-
-      this.bounce += 1;
+      if (this.bounce < 3) {
+        io.to(room.name).emit(
+          "ricochet_explosion",
+          {
+            x: this.position.x,
+            y: this.position.y,
+          },
+          this.angle
+        );
+      }
+    } else if (this.side == "down") {
       this.velocity.y = -this.velocity.y;
       this.angle = -this.angle;
-      return;
+      if (this.bounce < 3) {
+        io.to(room.name).emit(
+          "ricochet_explosion",
+          {
+            x: this.position.x,
+            y: this.position.y + this.size.h,
+          },
+          this.angle
+        );
+      }
     }
   }
 }
@@ -960,7 +993,7 @@ function detectCollision(rect1, rect2, velocity1) {
   }
 
   // S'il n't a pas de collision, retourner null
-  return null;
+  return "";
 }
 
 function colliderect(

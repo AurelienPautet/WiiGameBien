@@ -77,13 +77,107 @@ class Chockwave {
 particles = [];
 chockwaves = [];
 
-window.addEventListener("click", (event) => {
-  console.log("particule");
+window.addEventListener("click", (event) => {});
+
+socket.on("ricochet_explosion", (position, angle) => {
+  ricochet_sparks(position, angle, 20);
+});
+
+socket.on("bullet_explosion", (position) => {
+  bullet_explosion(position, 100);
 });
 
 socket.on("shoot_explosion", (position, angle) => {
-  shoot_explosion(position, angle, 20);
+  shoot_explosion(position, angle, 10);
 });
+
+socket.on("player_explosion", (position) => {
+  explosion(position, 100);
+});
+
+socket.on("mine_explosion", (position) => {
+  explosion(position, 100);
+});
+
+function ricochet_sparks(position, angle, num) {
+  for (let e = 0; e < num; e++) {
+    particles.push(
+      new Particle(
+        structuredClone(position),
+        angle + getRandomNormal(-50, 50),
+        getRandomArbitrary(0, 2),
+        getRandomArbitrary(1, 3),
+        [
+          {
+            color: {
+              red: 255,
+              green: 255,
+              blue: 255,
+            },
+            percent: 0,
+          },
+          {
+            color: {
+              red: 245,
+              green: 251,
+              blue: 0,
+            },
+            percent: 1,
+          },
+        ],
+        50
+      )
+    );
+  }
+}
+
+function ricochet_explosion(position, angle, num) {
+  for (let e = 0; e < num; e++) {
+    particles.push(
+      new Particle(
+        structuredClone(position),
+        angle + getRandomNormal(-20, 20),
+        getRandomArbitrary(2.5, 4),
+        getRandomArbitrary(4, 6),
+        [
+          {
+            color: {
+              red: 255,
+              green: Math.floor(getRandomArbitrary(220, 260)),
+              blue: 39,
+            },
+            percent: 0,
+          },
+          {
+            color: {
+              red: 255,
+              green: Math.floor(getRandomArbitrary(100, 120)),
+              blue: 39,
+            },
+            percent: 0.1,
+          },
+          {
+            color: {
+              red: Math.floor(getRandomArbitrary(40, 60)),
+              green: Math.floor(getRandomArbitrary(40, 60)),
+              blue: Math.floor(getRandomArbitrary(40, 60)),
+            },
+            percent: 0.3,
+          },
+          {
+            color: {
+              red: Math.floor(getRandomArbitrary(220, 240)),
+              green: Math.floor(getRandomArbitrary(220, 240)),
+              blue: Math.floor(getRandomArbitrary(220, 240)),
+            },
+            percent: 1,
+          },
+        ],
+        30
+      )
+    );
+  }
+}
 
 function shoot_explosion(position, angle, num) {
   chockwaves.push(
@@ -144,14 +238,6 @@ function shoot_explosion(position, angle, num) {
   }
 }
 
-socket.on("player_explosion", (position) => {
-  explosion(position, 100);
-});
-
-socket.on("mine_explosion", (position) => {
-  explosion(position, 100);
-});
-
 function explosion(position, num) {
   chockwaves.push(
     new Chockwave(
@@ -209,36 +295,82 @@ function explosion(position, num) {
       )
     );
   }
+}
+
+function bullet_explosion(position, num) {
+  chockwaves.push(
+    new Chockwave(
+      structuredClone(position),
+      10,
+      0,
+      13,
+      { red: 255, green: 220, blue: 0 },
+      { red: 255, green: 220, blue: 0 },
+      10
+    )
+  );
+  for (let e = 0; e < num; e++) {
+    particles.push(
+      new Particle(
+        structuredClone(position),
+        getRandomArbitrary(0, 360),
+        getRandomArbitrary(0, 2),
+        getRandomArbitrary(2.5, 7.5),
+        [
+          {
+            color: {
+              red: 255,
+              green: Math.floor(getRandomArbitrary(220, 260)),
+              blue: 39,
+            },
+            percent: 0,
+          },
+          {
+            color: {
+              red: 255,
+              green: Math.floor(getRandomArbitrary(100, 120)),
+              blue: 39,
+            },
+            percent: 0.4,
+          },
+          {
+            color: {
+              red: Math.floor(getRandomArbitrary(40, 60)),
+              green: Math.floor(getRandomArbitrary(40, 60)),
+              blue: Math.floor(getRandomArbitrary(40, 60)),
+            },
+            percent: 0.6,
+          },
+          {
+            color: {
+              red: Math.floor(getRandomArbitrary(220, 240)),
+              green: Math.floor(getRandomArbitrary(220, 240)),
+              blue: Math.floor(getRandomArbitrary(220, 240)),
+            },
+            percent: 1,
+          },
+        ],
+        20
+      )
+    );
+  }
 
   for (let e = 0; e < Math.floor(num / 10); e++) {
     particles.push(
       new Particle(
         structuredClone(position),
         getRandomArbitrary(0, 360),
-        getRandomArbitrary(7, 10),
-        getRandomArbitrary(3, 4),
+        getRandomArbitrary(2, 3),
+        getRandomArbitrary(1.5, 2),
         [
-          {
-            color: {
-              red: 245,
-              green: 251,
-              blue: 0,
-            },
-            percent: 0,
-          },
-          {
-            color: {
-              red: 238,
-              green: 136,
-              blue: 136,
-            },
-            percent: 0.12,
-          },
+          { color: { red: 245, green: 251, blue: 0 }, percent: 0 },
+          { color: { red: 238, green: 136, blue: 136 }, percent: 0 },
           { color: { red: 240, green: 251, blue: 249 }, percent: 0.31 },
           { color: { red: 255, green: 255, blue: 255 }, percent: 0.52 },
-          { color: { red: 252, green: 255, blue: 182 }, percent: 1 },
+          { color: { red: 252, green: 255, blue: 182 }, percent: 0.8 },
+          { color: { red: 255, green: 239, blue: 90 }, percent: 1 },
         ],
-        40
+        35
       )
     );
   }

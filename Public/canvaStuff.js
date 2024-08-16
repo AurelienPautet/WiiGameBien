@@ -157,13 +157,6 @@ function draw() {
 
   players.forEach((player) => {
     //body hit box
-    c.fillStyle = debug;
-    c.fillRect(
-      player.position.x,
-      player.position.y,
-      player.size.w,
-      player.size.h
-    );
     if (player.alive) {
       //drawing the body
       drawImageRot(
@@ -194,14 +187,21 @@ function draw() {
         player.rotation
       );
     }
-    drawTextRot(
-      "c MOI",
-      player.position.x,
-      player.position.y,
-      player.turretsize.w,
-      player.turretsize.h,
-      player.angle
-    );
+    if (debug_visual) {
+      c.beginPath();
+
+      c.fillStyle = "rgba(255,0,0,0.4)";
+      c.strokeStyle = "red";
+
+      c.rect(
+        player.position.x,
+        player.position.y,
+        player.size.w,
+        player.size.h
+      );
+      c.fill();
+      c.stroke();
+    }
   });
   for (let e = 0; e < particles.length; e++) {
     if (particles[e].timealive < particles[e].timelife) {
