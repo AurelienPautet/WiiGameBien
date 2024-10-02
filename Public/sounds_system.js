@@ -1,10 +1,11 @@
 var sound_tir = new Audio("sounds/tir.mp3");
 var sound_kill = new Audio("sounds/kill.mp3");
 var sound_explose = new Audio("sounds/eplose.mp3");
-
+var sound_fuse = new Audio("sounds/fuse.mp3");
 var sound_plant = new Audio("sounds/plant.mp3");
 var sound_ricochet = new Audio("sounds/ricochet.mp3");
 
+//list of already created sound elements
 tirs = [];
 plants = [];
 kills = [];
@@ -27,7 +28,7 @@ function playsound(typelist, baseaudio) {
 }
 
 function playpause(typelist, e) {
-  typelist[e].playbackRate = Number(getRandomArbitrary(0.9, 5));
+  typelist[e].sound.playbackRate = Number(getRandomArbitrary(0.9, 2)); // not working fuckkkkk
   typelist[e].sound.play();
   typelist[e].playing = true;
   setTimeout(() => {

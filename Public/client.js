@@ -1,6 +1,6 @@
 //
-const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
-//const socket = io("http://localhost:7000/");
+//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+const socket = io("http://localhost:7000/");
 
 socket.on("welcome", (data) => {});
 
@@ -144,7 +144,6 @@ window.addEventListener("keyup", (event) => {
       break;
     case "KeyZ":
     case "ArrowUp":
-
     case "KeyW":
       if (direction.y < 0) {
         direction.y = 0;

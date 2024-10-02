@@ -1,27 +1,22 @@
 const canvas = document.querySelector("canvas");
 const c = canvas.getContext("2d");
 
+//Canva size
 canvas.width = 1150;
 canvas.height = 800;
 
 debug = "rgba(255, 0, 0, 0)";
-//debug = "rgba(255, 0, 0, 0)";
-
-dead = new Image();
-dead.src = "image/dead.png";
 
 //BLUE
 body_blue = new Image();
 body_blue.src = "image/tank_player/body_blue.png";
 turret_blue = new Image();
 turret_blue.src = "image/tank_player/turret_blue.png";
-
 //ORANGE
 body_orange = new Image();
 body_orange.src = "image/tank_player/body_orange.png";
 turret_orange = new Image();
 turret_orange.src = "image/tank_player/turret_orange.png";
-
 //GREEN
 body_green = new Image();
 body_green.src = "image/tank_player/body_green.png";
@@ -58,17 +53,19 @@ body_violetF.src = "image/tank_player/body_violetF.png";
 turret_violetF = new Image();
 turret_violetF.src = "image/tank_player/turret_violetF.png";
 
-let theme = 5;
+let theme = 1;
 let maxtheme = 5;
 
+//Create canva images
 block1 = new Image();
-
 block2 = new Image();
-
 bullet1 = new Image();
-
 bg = new Image();
 
+dead = new Image();
+dead.src = "image/dead.png";
+
+//load images that will be drawn
 loadtheme(theme);
 function loadtheme(themnb) {
   block1.src = `image/block/Cube${theme}-1.png`;
@@ -76,8 +73,6 @@ function loadtheme(themnb) {
   bullet1.src = `image/bullet/bullet-${theme}.png`;
   bg.src = `image/bg${theme}.png`;
 }
-
-var sound_fuse = new Audio("sounds/fuse.mp3");
 
 draw();
 
@@ -266,16 +261,17 @@ function drawTurretRot(img, x, y, width, height, deg) {
   //Convert degrees to radian
   var rad = (deg * Math.PI) / 180;
   //Set the origin to the center of the image
-  c.translate(x + 3 * (width / 8), y + height / 2);
+  c.translate(x + 0.4 * width, y + height * 0.6);
   //Rotate the canvas around the origin
   c.rotate(rad);
   //draw theimage
-  c.drawImage(img, -2 * (width / 3), (height / 2) * -1, width, height);
+  c.drawImage(img, -0.75 * width, (height / 2) * -1, width, height);
   // Restore canvas state as saved from above
   c.restore();
 }
 
 function getRandomColor() {
+  //useless for now
   var letters = "0123456789ABCDEF";
   var color = "#";
   for (var i = 0; i < 6; i++) {
