@@ -175,4 +175,5 @@ function generateBcollision(room) {
 
 module.exports = {
   loadlevel,
+  generateBcollision,
 };

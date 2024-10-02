@@ -28,7 +28,8 @@ const {
   Mine,
   Room,
 } = require(__dirname + "/class.js");
-const { loadlevel } = require(__dirname + "/level_loader.js");
+const { loadlevel, generateBcollision } = require(__dirname +
+  "/level_loader.js");
 const {
   rectRect,
   detectCollision,
