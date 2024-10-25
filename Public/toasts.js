@@ -3,7 +3,7 @@ let notifications = document.getElementById("notif");
 function createToast(type, icon, title, text) {
   let newToast = document.createElement("div");
   newToast.innerHTML = `
-            <div class="toast" id="${type}">
+            <div class="toast select-none" id="${type}">
               <div class="header">
                 <img src="${icon}" height="30px" width="30px" />
                 <div class="title">${title}</div>

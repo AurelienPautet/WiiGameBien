@@ -209,7 +209,7 @@ tickTockInterval = setTimeout(function toocking() {
             if (
               distance(
                 room.mines[i].position,
-                { w: room.mines[i].radius, h: room.mines[i].radius },
+                { w: room.mines[i].radius * 2, h: room.mines[i].radius * 2 },
                 room.blocks[m].position,
                 room.blocks[m].size
               ) <=
@@ -235,9 +235,9 @@ tickTockInterval = setTimeout(function toocking() {
           if (
             distance(
               room.mines[i].position,
-              { w: room.mines[i].radius, h: room.mines[i].radius },
+              { w: room.mines[i].radius * 2, h: room.mines[i].radius * 2 },
               room.mines[e].position,
-              { w: room.mines[e].radius, h: room.mines[e].radius }
+              { w: room.mines[e].radius * 2, h: room.mines[e].radius * 2 }
             ) <=
             90 ** 2
           ) {
@@ -248,7 +248,7 @@ tickTockInterval = setTimeout(function toocking() {
           if (
             distance(
               room.mines[i].position,
-              { w: room.mines[i].radius, h: room.mines[i].radius },
+              { w: room.mines[i].radius * 2, h: room.mines[i].radius * 2 },
               room.players[m].position,
               room.players[m].size
             ) <=
@@ -286,10 +286,10 @@ tickTockInterval = setTimeout(function toocking() {
       for (let e = 0; e < room.mines.length; e++) {
         if (
           rectanglesSeTouchent(
-            room.mines[e].position.x,
-            room.mines[e].position.y,
-            room.mines[e].radius,
-            room.mines[e].radius,
+            room.mines[e].position.x - room.mines[e].radius,
+            room.mines[e].position.y - room.mines[e].radius,
+            room.mines[e].radius * 2,
+            room.mines[e].radius * 2,
             room.bullets[i].position.x,
             room.bullets[i].position.y,
             room.bullets[i].size.w,
@@ -415,8 +415,9 @@ fs.readdir(path.join(__dirname, "./", "levels"), (err, files) => {
       fs.readdir(
         path.join(__dirname, "./", "levels", file),
         (levelerr, levelfiles) => {
-          if (levelerr) console.log(levelerr);
-          else {
+          if (levelerr) {
+            console.log(levelerr);
+          } else {
             levelsset.push({
               levelset: file,
               levelslist: levelfiles,

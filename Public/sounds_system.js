@@ -28,7 +28,7 @@ function playsound(typelist, baseaudio) {
 }
 
 function playpause(typelist, e) {
-  typelist[e].sound.playbackRate = Number(getRandomArbitrary(0.9, 2)); // not working fuckkkkk
+  typelist[e].sound.playbackRate = Number(getRandomArbitrary(0.8, 1.2)); // not working fuckkkkk
   typelist[e].sound.play();
   typelist[e].playing = true;
   setTimeout(() => {

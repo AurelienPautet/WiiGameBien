@@ -1,6 +1,6 @@
 //
-const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
-//const socket = io("http://localhost:7000/");
+//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+const socket = io("http://localhost:7000/");
 
 socket.on("welcome", (data) => {});
 
@@ -53,6 +53,8 @@ Bcollision = [];
 bullets = [];
 mines = [];
 debug_visual = false;
+width = 1150;
+height = 800;
 
 const mvtspeed = 3;
 
