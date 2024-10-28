@@ -54,3 +54,14 @@
   left: 12.5%;
   top: 12.5%;
 }
+
+.center_ui2 {
+  top: 12.5%;
+}
+
+.star-filled {
+  color: #ffd700;
+}
+.star-empty {
+  color: #808080;
+}

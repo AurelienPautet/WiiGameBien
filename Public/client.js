@@ -127,6 +127,9 @@ window.addEventListener("keydown", (event) => {
       }
       loadtheme(theme);
       break;
+    case "Escape":
+      return_home();
+      break;
   }
 });
 window.addEventListener("keyup", (event) => {

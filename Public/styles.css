@@ -18,8 +18,8 @@
 }
 
 #notif {
+  pointer-events: none;
   user-select: none; /* Propriété standard */
-
   position: absolute;
   left: 40%;
   top: 0%;
@@ -39,7 +39,6 @@
 .toast {
   width: 230px;
   height: 80px;
-  border-radius: 20px;
   margin: 3px;
   color: white;
   animation: entrance 2s ease 0s 1 normal forwards,
@@ -54,7 +53,7 @@
 }
 
 .toast .title {
-  font-size: 27px;
+  font-size: 17px;
   font-weight: bold;
   text-align: left;
 }
