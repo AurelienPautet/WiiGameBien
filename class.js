@@ -355,14 +355,14 @@ class Mine {
 class Room {
   //room class that contains all the players, the blocks, the bullets, the mines, the collision boxes, the levelset and the levelid
   //the room class also contains the sounds that are played in the room
-  constructor(name, levels, leveldir) {
+  constructor(name, rounds, levels, creator) {
     this.name = name;
     this.waitingrespawn = false;
     this.atleast2 = false;
     this.maxplayernb = 0;
     this.levels = levels;
-    this.leveldir = leveldir;
-
+    this.rounds = rounds;
+    this.creator = creator;
     this.sounds = {
       plant: false,
       kill: false,

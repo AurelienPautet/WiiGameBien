@@ -1,3 +1,5 @@
+const { get_json_from_id } = require(__dirname + "/database_stuff.js");
+
 const {
   Player,
   CollisonsBox,
@@ -7,29 +9,31 @@ const {
   Mine,
 } = require(__dirname + "/class.js");
 
-function loadlevel(name, room) {
+async function loadlevel(level_id, room) {
   //load the level from the json file and create the blocks and the spawns for the players and the collision boxes
-  var my_JSON_object = require(name);
-  blocklist_json = my_JSON_object["layers"][0]["data"];
-  room.blocklist = [...blocklist_json];
-  room.blocks = [];
-  room.spawns = [];
+  return new Promise((resolve) => {
+    get_json_from_id(level_id).then((blocklist) => {
+      room.blocklist = blocklist;
+      room.blocks = [];
+      room.spawns = [];
 
-  for (let l = 0; l <= 16; l++) {
-    for (let c = 0; c <= 23; c++) {
-      if (room.blocklist[l * 23 + c] == 1) {
-        room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 1));
+      for (let l = 0; l <= 16; l++) {
+        for (let c = 0; c <= 23; c++) {
+          if (room.blocklist[l * 23 + c] == 1) {
+            room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 1));
+          }
+          if (room.blocklist[l * 23 + c] == 2) {
+            room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 2));
+          }
+          if (room.blocklist[l * 23 + c] == 3) {
+            room.spawns.push({ x: c * 50, y: l * 50 });
+          }
+        }
       }
-      if (room.blocklist[l * 23 + c] == 2) {
-        room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 2));
-      }
-      if (room.blocklist[l * 23 + c] == 3) {
-        room.spawns.push({ x: c * 50, y: l * 50 });
-      }
-    }
-  }
-  room.maxplayernb = room.spawns.length;
-  generateBcollision(room);
+      generateBcollision(room);
+      resolve();
+    });
+  });
 }
 
 function generateBcollision(room) {
@@ -149,7 +153,7 @@ function generateBcollision(room) {
       }
     }
   }
-  //remove the collision boxes that are the same
+  //remove the collision boxes that are the same if they are any
   for (let i = 0; i < room.Bcollision.length; i++) {
     for (let e = 0; e < room.Bcollision.length; e++) {
       if (

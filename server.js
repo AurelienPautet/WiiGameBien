@@ -38,6 +38,9 @@ const {
   rectanglesSeTouchent,
 } = require(__dirname + "/check_collision.js");
 
+const { get_levels, get_max_players, get_json_from_id } = require(__dirname +
+  "/database_stuff.js");
+
 io.on("connect", (socket) => {
   room_list(socket);
   socket.join("lobby" + serverid);
@@ -77,14 +80,13 @@ io.on("connect", (socket) => {
     }
   });
 
-  socket.on("new-room", (name, set) => {
-    res = levelsset.find((item) => item.levelset === set);
+  socket.on("search_levels", (input_name, input_nb_players) => {
+    levels = get_levels(input_name, input_nb_players, socket);
+  });
 
-    room = new Room(name, res.levelslist, res.levelset);
-    rooms.push(room);
-    level = path.join(__dirname, "./", "levels", room.leveldir, room.levels[0]);
-    loadlevel(level, room);
-    room_list(0);
+  socket.on("new-room", async (name, rounds, list_id, creator) => {
+    create_room(name, rounds, list_id, creator);
+    socket.emit("room_created");
   });
 
   socket.on("play", (playerName, turretc, bodyc, room_name) => {
@@ -149,207 +151,10 @@ io.on("connect", (socket) => {
 tickTockInterval = setTimeout(function toocking() {
   func = setTimeout(toocking, 16.67);
   rooms.forEach((room) => {
-    if (room.players.length >= 2) {
-      room.atleast2 = true;
-    }
-    if (room.players.length <= 1) {
-      room.atleast2 = false;
-    }
-    if (room.waitingrespawn == false && room.nbliving <= 1) {
-      if (room.atleast2) {
-        if (room.nbliving == 1) {
-          room.players.forEach((player) => {
-            if (player.alive) {
-              io.to(room.name).emit("winner", player.name, waitingtime);
-            }
-          });
-        } else {
-          io.to(room.name).emit("draw", waitingtime);
-        }
-        room.waitingrespawn = true;
-        respawnwait = setTimeout(() => {
-          room.bullets = [];
-          room.mines = [];
-          level = path.join(
-            __dirname,
-            "./",
-            "levels",
-            room.leveldir,
-            room.levels[room.levelid]
-          );
-          loadlevel(level, room);
-          io.to(room.name).emit("level_change", room.blocks, room.Bcollision);
-          room.players.forEach((player) => {
-            player.alive = true;
-            player.minecount = 0;
-            player.bulletcount = 0;
-            spawnid = Math.floor(Math.random() * room.spawns.length);
-            player.spawnpos = room.spawns[spawnid];
-            room.spawns.splice(spawnid, 1);
-            player.spawn();
-          });
-          room.nbliving = room.players.length;
-          room.waitingrespawn = false;
+    check_for_winns_and_load_next_level(room);
+    update_mines(room);
+    update_bullets(room);
 
-          if (room.levelid < room.levels.length - 1) {
-            room.levelid++;
-          } else {
-            room.levelid = 0;
-          }
-        }, waitingtime);
-      }
-    }
-
-    //update the mines
-    mining: for (let i = 0; i < room.mines.length; i++) {
-      room.mines[i].update();
-      if (room.mines[i].timealive > timetoeplode) {
-        for (let m = 0; m < room.blocks.length; m++) {
-          if (room.blocks[m].type == 2) {
-            if (
-              distance(
-                room.mines[i].position,
-                { w: room.mines[i].radius * 2, h: room.mines[i].radius * 2 },
-                room.blocks[m].position,
-                room.blocks[m].size
-              ) <=
-              90 ** 2
-            ) {
-              room.blocklist[
-                (room.blocks[m].position.y / 50) * 23 +
-                  room.blocks[m].position.x / 50
-              ] = 10;
-              generateBcollision(room);
-              room.blocks.splice(m, 1);
-              io.to(room.name).emit(
-                "level_change",
-                room.blocks,
-                room.Bcollision
-              );
-
-              m -= 1;
-            }
-          }
-        }
-        for (let e = 0; e < room.mines.length; e++) {
-          if (
-            distance(
-              room.mines[i].position,
-              { w: room.mines[i].radius * 2, h: room.mines[i].radius * 2 },
-              room.mines[e].position,
-              { w: room.mines[e].radius * 2, h: room.mines[e].radius * 2 }
-            ) <=
-            90 ** 2
-          ) {
-            room.mines[e].timealive = timetoeplode;
-          }
-        }
-        for (let m = 0; m < room.players.length; m++) {
-          if (
-            distance(
-              room.mines[i].position,
-              { w: room.mines[i].radius * 2, h: room.mines[i].radius * 2 },
-              room.players[m].position,
-              room.players[m].size
-            ) <=
-              90 ** 2 &&
-            room.players[m].alive
-          ) {
-            kill(room.mines[i].emitter, room.players[m], room, "mine");
-          }
-        }
-
-        io.to(room.name).emit("mine_explosion", {
-          x: room.mines[i].position.x + room.mines[i].radius / 2,
-          y: room.mines[i].position.y + room.mines[i].radius / 2,
-        });
-        room.sounds.explose = true;
-        room.mines[i].emitter.minecount--;
-        room.mines.splice(i, 1);
-        i -= 1;
-        continue mining;
-      }
-    }
-
-    bulleting: for (let i = 0; i < room.bullets.length; i++) {
-      room.bullets[i].update(room);
-      if (room.bullets[i].bounce >= 3) {
-        io.to(room.name).emit("bullet_explosion", {
-          x: room.bullets[i].position.x,
-          y: room.bullets[i].position.y,
-        });
-        room.bullets[i].emitter.bulletcount--;
-        room.bullets.splice(i, 1);
-        i -= 1;
-        continue bulleting;
-      }
-      for (let e = 0; e < room.mines.length; e++) {
-        if (
-          rectanglesSeTouchent(
-            room.mines[e].position.x - room.mines[e].radius,
-            room.mines[e].position.y - room.mines[e].radius,
-            room.mines[e].radius * 2,
-            room.mines[e].radius * 2,
-            room.bullets[i].position.x,
-            room.bullets[i].position.y,
-            room.bullets[i].size.w,
-            room.bullets[i].size.h
-          )
-        ) {
-          room.mines[e].timealive = timetoeplode;
-          room.bullets[i].emitter.bulletcount--;
-          room.bullets.splice(i, 1);
-          i -= 1;
-          continue bulleting;
-        }
-      }
-      for (let e = 0; e < room.bullets.length; e++) {
-        if (
-          rectRect(
-            room.bullets[i].position.x,
-            room.bullets[i].position.y,
-            room.bullets[i].size.w,
-            room.bullets[i].size.h,
-            room.bullets[e].position.x,
-            room.bullets[e].position.y,
-            room.bullets[e].size.w,
-            room.bullets[e].size.h
-          ) &&
-          i != e
-        ) {
-          room.bullets[i].emitter.bulletcount--;
-          room.bullets[e].emitter.bulletcount--;
-          io.to(room.name).emit("bullet_explosion", {
-            x: room.bullets[i].position.x,
-            y: room.bullets[i].position.y,
-          });
-          if (e < i) {
-            room.bullets.splice(i, 1);
-            room.bullets.splice(e, 1);
-            i -= 2;
-          } else {
-            room.bullets.splice(e, 1);
-            room.bullets.splice(i, 1);
-            i -= 1;
-          }
-
-          continue bulleting;
-        }
-      }
-      for (let e = 0; e < room.players.length; e++) {
-        if (
-          room.players[e].BulletCollision(room.bullets[i]) &&
-          room.players[e].alive
-        ) {
-          room.bullets[i].emitter.bulletcount--;
-          kill(room.bullets[i].emitter, room.players[e], room, "bullet");
-          room.bullets.splice(i, 1);
-          i -= 1;
-
-          continue bulleting;
-        }
-      }
-    }
     room.frontend_players = [];
     room.players.forEach((player) => {
       player.update(room);
@@ -388,15 +193,31 @@ tickTockInterval = setTimeout(function toocking() {
 function room_list(socket) {
   room_names = [];
   room_players = [];
+  room_players_max = [];
+  room_creator_name = [];
   rooms.forEach((room) => {
     room_names.push(room.name);
-    room_players.push(room.players.length + "/" + room.maxplayernb);
+    room_players.push(room.players.length);
+    room_players_max.push(room.maxplayernb);
+    room_creator_name.push(room.creator);
   });
   console.log("room_list");
   if (socket != 0) {
-    socket.emit("room_list", room_names, room_players);
+    socket.emit(
+      "room_list",
+      room_names,
+      room_creator_name,
+      room_players,
+      room_players_max
+    );
   } else {
-    io.to("lobby" + serverid).emit("room_list", room_names, room_players);
+    io.to("lobby" + serverid).emit(
+      "room_list",
+      room_names,
+      room_creator_name,
+      room_players,
+      room_players_max
+    );
   }
 }
 
@@ -429,6 +250,197 @@ fs.readdir(path.join(__dirname, "./", "levels"), (err, files) => {
   }
 });
 
+function check_for_winns_and_load_next_level(room) {
+  if (room.waitingrespawn == false && room.nbliving <= 1) {
+    if (room.players.length >= 2) {
+      if (room.nbliving == 1) {
+        room.players.forEach((player) => {
+          if (player.alive) {
+            io.to(room.name).emit("winner", player.name, waitingtime);
+          }
+        });
+      } else {
+        io.to(room.name).emit("draw", waitingtime);
+      }
+      room.waitingrespawn = true;
+      respawnwait = setTimeout(async () => {
+        room.bullets = [];
+        room.mines = [];
+        await loadlevel(room.levels[room.levelid], room);
+        io.to(room.name).emit("level_change", room.blocks, room.Bcollision);
+        room.players.forEach((player) => {
+          player.alive = true;
+          player.minecount = 0;
+          player.bulletcount = 0;
+          spawnid = Math.floor(Math.random() * room.spawns.length);
+          player.spawnpos = room.spawns[spawnid];
+          room.spawns.splice(spawnid, 1);
+          player.spawn();
+        });
+        room.nbliving = room.players.length;
+        room.waitingrespawn = false;
+
+        if (room.levelid < room.levels.length - 1) {
+          room.levelid++;
+        } else {
+          room.levelid = 0;
+        }
+      }, waitingtime);
+    }
+  }
+}
+
+function update_bullets(room) {
+  bulleting: for (let i = 0; i < room.bullets.length; i++) {
+    room.bullets[i].update(room);
+    if (room.bullets[i].bounce >= 3) {
+      io.to(room.name).emit("bullet_explosion", {
+        x: room.bullets[i].position.x,
+        y: room.bullets[i].position.y,
+      });
+      room.bullets[i].emitter.bulletcount--;
+      room.bullets.splice(i, 1);
+      i -= 1;
+      continue bulleting;
+    }
+    for (let e = 0; e < room.mines.length; e++) {
+      if (
+        rectanglesSeTouchent(
+          room.mines[e].position.x - room.mines[e].radius,
+          room.mines[e].position.y - room.mines[e].radius,
+          room.mines[e].radius * 2,
+          room.mines[e].radius * 2,
+          room.bullets[i].position.x,
+          room.bullets[i].position.y,
+          room.bullets[i].size.w,
+          room.bullets[i].size.h
+        )
+      ) {
+        room.mines[e].timealive = timetoeplode;
+        room.bullets[i].emitter.bulletcount--;
+        room.bullets.splice(i, 1);
+        i -= 1;
+        continue bulleting;
+      }
+    }
+    for (let e = 0; e < room.bullets.length; e++) {
+      if (
+        rectRect(
+          room.bullets[i].position.x,
+          room.bullets[i].position.y,
+          room.bullets[i].size.w,
+          room.bullets[i].size.h,
+          room.bullets[e].position.x,
+          room.bullets[e].position.y,
+          room.bullets[e].size.w,
+          room.bullets[e].size.h
+        ) &&
+        i != e
+      ) {
+        room.bullets[i].emitter.bulletcount--;
+        room.bullets[e].emitter.bulletcount--;
+        io.to(room.name).emit("bullet_explosion", {
+          x: room.bullets[i].position.x,
+          y: room.bullets[i].position.y,
+        });
+        if (e < i) {
+          room.bullets.splice(i, 1);
+          room.bullets.splice(e, 1);
+          i -= 2;
+        } else {
+          room.bullets.splice(e, 1);
+          room.bullets.splice(i, 1);
+          i -= 1;
+        }
+
+        continue bulleting;
+      }
+    }
+    for (let e = 0; e < room.players.length; e++) {
+      if (
+        room.players[e].BulletCollision(room.bullets[i]) &&
+        room.players[e].alive
+      ) {
+        room.bullets[i].emitter.bulletcount--;
+        kill(room.bullets[i].emitter, room.players[e], room, "bullet");
+        room.bullets.splice(i, 1);
+        i -= 1;
+
+        continue bulleting;
+      }
+    }
+  }
+}
+
+function update_mines(room) {
+  //update the mines
+  mining: for (let i = 0; i < room.mines.length; i++) {
+    room.mines[i].update();
+    if (room.mines[i].timealive > timetoeplode) {
+      for (let m = 0; m < room.blocks.length; m++) {
+        if (room.blocks[m].type == 2) {
+          if (
+            distance(
+              room.mines[i].position,
+              { w: room.mines[i].radius * 2, h: room.mines[i].radius * 2 },
+              room.blocks[m].position,
+              room.blocks[m].size
+            ) <=
+            90 ** 2
+          ) {
+            room.blocklist[
+              (room.blocks[m].position.y / 50) * 23 +
+                room.blocks[m].position.x / 50
+            ] = 10;
+            generateBcollision(room);
+            room.blocks.splice(m, 1);
+            io.to(room.name).emit("level_change", room.blocks, room.Bcollision);
+
+            m -= 1;
+          }
+        }
+      }
+      for (let e = 0; e < room.mines.length; e++) {
+        if (
+          distance(
+            room.mines[i].position,
+            { w: room.mines[i].radius * 2, h: room.mines[i].radius * 2 },
+            room.mines[e].position,
+            { w: room.mines[e].radius * 2, h: room.mines[e].radius * 2 }
+          ) <=
+          90 ** 2
+        ) {
+          room.mines[e].timealive = timetoeplode;
+        }
+      }
+      for (let m = 0; m < room.players.length; m++) {
+        if (
+          distance(
+            room.mines[i].position,
+            { w: room.mines[i].radius * 2, h: room.mines[i].radius * 2 },
+            room.players[m].position,
+            room.players[m].size
+          ) <=
+            90 ** 2 &&
+          room.players[m].alive
+        ) {
+          kill(room.mines[i].emitter, room.players[m], room, "mine");
+        }
+      }
+
+      io.to(room.name).emit("mine_explosion", {
+        x: room.mines[i].position.x + room.mines[i].radius / 2,
+        y: room.mines[i].position.y + room.mines[i].radius / 2,
+      });
+      room.sounds.explose = true;
+      room.mines[i].emitter.minecount--;
+      room.mines.splice(i, 1);
+      i -= 1;
+      continue mining;
+    }
+  }
+}
+
 function kill(killer, killed, room, type) {
   killed.alive = false;
   room.nbliving--;
@@ -440,21 +452,18 @@ function kill(killer, killed, room, type) {
   });
 }
 
+async function create_room(name, rounds, list_id, creator) {
+  room = new Room(name, rounds, list_id, creator);
+  room.maxplayernb = await get_max_players(list_id);
+  console.log(room.maxplayernb);
+  rooms.push(room);
+  loadlevel(room.levels[0], room);
+  room_list(0);
+}
 //Create the default room and load the first level
-base_room = new Room(
-  "Default",
-  ["level1.json", "level2.json", "level3.json", "level4.json", "level5.json"],
-  "Cartes 2 Joueurs bis"
-);
-rooms = [base_room];
-level = path.join(
-  __dirname,
-  "./",
-  "levels",
-  base_room.leveldir,
-  base_room.levels[0]
-);
-loadlevel(level, base_room);
+rooms = [];
+
+create_room("6 players", 10, [2, 3, 4, 5], "GAME MASTER");
 
 //make an id for the server
 function makeid(length) {

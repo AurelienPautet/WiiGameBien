@@ -11,7 +11,7 @@ socket.on("serverid", (data) => {
 
 socket.on("id", (data) => {
   playerid = data;
-  document.getElementById("connect").style.display = "none";
+  showgame();
   playing = true;
   trying = false;
 });
@@ -85,8 +85,7 @@ onmousemove = function (e) {
   var rect = canvas.getBoundingClientRect();
   MouseX = e.clientX - rect.left;
   MouseY = e.clientY - rect.top;
-
-  aim = { x: MouseX, y: MouseY };
+  aim = { x: MouseX / scale, y: MouseY / scale };
 };
 
 window.addEventListener("click", (event) => {

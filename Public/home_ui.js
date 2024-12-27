@@ -3,7 +3,9 @@ const elements = {
   mapset_selector,
   landing_page,
   room_configuration,
-  romm_selector,
+  room_selector,
+  end_screen_screen,
+  waiting_screen,
 };
 
 const before_check = {
@@ -12,28 +14,53 @@ const before_check = {
   mapset_selector: alwaystrue,
   landing_page: alwaystrue,
   room_configuration: get_player_name,
-  romm_selector: get_player_name,
+  room_selector: get_player_name,
+  waiting_screen: blur_canvas,
+  end_screen_screen: blur_canvas,
+};
+
+const after_hide = {
+  home: alwaystrue,
+  tank_select: alwaystrue,
+  mapset_selector: alwaystrue,
+  landing_page: alwaystrue,
+  room_configuration: alwaystrue,
+  room_selector: alwaystrue,
+  waiting_screen: deblur_canvas,
+  end_screen_screen: deblur_canvas,
 };
 
 tank_select = document.getElementById("tank_select");
 mapset_selector = document.getElementById("mapset_selector");
 landing_page = document.getElementById("landing_page");
 room_configuration = document.getElementById("room_configuration");
-romm_selector = document.getElementById("romm_selector");
+room_selector = document.getElementById("room_selector");
+end_screen_screen = document.getElementById("end_screen_screen");
+waiting_screen = document.getElementById("waiting_screen");
+the_canvas = document.getElementById("the_canvas");
 
 current_page = "home";
 waited = false;
 
-var name = "";
+var playerName = "";
 try {
-  name = localStorage.getItem("name");
-  document.getElementById("player_name").value = name;
-  console.log(name);
-  if (name == null) {
-    name = "";
+  playerName = localStorage.getItem("playerName");
+  document.getElementById("player_name_input").value = playerName;
+  console.log(playerName);
+  if (playerName == null) {
+    playerName = "";
   }
 } catch (err) {
-  name = "";
+  playerName = "";
+}
+
+function deblur_canvas() {
+  the_canvas.classList.remove("blur");
+  return true;
+}
+function blur_canvas() {
+  the_canvas.classList.add("blur");
+  return true;
 }
 
 function alwaystrue() {
@@ -46,6 +73,7 @@ function show_ui_element(elementid) {
   if (!res) {
     return;
   }
+  console.log("showing", elementid);
   current_page = elementid;
   console.log(elements, elements[elementid]);
   landing_page.classList.add("blur");
@@ -59,20 +87,34 @@ function show_ui_element(elementid) {
 }
 
 function hide_ui_element(elementid) {
+  try {
+    after_hide[elementid]();
+  } catch (err) {
+    console.log(err);
+  }
   current_page = "home";
   landing_page.classList.remove("blur");
   elements[elementid].classList.add("hidden");
 }
 
 function get_player_name() {
-  name = document.getElementById("player_name").value;
-  localStorage.setItem("name", name);
+  playerName = document.getElementById("player_name_input").value;
+  localStorage.setItem("playerName", playerName);
 
-  console.log("name", name);
-  if (name.length > 0) {
+  console.log("playerName", playerName);
+  if (playerName.length > 0) {
     return true;
   } else {
-    createToast("info", "/image/info.svg", "Error", "Enter a name ");
+    createToast("info", "/image/info.svg", "Error", "Enter a playerName ");
+    return false;
+  }
+}
+
+function is_selected_not_empty() {
+  if (selected_map.length > 0) {
+    return true;
+  } else {
+    createToast("info", "/image/info.svg", "Error", "Select a map");
     return false;
   }
 }
@@ -88,7 +130,7 @@ function update_tank_visualiser() {
 }
 
 function return_home() {
-  console.log("returning home");
+  console.log("returning home", current_page, waited);
 
   if (current_page == "tank_select" && waited) {
     hide_ui_element("tank_select");
@@ -97,13 +139,22 @@ function return_home() {
     localStorage.setItem("turret", current["turret"]);
   }
   if (current_page == "mapset_selector" && waited) {
-    hide_ui_element("mapset_selector");
-    show_ui_element("room_configuration");
+    if (is_selected_not_empty()) {
+      hide_ui_element("mapset_selector");
+      show_ui_element("room_configuration");
+    }
   }
   if (current_page == "room_configuration" && waited) {
     hide_ui_element("room_configuration");
   }
-  if (current_page == "romm_selector" && waited) {
-    hide_ui_element("romm_selector");
+  if (current_page == "room_selector" && waited) {
+    hide_ui_element("room_selector");
+  } else if (waited && current_page != "home") {
+    hide_ui_element(current_page);
   }
+}
+
+function showgame() {
+  return_home();
+  landing_page.classList.add("hidden");
 }

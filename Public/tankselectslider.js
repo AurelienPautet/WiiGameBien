@@ -29,9 +29,6 @@ let scrollone = 154.6666717529297;
 
 function load_old_tank() {
   show_ui_element("tank_select");
-  setTimeout(() => {
-    return_home();
-  }, 1);
   try {
     current["body"] = parseInt(localStorage.getItem("body"), 10);
     current["turret"] = parseInt(localStorage.getItem("turret"), 10);
@@ -47,6 +44,9 @@ function load_old_tank() {
   } catch (err) {
     random_tank();
   }
+  setTimeout(() => {
+    return_home();
+  }, 1);
 }
 
 function random_tank() {
@@ -61,9 +61,13 @@ function random_tank() {
 }
 
 function update_slider(name_str) {
+  show_ui_element("tank_select");
+
   console.log(name_str);
   document.getElementById(name_str + "_select").scrollLeft =
     scrollone * current[name_str];
+  console.log(current["body"], current["turret"]);
+  return_home();
 }
 
 function slide(name_str) {

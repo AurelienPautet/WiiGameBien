@@ -17,6 +17,10 @@
   --radius: 10px;
 }
 
+body {
+  transform: scale(0.7);
+}
+
 #notif {
   pointer-events: none;
   user-select: none; /* Propriété standard */

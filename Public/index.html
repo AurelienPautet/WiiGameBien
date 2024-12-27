@@ -18,8 +18,8 @@
     <link rel="stylesheet" href="customclass.css" />
   </head>
 
-  <body onload="load_old_tank()">
-    <canvas class="everything"></canvas>
+  <body onload="load_old_tank()" onresize="rescale()">
+    <canvas class="everything" id="the_canvas"></canvas>
     <div id="ui" class="everything relative">
       <div
         id="landing_page"
@@ -59,7 +59,7 @@
             placeholder="Type your name.."
             control-id="ControlID-3"
             type="text"
-            id="player_name"
+            id="player_name_input"
             name="name"
             required
             maxlength="20"
@@ -69,7 +69,7 @@
             src="/icons/close.png"
             alt=""
             class="h-4 w-4 hover:h-5 hover:w-5 absolute crosspx inputtext font-bold group-hover:"
-            onclick="document.getElementById('player_name').value = ''"
+            onclick="document.getElementById('player_name_input').value = ''"
           />
         </div>
         <div id="buttons" class="h-24 w-1/3 flex justify-center items-center">
@@ -83,12 +83,31 @@
             class="bg-blue-500 h-14 w-28 hover:h-16 hover:w-32 text-white text-lg hover:text-xl m-2 font-extrabold"
             type="button"
             value="JOIN"
-            onclick="show_ui_element('romm_selector')"
+            onclick="show_ui_element('room_selector')"
           />
         </div>
       </div>
       <div id="notif"></div>
-
+      <div
+        id="waiting_screen"
+        class="hidden absolute w-full h-full border-8 border-yellow-400 pointer-events-none"
+      >
+        <div class="opacity-0 text-4xl">.</div>
+        <div class="relative text-4xl font-bold text-yellow-400">
+          Waiting for room to start
+        </div>
+        <div class="relative text-4xl font-bold text-yellow-400">3/4 👤</div>
+      </div>
+      <div
+        id="end_screen_screen"
+        class="hidden absolute w-full h-full border-8 border-red-500 pointer-events-none"
+      >
+        <div class="opacity-0 text-4xl">.</div>
+        <div class="relative text-4xl font-bold text-red-500">
+          You won this round
+        </div>
+        <div class="relative text-4xl font-bold text-red-500">3/4 👤</div>
+      </div>
       <div
         id="tank_select"
         class="absolute bg-gray-400 h-1/2 w-1/2 left-1/4 top-1/3 hidden"
@@ -226,21 +245,19 @@
           class="w-full h-full mx-auto bg-white shadow flex flex-col overflow-hidden"
         >
           <!-- Header -->
-          <div
-            class="bg-gray-300/50 p-4 flex justify-between items-center"
-            onclick="addRoom('Map 1', 'Creator 1', 10, 5, 3,'/image/minia/test.png'); "
-          >
+          <div class="bg-gray-300/50 p-4 flex justify-between items-center">
             <div class="flex items-center gap-4">
               <span class="font-bold text-xl">Name/creator:</span>
               <div class="flex items-center bg-white px-3 py-1">
                 <span>🔍</span>
                 <input
                   type="text"
-                  id="room_name"
-                  name="room_name"
+                  id="level_name_input"
+                  name="level_name"
                   class="w-full px-4 py-2 text-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter room name"
+                  placeholder="Enter level name"
                   required
+                  onchange="request_levels()"
                 />
               </div>
             </div>
@@ -249,14 +266,19 @@
                 >Players :</label
               >
               <select
-                id="players"
+                id="level_max_players_drop"
                 name="players"
                 class="px-4 py-2 text-lg border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
+                onchange="request_levels()"
               >
+                <option value="0">any</option>
                 <option value="1">1</option>
+                <option value="2">2</option>
                 <option value="3">3</option>
+                <option value="4">4</option>
                 <option value="5">5</option>
+                <option value="6">6</option>
                 <option value="7">7</option>
               </select>
             </div>
@@ -270,7 +292,7 @@
         </div>
       </div>
       <div
-        id="romm_selector"
+        id="room_selector"
         class="absolute w-3/4 h-3/4 bg-gray-500 left-1/4 top-1/8 center_ui hidden"
       >
         <div
@@ -284,7 +306,7 @@
                 <span>🔍</span>
                 <input
                   type="text"
-                  id="room_name"
+                  id="room_name_input"
                   name="room_name"
                   class="w-full px-4 py-2 text-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter room name"
@@ -297,127 +319,32 @@
                 >Players :</label
               >
               <select
-                id="players"
+                id="drop_nb_players_room"
                 name="players"
                 class="px-4 py-2 text-lg border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
                 <option value="1">1</option>
+                <option value="2">2</option>
                 <option value="3">3</option>
+                <option value="4">4</option>
                 <option value="5">5</option>
+                <option value="6">6</option>
                 <option value="7">7</option>
               </select>
             </div>
           </div>
 
           <!-- Map List -->
-          <div class="p-4 space-y-4 overflow-scroll flex-grow-0">
-            <div class="bg-gray-200 p-4 flex w-full border-2">
-              <img src="\image\minia\test.png" alt="" class="w-32 h-24" />
-              <div class="flex justify-between w-full">
-                <div class="ml-4 flex-col flex-grow-0">
-                  <h3 class="text-xl font-bold">Base 3 player by Aurélien</h3>
-                  <div class="flex gap-4 mt-2">
-                    <span class="bg-white px-2 py-1">3 👤</span>
-                    <span class="bg-white px-2 py-1">5 🗺</span>
-                  </div>
-                </div>
-                <div class="flex">
-                  <span class="star-filled">★</span>
-                  <span class="star-filled">★</span>
-                  <span class="star-filled">★</span>
-                  <span class="star-empty">★</span>
-                  <span class="star-empty">★</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="bg-gray-200 p-4 flex w-full border-2 border-blue-400">
-              <img src="\image\minia\test.png" alt="" class="w-32 h-24" />
-              <div class="flex justify-between w-full">
-                <div class="ml-4 flex-col flex-grow-0">
-                  <h3 class="text-xl font-bold">Base 3 player by Aurélien</h3>
-                  <div class="flex gap-4 mt-2">
-                    <span class="bg-white px-2 py-1">3 👤</span>
-                    <span class="bg-white px-2 py-1">5 🗺</span>
-                  </div>
-                </div>
-                <div class="flex">
-                  <span class="star-filled">★</span>
-                  <span class="star-filled">★</span>
-                  <span class="star-filled">★</span>
-                  <span class="star-empty">★</span>
-                  <span class="star-empty">★</span>
-                </div>
-              </div>
-            </div>
-            <div class="bg-gray-200 p-4 flex w-full border-2 border-blue-400">
-              <img src="\image\minia\test.png" alt="" class="w-32 h-24" />
-              <div class="flex justify-between w-full">
-                <div class="ml-4 flex-col flex-grow-0">
-                  <h3 class="text-xl font-bold">Base 3 player by Aurélien</h3>
-                  <div class="flex gap-4 mt-2">
-                    <span class="bg-white px-2 py-1">3 👤</span>
-                    <span class="bg-white px-2 py-1">5 🗺</span>
-                  </div>
-                </div>
-                <div class="flex">
-                  <span class="star-filled">★</span>
-                  <span class="star-filled">★</span>
-                  <span class="star-filled">★</span>
-                  <span class="star-empty">★</span>
-                  <span class="star-empty">★</span>
-                </div>
-              </div>
-            </div>
-            <!-- Map Item 2 -->
-            <div class="bg-gray-200 p-4 flex w-full border-2 border-blue-400">
-              <img src="\image\minia\test.png" alt="" class="w-32 h-24" />
-              <div class="flex justify-between w-full">
-                <div class="ml-4 flex-col flex-grow-0">
-                  <h3 class="text-xl font-bold">Base 3 player by Aurélien</h3>
-                  <div class="flex gap-4 mt-2">
-                    <span class="bg-white px-2 py-1">3 👤</span>
-                    <span class="bg-white px-2 py-1">5 🗺</span>
-                  </div>
-                </div>
-                <div class="flex">
-                  <span class="star-filled">★</span>
-                  <span class="star-filled">★</span>
-                  <span class="star-filled">★</span>
-                  <span class="star-empty">★</span>
-                  <span class="star-empty">★</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Map Item 3 -->
-            <div class="bg-gray-200 p-4 flex w-full border-2 border-blue-400">
-              <img src="\image\minia\test.png" alt="" class="w-32 h-24" />
-              <div class="flex justify-between w-full">
-                <div class="ml-4 flex-col flex-grow-0">
-                  <h3 class="text-xl font-bold">Base 3 player by Aurélien</h3>
-                  <div class="flex gap-4 mt-2">
-                    <span class="bg-white px-2 py-1">3 👤</span>
-                    <span class="bg-white px-2 py-1">5 🗺</span>
-                  </div>
-                </div>
-                <div class="flex">
-                  <span class="star-filled">★</span>
-                  <span class="star-filled">★</span>
-                  <span class="star-filled">★</span>
-                  <span class="star-empty">★</span>
-                  <span class="star-empty">★</span>
-                </div>
-              </div>
-            </div>
-            <!-- Map Item 4 -->
-          </div>
+          <div
+            class="p-4 space-y-4 overflow-scroll flex-grow-0"
+            id="room_list"
+          ></div>
         </div>
       </div>
       <div
         id="room_configuration"
-        class="absolute w-1/3 h-3/4 bg-gray-500 left-1/3 top-1/4 center_ui2 hidden flex justify-center p-6"
+        class="absolute w-1/3 h-3/4 bg-gray-300 left-1/3 top-1/4 center_ui2 hidden flex justify-center p-6"
       >
         <div class="flex flex-col items-center w-full">
           <!-- Room Name Input -->
@@ -427,10 +354,10 @@
             >
             <input
               type="text"
-              id="room_name"
+              id="room_name_input_create"
               name="room_name"
               class="w-full px-4 py-2 text-lg border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter room name"
+              placeholder="Enter room name ooooo"
               required
             />
           </div>
@@ -465,7 +392,7 @@
               >Number of Rounds:</label
             >
             <select
-              id="rounds"
+              id="room_rounds_select"
               name="rounds"
               class="w-full px-4 py-2 text-lg border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
@@ -493,13 +420,16 @@
             <button
               type="button"
               class="w-full bg-blue-500 text-white text-lg py-2 rounded hover:bg-blue-600"
-              onclick="createRoom()"
+              onclick="create_room()"
             >
               Create Room
             </button>
           </div>
         </div>
       </div>
+      <div
+        class="hidden blur bg-gray-200 p-4 w-full border-2 hover:bg-gray-300 ml-4 flex-col flex-grow-0 gap-4 mt-2 text-xl font-bold bg-white px-2 py-1 border-blue-400"
+      ></div>
     </div>
   </body>
 
@@ -512,6 +442,11 @@
   <script src="./canvaStuff.js"></script>
   <script src="./tankselectslider.js"></script>
   <script src="./level_selector.js"></script>
+  <script src="./room_selector.js"></script>
+  <script src="./room_configurator.js"></script>
+  <script src="./rescale.js"></script>
+  <script src="./blured_ui.js"></script>
+
   <script src="./home_ui.js"></script>
 </html>
 

@@ -232,7 +232,7 @@ function shoot_explosion(position, angle, num) {
             percent: 1,
           },
         ],
-        30
+        60
       )
     );
   }
