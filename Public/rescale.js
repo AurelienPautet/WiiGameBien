@@ -6,7 +6,7 @@ function rescale() {
   widthporcent = windowWidth / canvas.width;
   heightporcent = windowHeight / canvas.height;
   console.log(`Window Width: ${windowWidth}, Window Height: ${windowHeight}`);
-  scale = Math.min(widthporcent, heightporcent);
+  scale = Math.min(widthporcent, heightporcent) * 0.95;
   console.log("Rescaling...");
   console.log(scale);
   document.body.style.transform = `scale(${scale})`;
