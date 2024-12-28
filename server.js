@@ -6,7 +6,7 @@ const path = require("path");
 
 app.use(express.static("Public"));
 const PORT = process.env.PORT || 7000;
-console.log(PORT);
+console.log("PORT : ", PORT);
 const expressServer = app.listen(PORT);
 
 const socketio = require("socket.io");
