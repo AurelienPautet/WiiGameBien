@@ -1,3 +1,4 @@
+// all the ui elements
 const elements = {
   tank_select,
   mapset_selector,
@@ -8,6 +9,7 @@ const elements = {
   waiting_screen,
 };
 
+// the functions to run before showing the ui element
 const before_check = {
   home: alwaystrue,
   tank_select: alwaystrue,
@@ -19,6 +21,7 @@ const before_check = {
   end_screen_screen: blur_canvas,
 };
 
+// the functions to run after hiding the ui element
 const after_hide = {
   home: alwaystrue,
   tank_select: alwaystrue,
@@ -30,6 +33,7 @@ const after_hide = {
   end_screen_screen: deblur_canvas,
 };
 
+// all the ui elements in the html
 tank_select = document.getElementById("tank_select");
 mapset_selector = document.getElementById("mapset_selector");
 landing_page = document.getElementById("landing_page");
@@ -39,9 +43,12 @@ end_screen_screen = document.getElementById("end_screen_screen");
 waiting_screen = document.getElementById("waiting_screen");
 the_canvas = document.getElementById("the_canvas");
 
+// the current page
 current_page = "home";
+// to prevent double clicking
 waited = false;
 
+// get the player name from the local storage if it exists
 var playerName = "";
 try {
   playerName = localStorage.getItem("playerName");

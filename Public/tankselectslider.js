@@ -1,3 +1,4 @@
+//list of all available colors for the turret
 let turret_colors = [
   "blue",
   "orange",
@@ -9,7 +10,7 @@ let turret_colors = [
   "turquoise",
   "violetF",
 ];
-
+//list of all available colors for the body
 let body_colors = [
   "blue",
   "orange",
@@ -22,31 +23,40 @@ let body_colors = [
   "violetF",
 ];
 
+// group the colors by type
 let colors = { body: body_colors, turret: turret_colors };
+//hold the current colors index for the body and turret
 let current = { body: 0, turret: 0 };
 
+//the width of the body and turret select div
 let scrollone = 154.6666717529297;
 
 function load_old_tank() {
   show_ui_element("tank_select");
   try {
+    //load the tank colors from the local storage if they exist
     current["body"] = parseInt(localStorage.getItem("body"), 10);
     current["turret"] = parseInt(localStorage.getItem("turret"), 10);
     console.log(current["body"], current["turret"]);
+
     if (isNaN(current["body"]) || isNaN(current["turret"])) {
+      //if the colors are not valid, choose a random tank
       console.log("nan");
       random_tank();
     } else {
+      //update the visualiser with the loaded colors
       update_tank_visualiser();
       update_slider("turret");
       update_slider("body");
+      return_home();
     }
   } catch (err) {
+    //if there is an error, choose a random tank
     random_tank();
   }
   setTimeout(() => {
     return_home();
-  }, 1);
+  }, 2);
 }
 
 function random_tank() {
@@ -62,22 +72,20 @@ function random_tank() {
 
 function update_slider(name_str) {
   show_ui_element("tank_select");
-
-  console.log(name_str);
   document.getElementById(name_str + "_select").scrollLeft =
     scrollone * current[name_str];
-  console.log(current["body"], current["turret"]);
-  return_home();
 }
 
 function slide(name_str) {
-  //console.log(document.getElementById(name_str + "_select").scrollLeft / scrollone);
+  //get the current index of the color
   let i = document.getElementById(name_str + "_select").scrollLeft / scrollone;
-
   i = Math.floor(i);
-  //console.log(name_str + "_" + turret_colors[current[name_str]]);
-  retressir(name_str + "_" + colors[name_str][current[name_str]]);
-  grossir(name_str + "_" + colors[name_str][i]);
+
+  //we grow the selected color image and shrink the previous one
+  shrink(name_str + "_" + colors[name_str][current[name_str]]);
+  grow(name_str + "_" + colors[name_str][i]);
+
+  //update the current color index
   if (i != undefined) {
     current[name_str] = i;
   }
@@ -92,14 +100,16 @@ function slide2(name_str) {
   slide("name_str");
 }
 
-function grossir(elementid) {
+function grow(elementid) {
+  //grow the selected color image
   var element = document.getElementById(elementid);
   element.classList.remove("w-1/4");
   element.classList.remove("h-1/2");
   element.classList.add("w-2/5");
   element.classList.add("h-2/3");
 }
-function retressir(elementid) {
+function shrink(elementid) {
+  //shrink the selected color image
   var element = document.getElementById(elementid);
   element.classList.add("w-1/4");
   element.classList.add("h-1/2");
@@ -109,6 +119,11 @@ function retressir(elementid) {
 
 let pressed = { body: false, turret: false };
 let x = 0;
+
+//i tried to make the slider draggable but it is not working
+// fucking css of shit
+// i hate thissssss
+// Why is it working in mobile ?????/!!! but not on the computer !!!!!!
 
 let turret_select = document.getElementById("turret_select");
 turret_select.addEventListener("mousedown", () => {

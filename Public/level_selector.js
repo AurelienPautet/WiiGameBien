@@ -66,9 +66,10 @@ function add_map(map_name, map_id, creator_name, int_players, star, img_src) {
   // Prepend the new map element to the map list
   map_list.prepend(newMap);
 }
-//addRoom('room_name', 'creator_name', 5, 7)
+
 function request_levels() {
-  console.log("Requesting levels", level_max_players_drop.value);
+  // Function to request levels from the server based on the search parameters
+  // the server will the do a database query and return the levels that match the search parameters
   socket.emit(
     "search_levels",
     level_name_input.value,
@@ -76,11 +77,14 @@ function request_levels() {
   );
 }
 
+// Request all levels from the server when the page is loaded for the first time
 socket.emit("search_levels", "", 0);
 
 socket.on("recieve_levels", (levels) => {
-  console.log(levels);
+  // Function to receive levels from the server and add them to the map list
+  // Clear the map list
   remove_all_maps();
+  // Add all the levels back to the map list
   for (let i = 0; i < levels.length; i++) {
     add_map(
       levels[i].level_name,
@@ -91,10 +95,12 @@ socket.on("recieve_levels", (levels) => {
       "./image/minia/test.png"
     );
   }
+  // Select the maps that were already selected
   readd_selection();
 });
 
 function readd_selection() {
+  // Function to re-add the blue border to the selected maps
   for (let i = 0; i < selected_map.length; i++) {
     try {
       document.getElementById(selected_map[i]).classList.add("border-blue-400");
@@ -102,8 +108,8 @@ function readd_selection() {
   }
 }
 
-// Function to add a new map room to the map list
 function select_map(map_id) {
+  // Function to add a new map room to the map list
   // Check if the map is already selected
   if (selected_map.includes(map_id)) {
     // If selected, remove from selected_map array and remove border class
@@ -117,5 +123,6 @@ function select_map(map_id) {
 }
 
 function remove_all_maps() {
+  // Function to remove all maps from the map list
   map_list.innerHTML = "";
 }

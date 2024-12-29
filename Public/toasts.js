@@ -1,6 +1,9 @@
+//div that holds all the toast notifications
 let notifications = document.getElementById("notif");
 
 function createToast(type, icon, title, text) {
+  //create a new toast notification
+  //with the given type, icon, title and text
   let newToast = document.createElement("div");
   newToast.innerHTML = `
             <div class="toast select-none" id="${type}">
@@ -12,6 +15,7 @@ function createToast(type, icon, title, text) {
             </div>`;
   notifications.prepend(newToast);
 
+  //remove the toast after 5 seconds
   newToast.timeOut = setTimeout(() => newToast.remove(), 5000);
 }
 

@@ -1,19 +1,19 @@
 // Get the user's window width and height
 rescale();
 function rescale() {
+  console.log("rescaling the window to fit the canvas");
+  // Get the user's window width and height
   windowWidth = window.innerWidth;
   windowHeight = window.innerHeight;
+  // calculate the scale factor been the window and the canvas
   widthporcent = windowWidth / canvas.width;
   heightporcent = windowHeight / canvas.height;
-  console.log(`Window Width: ${windowWidth}, Window Height: ${windowHeight}`);
+
+  //get the minimum scale factor and apply a 5% reduction
   scale = Math.min(widthporcent, heightporcent) * 0.95;
-  console.log("Rescaling...");
-  console.log(scale);
+
+  //apply the scale factor to the canvas
   document.body.style.transform = `scale(${scale})`;
 }
 
 window.onresize = rescale;
-
-function resize() {
-  alert("resize event detected!");
-}

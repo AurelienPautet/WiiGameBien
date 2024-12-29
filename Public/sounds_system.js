@@ -1,3 +1,6 @@
+// Needs a re-do with Howler.js because sounds not working on safari
+// https://howlerjs.com/
+
 var sound_tir = new Audio("sounds/tir.mp3");
 var sound_kill = new Audio("sounds/kill.mp3");
 var sound_explose = new Audio("sounds/eplose.mp3");

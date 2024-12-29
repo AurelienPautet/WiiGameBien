@@ -5,6 +5,7 @@ const c = canvas.getContext("2d");
 canvas.width = 1150;
 canvas.height = 800;
 
+//debug visual for hitboxes and other stuff
 debug = "rgba(255, 0, 0, 0)";
 
 //BLUE
@@ -53,34 +54,42 @@ body_violetF.src = "image/tank_player/body_violetF.png";
 turret_violetF = new Image();
 turret_violetF.src = "image/tank_player/turret_violetF.png";
 
+//index of themes for the game
 let theme = 1;
 let maxtheme = 5;
 
-//Create canva images
+//Create all the needed sprites
 block1 = new Image();
 block2 = new Image();
 bullet1 = new Image();
 bg = new Image();
-
 dead = new Image();
+
+//add the dead sprite source
 dead.src = "image/dead.png";
 
 //load images that will be drawn
 loadtheme(theme);
-function loadtheme(themnb) {
+function loadtheme() {
+  //load the images in the coresponding sprites for the current theme
   block1.src = `image/block/Cube${theme}-1.png`;
   block2.src = `image/block/Cube${theme}-2.png`;
   bullet1.src = `image/bullet/bullet-${theme}.png`;
   bg.src = `image/bg${theme}.png`;
 }
 
+//draw the game to the canvas
 draw();
 
 function draw() {
+  //draw the game
+  //it will be called every frame
   window.requestAnimationFrame(draw);
 
+  //draw the background on the canvas first
   c.drawImage(bg, 0, 0, canvas.width, canvas.height);
 
+  //draw each mine on the canvas
   mines.forEach((mine) => {
     if (mine.timealive > 220) {
       if (mine.timealive % 10 < 5) {
@@ -112,6 +121,7 @@ function draw() {
     c.closePath();
   });
 
+  //draw the blocks on the canvas
   blocks.forEach((block) => {
     if (block.type == 1) {
       c.drawImage(
@@ -146,6 +156,7 @@ function draw() {
     });
   }
 
+  //draw the bullets on the canvas
   bullets.forEach((bullet) => {
     drawImageRot(
       bullet1,
@@ -157,6 +168,7 @@ function draw() {
     );
   });
 
+  //draw the players on the canvas
   players.forEach((player) => {
     //body hit box
     if (player.alive) {
@@ -205,6 +217,8 @@ function draw() {
       c.stroke();
     }
   });
+
+  //draw the particles on the canvas
   for (let e = 0; e < particles.length; e++) {
     if (particles[e].timealive < particles[e].timelife) {
       particles[e].update();
@@ -213,6 +227,8 @@ function draw() {
       e -= 1;
     }
   }
+
+  //draw the chockwaves on the canvas
   for (let e = 0; e < chockwaves.length; e++) {
     if (chockwaves[e].timealive < chockwaves[e].timelife) {
       chockwaves[e].update();
@@ -222,7 +238,6 @@ function draw() {
     }
   }
 }
-c.font = "50px Arial";
 
 function drawImageRot(img, x, y, width, height, deg) {
   // Store the current context state (i.e. rotation, translation etc..)

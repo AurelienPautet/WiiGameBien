@@ -1,3 +1,31 @@
+.highliht {
+  background-color: #ef8354;
+}
+.highlit_text {
+  color: #ef8354;
+}
+.dark_background {
+  background-color: #2d3142;
+}
+.dark_text {
+  color: #2d3142;
+}
+.light_background {
+  background-color: #4f5d75;
+}
+.light_text {
+  color: #4f5d75;
+}
+.grey_background {
+  background-color: #bfc0c0;
+}
+.grey_text {
+  color: #bfc0c0;
+}
+.text_color {
+  color: #ffffff;
+}
+
 .everything {
   position: absolute;
   width: 1150px;
