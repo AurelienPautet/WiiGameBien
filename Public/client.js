@@ -1,6 +1,6 @@
 //
-//const socket = io("https://wiitank.pautet.net");
-const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+const socket = io("https://wiitank.pautet.net");
+//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
 //const socket = io("http://localhost:7000/");
 
 socket.on("welcome", (data) => {});
@@ -10,8 +10,9 @@ socket.on("serverid", (data) => {
   console.log(serverid);
 });
 
-socket.on("id", (data) => {
-  playerid = data;
+socket.on("id", (pid, socketid) => {
+  mysocketid = socketid;
+  playerid = pid;
   showgame();
   playing = true;
   trying = false;
@@ -44,6 +45,7 @@ setInterval(async () => {
 }, 16.67);
 
 serverid = "";
+mysocketid = "";
 room_name = 0;
 trying = false;
 playing = false;

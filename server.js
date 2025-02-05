@@ -109,7 +109,9 @@ io.on("connect", (socket) => {
       room.spawns.splice(spawnid, 1);
       room.players.push(player);
       room.ids.push(socket.id);
-      socket.emit("id", room.ids.length - 1);
+      room.ids_to_names[socket.id] = playerName;
+      room.scores[socket.id] = 0;
+      socket.emit("id", room.ids.length - 1, socket.id);
       socket.leave("lobby" + serverid);
       socket.join(room.name);
       io.to(room.name).emit("player-connection", playerName);
@@ -256,7 +258,14 @@ function check_for_winns_and_load_next_level(room) {
       if (room.nbliving == 1) {
         room.players.forEach((player) => {
           if (player.alive) {
-            io.to(room.name).emit("winner", player.name, waitingtime);
+            room.scores[player.socketid] += 1;
+            io.to(room.name).emit(
+              "winner",
+              player.socketid,
+              waitingtime,
+              room.scores,
+              room.ids_to_names
+            );
           }
         });
       } else {

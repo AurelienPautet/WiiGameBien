@@ -362,6 +362,7 @@ class Room {
     this.maxplayernb = 0;
     this.levels = levels;
     this.rounds = rounds;
+    this.scores = {};
     this.creator = creator;
     this.sounds = {
       plant: false,
@@ -374,6 +375,7 @@ class Room {
     this.players = [];
     this.frontend_players = [];
     this.ids = [];
+    this.ids_to_names = {};
     this.blocks = [];
     this.Bcollision = [];
     this.bullets = [];

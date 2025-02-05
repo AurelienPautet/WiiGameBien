@@ -92,7 +92,7 @@ function slide(name_str) {
 }
 
 function slide2(name_str) {
-  if (MouseX > width / 2) {
+  if (MouseX > (width * scale) / 2) {
     document.getElementById(name_str + "_select").scrollLeft += scrollone;
   } else {
     document.getElementById(name_str + "_select").scrollLeft -= scrollone;
@@ -124,7 +124,7 @@ let x = 0;
 // fucking css of shit
 // i hate thissssss
 // Why is it working in mobile ?????/!!! but not on the computer !!!!!!
-
+/* 
 let turret_select = document.getElementById("turret_select");
 turret_select.addEventListener("mousedown", () => {
   dragdown("turret");
@@ -176,3 +176,4 @@ function dragup(name_str) {
   pressed[name_str] = false;
   console.log("dragup");
 }
+ */
