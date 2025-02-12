@@ -113,7 +113,7 @@ class Player {
     for (let i = 0; i < room.Bcollision.length; i++) {
       this.BodyCollision(room.Bcollision[i]);
     }
-    for (let socket_id in room.players.length) {
+    for (let socket_id in room.players) {
       if (room.players[socket_id].alive && this != room.players[socket_id]) {
         this.BodyCollision(room.players[socket_id]);
       }

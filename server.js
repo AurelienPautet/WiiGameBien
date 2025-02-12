@@ -73,12 +73,12 @@ io.on("connect", (socket) => {
           roomsf.players[socket.id].name
         );
         delete roomsf.players[socket.id];
+        roomsf.ids = roomsf.ids.filter((id) => id !== socket.id);
+        roomsf.nbliving--;
       }
     } catch (error) {
       console.error("Error handling player disconnection:", error);
     }
-    roomsf.ids = roomsf.ids.filter((id) => id !== socket.id);
-    roomsf.nbliving--;
   });
 
   socket.on("search_levels", (input_name, input_nb_players) => {
@@ -286,7 +286,13 @@ function check_for_winns_and_load_next_level(room) {
           }
         }
       } else {
-        io.to(room.name).emit("draw", waitingtime);
+        io.to(room.name).emit(
+          "winner",
+          -1,
+          waitingtime,
+          room.scores,
+          room.ids_to_names
+        );
       }
       room.waitingrespawn = true;
       respawnwait = setTimeout(async () => {
@@ -489,7 +495,7 @@ async function create_room(name, rounds, list_id, creator) {
 //Create the default room and load the first level
 rooms = [];
 
-create_room("6 players", 10, [2, 3, 4, 5], "GAME MASTER");
+create_room("6 players", 10, [2, 3, 4], "GAME MASTER");
 
 //make an id for the server
 function makeid(length) {
