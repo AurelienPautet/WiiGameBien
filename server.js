@@ -65,12 +65,17 @@ io.on("connect", (socket) => {
         roomsf = r;
       }
     });
-    if (roomsf && roomsf.players && roomsf.players[socket.id]) {
-      io.to(roomsf.name).emit(
-        "player-disconnection",
-        roomsf.players[socket.id].name
-      );
-      delete roomsf.players[socket.id];
+
+    try {
+      if (roomsf && roomsf.players && roomsf.players[socket.id]) {
+        io.to(roomsf.name).emit(
+          "player-disconnection",
+          roomsf.players[socket.id].name
+        );
+        delete roomsf.players[socket.id];
+      }
+    } catch (error) {
+      console.error("Error handling player disconnection:", error);
     }
     roomsf.ids = roomsf.ids.filter((id) => id !== socket.id);
     roomsf.nbliving--;
