@@ -50,7 +50,7 @@ function reconciliation_loop() {
     }
   }
   // Call itself after 16.67ms (60 FPS)
-  reconciliation_loop(gameLoop, 16.67);
+  setTimeout(reconciliation_loop, 16.67);
 }
 
 // Start the game loop
