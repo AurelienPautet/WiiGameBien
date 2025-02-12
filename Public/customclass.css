@@ -176,6 +176,10 @@ body {
   border: 15px solid rgba(25, 0, 255, 0.1);
 }
 
+.scores {
+  animation: entrance 1s ease 0s 1 normal forwards;
+}
+
 @keyframes entrance {
   0% {
     opacity: 0;

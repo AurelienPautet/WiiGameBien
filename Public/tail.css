@@ -689,10 +689,6 @@ video {
   height: 100%;
 }
 
-.h-1{
-  height: 0.25rem;
-}
-
 .w-1\/2{
   width: 50%;
 }
@@ -729,14 +725,6 @@ video {
   width: 100%;
 }
 
-.w-2\/4{
-  width: 50%;
-}
-
-.w-1{
-  width: 0.25rem;
-}
-
 .flex-grow-0{
   flex-grow: 0;
 }
@@ -751,10 +739,6 @@ video {
 
 .snap-center{
   scroll-snap-align: center;
-}
-
-.flex-row{
-  flex-direction: row;
 }
 
 .flex-col{
@@ -830,6 +814,11 @@ video {
   border-color: rgb(209 213 219 / var(--tw-border-opacity));
 }
 
+.border-green-500{
+  --tw-border-opacity: 1;
+  border-color: rgb(34 197 94 / var(--tw-border-opacity));
+}
+
 .border-red-500{
   --tw-border-opacity: 1;
   border-color: rgb(239 68 68 / var(--tw-border-opacity));
@@ -894,21 +883,6 @@ video {
   background-color: rgb(255 255 255 / var(--tw-bg-opacity));
 }
 
-.bg-black{
-  --tw-bg-opacity: 1;
-  background-color: rgb(0 0 0 / var(--tw-bg-opacity));
-}
-
-.bg-blue-50{
-  --tw-bg-opacity: 1;
-  background-color: rgb(239 246 255 / var(--tw-bg-opacity));
-}
-
-.bg-red-800{
-  --tw-bg-opacity: 1;
-  background-color: rgb(153 27 27 / var(--tw-bg-opacity));
-}
-
 .p-4{
   padding: 1rem;
 }
@@ -947,8 +921,9 @@ video {
   padding-bottom: 0.625rem;
 }
 
-.align-middle{
-  vertical-align: middle;
+.text-2xl{
+  font-size: 1.5rem;
+  line-height: 2rem;
 }
 
 .text-4xl{
@@ -971,11 +946,6 @@ video {
   line-height: 1.75rem;
 }
 
-.text-2xl{
-  font-size: 1.5rem;
-  line-height: 2rem;
-}
-
 .font-bold{
   font-weight: 700;
 }
@@ -994,6 +964,11 @@ video {
   color: rgb(0 0 0 / var(--tw-text-opacity));
 }
 
+.text-green-500{
+  --tw-text-opacity: 1;
+  color: rgb(34 197 94 / var(--tw-text-opacity));
+}
+
 .text-red-500{
   --tw-text-opacity: 1;
   color: rgb(239 68 68 / var(--tw-text-opacity));
@@ -1007,6 +982,11 @@ video {
 .text-yellow-400{
   --tw-text-opacity: 1;
   color: rgb(250 204 21 / var(--tw-text-opacity));
+}
+
+.text-yellow-500{
+  --tw-text-opacity: 1;
+  color: rgb(234 179 8 / var(--tw-text-opacity));
 }
 
 .opacity-0{
@@ -1350,20 +1330,12 @@ canvas {
   height: 100%;
 }
 
-.hover\:h-16:hover{
-  height: 4rem;
-}
-
 .hover\:h-5:hover{
   height: 1.25rem;
 }
 
 .hover\:h-9:hover{
   height: 2.25rem;
-}
-
-.hover\:w-32:hover{
-  width: 8rem;
 }
 
 .hover\:w-5:hover{

@@ -464,7 +464,6 @@ function kill(killer, killed, room, type) {
 async function create_room(name, rounds, list_id, creator) {
   room = new Room(name, rounds, list_id, creator);
   room.maxplayernb = await get_max_players(list_id);
-  console.log(room.maxplayernb);
   rooms.push(room);
   loadlevel(room.levels[0], room);
   room_list(0);
