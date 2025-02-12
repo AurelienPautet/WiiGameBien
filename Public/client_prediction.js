@@ -29,7 +29,12 @@ class Frontend_Player {
   }
 }
 
+player_reonciliation = true;
+
 function reconciliation_loop() {
+  if (!player_reonciliation) {
+    return;
+  }
   for (socketid in players) {
     player = players[socketid];
     if (player.socketid == mysocketid) {
