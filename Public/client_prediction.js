@@ -29,7 +29,7 @@ class Frontend_Player {
   }
 }
 
-player_reonciliation = true;
+player_reonciliation = false;
 
 function reconciliation_loop() {
   if (!player_reonciliation) {

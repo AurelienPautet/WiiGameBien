@@ -6,7 +6,7 @@ socket.on("winner", (id, wait, scores, ids_to_name) => {
   scores = Object.fromEntries(
     Object.entries(scores).sort(([, a], [, b]) => b - a)
   );
-
+  childs_list_to_add = [];
   higest_score = scores[Object.keys(scores)[0]];
   for (var _id in scores) {
     player_score_info = document.createElement("div");
@@ -19,9 +19,10 @@ socket.on("winner", (id, wait, scores, ids_to_name) => {
             ${ids_to_name[_id]} : ${scores[_id]} 
           </div>`;
     }
-    score_tab.appendChild(player_score_info);
+    childs_list_to_add.push(player_score_info);
   }
-
+  console.log(childs_list_to_add);
+  add_in_cascade(score_tab, childs_list_to_add, 0.2 * wait);
   document
     .getElementById("end_screen_screen")
     .classList.remove("border-red-500");
@@ -64,3 +65,18 @@ socket.on("draw", (wait) => {
     document.getElementById("draw").style.display = "none";
   }, wait);
 });
+
+function add_in_cascade(parent, child_divs_list, overall_delay) {
+  beetwen_delay = overall_delay / child_divs_list.length;
+  for (let i = 0; i < child_divs_list.length; i++) {
+    let blank = child_divs_list[i].cloneNode(true);
+    blank.style.opacity = 0;
+    blank.id = `child_div_${i}`;
+    parent.appendChild(blank);
+    setTimeout(() => {
+      document.getElementById(`child_div_${i}`).remove();
+      console.log("add");
+      parent.appendChild(child_divs_list[i]);
+    }, beetwen_delay * i);
+  }
+}
