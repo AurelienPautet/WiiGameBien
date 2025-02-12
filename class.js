@@ -16,6 +16,8 @@ class Player {
     this.turretc = turretc;
     this.position = position;
     this.socketid = socketid;
+    this.mytick = 0;
+    this.mvtspeed = 3;
     this.spawnpos = {
       x: 0,
       y: 0,
@@ -88,37 +90,50 @@ class Player {
     }
   }
 
-  update(room) {
+  update(room, fps_corector) {
     this.CalculateAngle();
 
     //change the angle of the image depending on the mvt direction
     if (this.alive) {
-      this.velocity = this.direction;
+      if (this.direction.x > 0) {
+        this.velocity.x = mvtspeed * fps_corector;
+      } else if (this.direction.x < 0) {
+        this.velocity.x = -mvtspeed * fps_corector;
+      } else {
+        this.velocity.x = 0;
+      }
+      if (this.direction.y > 0) {
+        this.velocity.y = mvtspeed * fps_corector;
+      } else if (this.direction.y < 0) {
+        this.velocity.y = -mvtspeed * fps_corector;
+      } else {
+        this.velocity.y = 0;
+      }
     }
     for (let i = 0; i < room.Bcollision.length; i++) {
       this.BodyCollision(room.Bcollision[i]);
     }
-    for (let i = 0; i < room.players.length; i++) {
-      if (room.players[i].alive && this != room.players[i]) {
-        this.BodyCollision(room.players[i]);
+    for (let socket_id in room.players.length) {
+      if (room.players[socket_id].alive && this != room.players[socket_id]) {
+        this.BodyCollision(room.players[socket_id]);
       }
     }
-    if (this.velocity.x == mvtspeed) {
+    if (this.velocity.x > 0) {
       this.rotation = 0;
-    } else if (this.velocity.x == -mvtspeed) {
+    } else if (this.velocity.x < 0) {
       this.rotation = 0;
-    } else if (this.velocity.y == -mvtspeed) {
+    } else if (this.velocity.y < 0) {
       this.rotation = 90;
-    } else if (this.velocity.y == mvtspeed) {
+    } else if (this.velocity.y > 0) {
       this.rotation = 90;
     }
-    if (this.velocity.x == -mvtspeed && this.velocity.y == -mvtspeed) {
+    if (this.velocity.x < 0 && this.velocity.y < 0) {
       this.rotation = 45;
-    } else if (this.velocity.x == mvtspeed && this.velocity.y == -mvtspeed) {
+    } else if (this.velocity.x > 0 && this.velocity.y < 0) {
       this.rotation = -45;
-    } else if (this.velocity.x == mvtspeed && this.velocity.y == mvtspeed) {
+    } else if (this.velocity.x > 0 && this.velocity.y > 0) {
       this.rotation = 45;
-    } else if (this.velocity.x == -mvtspeed && this.velocity.y == mvtspeed) {
+    } else if (this.velocity.x < 0 && this.velocity.y > 0) {
       this.rotation = -45;
     }
 
@@ -217,12 +232,12 @@ class Bullet {
     this.bounce = 0;
     this.emitter = emitter;
   }
-  update(room) {
+  update(room, fps_corector) {
     for (let i = 0; i < room.Bcollision.length; i++) {
       this.collision_walls(room.Bcollision[i], room);
     }
-    this.position.x += this.velocity.x;
-    this.position.y += this.velocity.y;
+    this.position.x += this.velocity.x * fps_corector;
+    this.position.y += this.velocity.y * fps_corector;
   }
   collision_walls(obj, room) {
     /*this.side = colliderect(
@@ -317,7 +332,9 @@ class Frontend_Player {
     bodyc,
     angle,
     alive,
-    rotation
+    rotation,
+    direction,
+    mytick
   ) {
     this.name = name;
     this.bodyc = bodyc;
@@ -335,6 +352,8 @@ class Frontend_Player {
     this.angle = angle;
     this.alive = alive;
     this.rotation = rotation;
+    this.direction = direction;
+    this.mytick = mytick;
   }
 }
 
@@ -372,8 +391,8 @@ class Room {
       explose: false,
     };
     this.levelid = 0;
-    this.players = [];
-    this.frontend_players = [];
+    this.players = {};
+    this.frontend_players = {};
     this.ids = [];
     this.ids_to_names = {};
     this.blocks = [];
@@ -382,6 +401,11 @@ class Room {
     this.mines = [];
     this.spawns = [];
     this.nbliving = 0;
+    this.tick = 0;
+  }
+
+  update() {
+    this.tick++;
   }
 }
 

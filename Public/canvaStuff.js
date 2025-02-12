@@ -169,7 +169,8 @@ function draw() {
   });
 
   //draw the players on the canvas
-  players.forEach((player) => {
+  for (socketid in players) {
+    player = players[socketid];
     //body hit box
     if (player.alive) {
       //drawing the body
@@ -216,7 +217,7 @@ function draw() {
       c.fill();
       c.stroke();
     }
-  });
+  }
 
   //draw the particles on the canvas
   for (let e = 0; e < particles.length; e++) {

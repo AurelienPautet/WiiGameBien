@@ -1,6 +1,6 @@
 //
-const socket = io("https://wiitank.pautet.net");
-//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+//const socket = io("https://wiitank.pautet.net");
+const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
 //const socket = io("http://localhost:7000/");
 
 socket.on("welcome", (data) => {});
@@ -8,6 +8,10 @@ socket.on("welcome", (data) => {});
 socket.on("serverid", (data) => {
   serverid = data;
   console.log(serverid);
+});
+
+socket.on("socketid", (socketid) => {
+  mysocketid = socketid;
 });
 
 socket.on("id", (pid, socketid) => {
@@ -31,19 +35,22 @@ socket.on("wrongserver", () => {
 setInterval(async () => {
   if (playing && room_name != 0) {
     socket.emit("tock", {
-      serverid,
+      mysocketid,
       playerid,
       direction,
       plant,
       click,
       aim,
       room_name,
+      mytick,
     });
   }
+  mytick++;
   click = false;
   plant = false;
 }, 16.67);
 
+mytick = 0;
 serverid = "";
 mysocketid = "";
 room_name = 0;
@@ -56,9 +63,9 @@ Bcollision = [];
 bullets = [];
 mines = [];
 debug_visual = false;
-width = 1150;
-height = 800;
 
+const width = 1150;
+const height = 800;
 const mvtspeed = 3;
 
 direction = {
@@ -72,11 +79,28 @@ aim = {
 plant = false;
 click = false;
 
-socket.on("tick", (p, bu, m, r) => {
-  players = p;
+socket.on("tick", (p, bu, m, r, t) => {
   bullets = bu;
   mines = m;
   room_name = r;
+  mytick = t;
+  for (socketid in p) {
+    if (!players[socketid]) {
+      players[socketid] = p[socketid];
+    } else {
+      players[socketid].position = p[socketid].position;
+      players[socketid].angle = p[socketid].angle;
+      players[socketid].alive = p[socketid].alive;
+      players[socketid].rotation = p[socketid].rotation;
+      players[socketid].direction = p[socketid].direction;
+      players[socketid].mytick = p[socketid].mytick;
+    }
+  }
+  for (socketid in players) {
+    if (!p[socketid]) {
+      delete players[socketid];
+    }
+  }
 });
 
 socket.on("level_change", (b, Bc) => {

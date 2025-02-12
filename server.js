@@ -10,6 +10,7 @@ console.log("PORT : ", PORT);
 const expressServer = app.listen(PORT);
 
 const socketio = require("socket.io");
+const { Z_ASCII } = require("zlib");
 const io = socketio(expressServer, {
   cors: [
     "http://localhost:7000",
@@ -48,6 +49,7 @@ io.on("connect", (socket) => {
   console.log(socket.id, "has joined our server!");
   socket.emit("welcome", socket.id + "has joinded the server");
   socket.emit("serverid", serverid);
+  socket.emit("socketid", socket.id);
   socket.emit("levelset", levelssetnames);
 
   socket.on("disconnect", function () {
@@ -63,21 +65,15 @@ io.on("connect", (socket) => {
         roomsf = r;
       }
     });
-    if (roomsf === 0) {
-      console.log("fuck");
-    } else {
+    if (roomsf && roomsf.players && roomsf.players[socket.id]) {
+      io.to(roomsf.name).emit(
+        "player-disconnection",
+        roomsf.players[socket.id].name
+      );
+      delete roomsf.players[socket.id];
     }
-    if (i != undefined && i > -1 && roomsf != undefined) {
-      for (let e = i + 1; e < roomsf.players.length; e++) {
-        io.to(roomsf.ids[e]).emit("id", e - 1);
-      }
-      io.to(roomsf.name).emit("player-disconnection", roomsf.players[i].name);
-
-      roomsf.players.splice(i, 1);
-      roomsf.ids.splice(i, 1);
-
-      roomsf.nbliving--;
-    }
+    roomsf.ids = roomsf.ids.filter((id) => id !== socket.id);
+    roomsf.nbliving--;
   });
 
   socket.on("search_levels", (input_name, input_nb_players) => {
@@ -94,7 +90,7 @@ io.on("connect", (socket) => {
 
     if (
       room.ids.includes(socket.id) == false &&
-      room.players.length < room.maxplayernb
+      Object.keys(room.players).length < room.maxplayernb
     ) {
       spawnid = Math.floor(Math.random() * room.spawns.length);
       const player = new Player(
@@ -107,7 +103,7 @@ io.on("connect", (socket) => {
       room.nbliving += 1;
       player.spawnpos = room.spawns[spawnid];
       room.spawns.splice(spawnid, 1);
-      room.players.push(player);
+      room.players[socket.id] = player;
       room.ids.push(socket.id);
       room.ids_to_names[socket.id] = playerName;
       room.scores[socket.id] = 0;
@@ -128,20 +124,21 @@ io.on("connect", (socket) => {
       if (
         room != undefined &&
         room.players != undefined &&
-        room.players[data.playerid] != undefined
+        room.players[data.mysocketid] != undefined
       ) {
+        room.players[data.mysocketid].mytick = data.mytick;
         if (data.direction != undefined) {
-          room.players[data.playerid].direction = data.direction;
+          room.players[data.mysocketid].direction = data.direction;
         }
         if (data.aim != undefined) {
-          room.players[data.playerid].aim = data.aim;
+          room.players[data.mysocketid].aim = data.aim;
         }
         // players[data.playerid].update();
         if (data.click) {
-          room.players[data.playerid].shoot(room);
+          room.players[data.mysocketid].shoot(room);
         }
         if (data.plant) {
-          room.players[data.playerid].plant(room);
+          room.players[data.mysocketid].plant(room);
         }
       }
     } else {
@@ -152,34 +149,37 @@ io.on("connect", (socket) => {
 
 tickTockInterval = setTimeout(function toocking() {
   func = setTimeout(toocking, 16.67);
+  TimeElapsed = getTimeElapsed();
+  fps_corector = TimeElapsed / 16.67;
   rooms.forEach((room) => {
     check_for_winns_and_load_next_level(room);
     update_mines(room);
     update_bullets(room);
-
-    room.frontend_players = [];
-    room.players.forEach((player) => {
-      player.update(room);
-
-      room.frontend_players.push(
-        new Frontend_Player(
-          player.position,
-          player.socketid,
-          player.name,
-          player.turretc,
-          player.bodyc,
-          player.angle,
-          player.alive,
-          player.rotation
-        )
+    room.update();
+    room.frontend_players = {};
+    for (socketid in room.players) {
+      room.players[socketid].update(room, fps_corector);
+      player = room.players[socketid];
+      room.frontend_players[socketid] = new Frontend_Player(
+        player.position,
+        player.socketid,
+        player.name,
+        player.turretc,
+        player.bodyc,
+        player.angle,
+        player.alive,
+        player.rotation,
+        player.direction,
+        player.mytick
       );
-    });
+    }
     io.to(room.name).emit(
       "tick",
       room.frontend_players,
       room.bullets,
       room.mines,
-      room.name
+      room.name,
+      room.tick
     ); // send the event to the "game" room
     io.to(room.name).emit("tick_sounds", room.sounds);
     room.sounds = {
@@ -199,7 +199,7 @@ function room_list(socket) {
   room_creator_name = [];
   rooms.forEach((room) => {
     room_names.push(room.name);
-    room_players.push(room.players.length);
+    room_players.push(Object.keys(room.players).length);
     room_players_max.push(room.maxplayernb);
     room_creator_name.push(room.creator);
   });
@@ -226,6 +226,17 @@ function room_list(socket) {
 //important constants for the game
 const waitingtime = 3000;
 const timetoeplode = 300;
+const mines_explsion_radius = 90;
+fps_corector = 1;
+//Function to get time elapsed in milliseconds between two moments
+oldTime = performance.now();
+
+function getTimeElapsed() {
+  const now = performance.now();
+  const res = now - oldTime;
+  oldTime = now;
+  return res;
+}
 
 //Read the levels folder and create all the different levelsets
 levelsset = [];
@@ -254,20 +265,21 @@ fs.readdir(path.join(__dirname, "./", "levels"), (err, files) => {
 
 function check_for_winns_and_load_next_level(room) {
   if (room.waitingrespawn == false && room.nbliving <= 1) {
-    if (room.players.length >= 2) {
+    if (Object.keys(room.players).length >= 2) {
       if (room.nbliving == 1) {
-        room.players.forEach((player) => {
+        for (socketid in room.players) {
+          player = room.players[socketid];
           if (player.alive) {
-            room.scores[player.socketid] += 1;
+            room.scores[socketid] += 1;
             io.to(room.name).emit(
               "winner",
-              player.socketid,
+              socketid,
               waitingtime,
               room.scores,
               room.ids_to_names
             );
           }
-        });
+        }
       } else {
         io.to(room.name).emit("draw", waitingtime);
       }
@@ -277,7 +289,8 @@ function check_for_winns_and_load_next_level(room) {
         room.mines = [];
         await loadlevel(room.levels[room.levelid], room);
         io.to(room.name).emit("level_change", room.blocks, room.Bcollision);
-        room.players.forEach((player) => {
+        for (socketid in room.players) {
+          player = room.players[socketid];
           player.alive = true;
           player.minecount = 0;
           player.bulletcount = 0;
@@ -285,8 +298,8 @@ function check_for_winns_and_load_next_level(room) {
           player.spawnpos = room.spawns[spawnid];
           room.spawns.splice(spawnid, 1);
           player.spawn();
-        });
-        room.nbliving = room.players.length;
+        }
+        room.nbliving = Object.keys(room.players).length;
         room.waitingrespawn = false;
 
         if (room.levelid < room.levels.length - 1) {
@@ -301,7 +314,7 @@ function check_for_winns_and_load_next_level(room) {
 
 function update_bullets(room) {
   bulleting: for (let i = 0; i < room.bullets.length; i++) {
-    room.bullets[i].update(room);
+    room.bullets[i].update(room, fps_corector);
     if (room.bullets[i].bounce >= 3) {
       io.to(room.name).emit("bullet_explosion", {
         x: room.bullets[i].position.x,
@@ -365,13 +378,13 @@ function update_bullets(room) {
         continue bulleting;
       }
     }
-    for (let e = 0; e < room.players.length; e++) {
+    for (socketid in room.players) {
       if (
-        room.players[e].BulletCollision(room.bullets[i]) &&
-        room.players[e].alive
+        room.players[socketid].BulletCollision(room.bullets[i]) &&
+        room.players[socketid].alive
       ) {
         room.bullets[i].emitter.bulletcount--;
-        kill(room.bullets[i].emitter, room.players[e], room, "bullet");
+        kill(room.bullets[i].emitter, room.players[socketid], room, "bullet");
         room.bullets.splice(i, 1);
         i -= 1;
 
@@ -395,7 +408,7 @@ function update_mines(room) {
               room.blocks[m].position,
               room.blocks[m].size
             ) <=
-            90 ** 2
+            mines_explsion_radius ** 2
           ) {
             room.blocklist[
               (room.blocks[m].position.y / 50) * 23 +
@@ -417,23 +430,23 @@ function update_mines(room) {
             room.mines[e].position,
             { w: room.mines[e].radius * 2, h: room.mines[e].radius * 2 }
           ) <=
-          90 ** 2
+          mines_explsion_radius ** 2
         ) {
           room.mines[e].timealive = timetoeplode;
         }
       }
-      for (let m = 0; m < room.players.length; m++) {
+      for (socketid in room.players) {
         if (
           distance(
             room.mines[i].position,
             { w: room.mines[i].radius * 2, h: room.mines[i].radius * 2 },
-            room.players[m].position,
-            room.players[m].size
+            room.players[socketid].position,
+            room.players[socketid].size
           ) <=
-            90 ** 2 &&
-          room.players[m].alive
+            mines_explsion_radius ** 2 &&
+          room.players[socketid].alive
         ) {
-          kill(room.mines[i].emitter, room.players[m], room, "mine");
+          kill(room.mines[i].emitter, room.players[socketid], room, "mine");
         }
       }
 
