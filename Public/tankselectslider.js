@@ -48,6 +48,8 @@ function load_old_tank() {
       update_tank_visualiser();
       update_slider("turret");
       update_slider("body");
+      slide("turret");
+      slide("body");
       return_home();
     }
   } catch (err) {
@@ -97,7 +99,7 @@ function slide2(name_str) {
   } else {
     document.getElementById(name_str + "_select").scrollLeft -= scrollone;
   }
-  slide("name_str");
+  slide(name_str);
 }
 
 function grow(elementid) {
