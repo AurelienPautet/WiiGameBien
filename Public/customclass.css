@@ -137,7 +137,7 @@ body {
   margin: 3px;
   color: white;
   animation: entrance 2s ease 0s 1 normal forwards,
-    exit 2s ease 3s 1 normal forwards;
+    exit 2s ease 15s 1 normal forwards;
   overflow: hidden;
 }
 .toast .header {

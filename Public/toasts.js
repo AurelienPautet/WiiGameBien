@@ -16,7 +16,7 @@ function createToast(type, icon, title, text) {
   notifications.prepend(newToast);
 
   //remove the toast after 5 seconds
-  newToast.timeOut = setTimeout(() => newToast.remove(), 5000);
+  newToast.timeOut = setTimeout(() => newToast.remove(), 50000);
 }
 
 socket.on("player-connection", (name) => {
