@@ -105,13 +105,7 @@ io.on("connect", (socket) => {
         turretc,
         bodyc
       );
-      room.nbliving += 1;
-      player.spawnpos = room.spawns[spawnid];
-      room.spawns.splice(spawnid, 1);
-      room.players[socket.id] = player;
-      room.ids.push(socket.id);
-      room.ids_to_names[socket.id] = playerName;
-      room.scores[socket.id] = 0;
+      room.spawn_player(player);
       socket.emit("id", room.ids.length - 1, socket.id);
       socket.leave("lobby" + serverid);
       socket.join(room.name);
@@ -229,7 +223,7 @@ function room_list(socket) {
 }
 
 //important constants for the game
-const waitingtime = 3000;
+const waitingtime = 5000;
 const timetoeplode = 300;
 const mines_explsion_radius = 90;
 fps_corector = 1;
@@ -268,6 +262,15 @@ fs.readdir(path.join(__dirname, "./", "levels"), (err, files) => {
   }
 });
 
+function get_all_player_stats(room) {
+  stats = {};
+  for (socketid in room.players) {
+    player = room.players[socketid];
+    stats[socketid] = player.stats;
+  }
+  return stats;
+}
+
 function check_for_winns_and_load_next_level(room) {
   if (room.waitingrespawn == false && room.nbliving <= 1) {
     if (Object.keys(room.players).length >= 2) {
@@ -275,12 +278,12 @@ function check_for_winns_and_load_next_level(room) {
         for (socketid in room.players) {
           player = room.players[socketid];
           if (player.alive) {
-            room.scores[socketid] += 1;
+            player.stats.wins++;
             io.to(room.name).emit(
               "winner",
               socketid,
               waitingtime,
-              room.scores,
+              get_all_player_stats(room),
               room.ids_to_names
             );
           }
@@ -476,6 +479,8 @@ function update_mines(room) {
 
 function kill(killer, killed, room, type) {
   killed.alive = false;
+  killer.stats.kills++;
+  killed.stats.deaths++;
   room.nbliving--;
   room.sounds.kill = true;
   io.to(room.name).emit("player-kill", [killer.name, killed.name], type);

@@ -18,6 +18,12 @@ class Player {
     this.socketid = socketid;
     this.mytick = 0;
     this.mvtspeed = 3;
+    this.stats = {
+      wins: 0,
+      kills: 0,
+      deaths: 0,
+      rounds: 0,
+    };
     this.spawnpos = {
       x: 0,
       y: 0,
@@ -58,7 +64,6 @@ class Player {
     this.endofbarrel();
     if (this.bulletcount < 5 && this.alive) {
       room.sounds.shoot = true;
-
       this.bulletcount++;
       room.bullets.push(
         new Bullet({ x: this.endpos.x, y: this.endpos.y }, this.angle, 6, this)
@@ -372,8 +377,6 @@ class Mine {
 }
 
 class Room {
-  //room class that contains all the players, the blocks, the bullets, the mines, the collision boxes, the levelset and the levelid
-  //the room class also contains the sounds that are played in the room
   constructor(name, rounds, levels, creator) {
     this.name = name;
     this.waitingrespawn = false;
@@ -381,7 +384,6 @@ class Room {
     this.maxplayernb = 0;
     this.levels = levels;
     this.rounds = rounds;
-    this.scores = {};
     this.creator = creator;
     this.sounds = {
       plant: false,
@@ -402,6 +404,15 @@ class Room {
     this.spawns = [];
     this.nbliving = 0;
     this.tick = 0;
+  }
+
+  spawn_player(player) {
+    this.nbliving += 1;
+    player.spawnpos = this.spawns[spawnid];
+    this.spawns.splice(spawnid, 1);
+    this.players[player.socketid] = player;
+    this.ids.push(player.socketid);
+    this.ids_to_names[player.socketid] = player.name;
   }
 
   update() {

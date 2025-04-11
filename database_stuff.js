@@ -8,7 +8,6 @@ DB_USER = process.env.DB_USER;
 DB_NAME = process.env.DB_NAME;
 DB_PORT = process.env.DB_PORT;
 
-// Create a new PostgreSQL client
 let client;
 console.log(process.env.DATABASE_URL, "DATABASE_URL");
 if (process.env.DATABASE_URL == undefined) {
@@ -29,7 +28,7 @@ if (process.env.DATABASE_URL == undefined) {
     },
   });
 }
-// Connect to the PostgreSQL database client
+
 client
   .connect()
   .then(() => console.log("Connected to PostgreSQL database"))
@@ -40,7 +39,6 @@ module.exports = client;
 var query_tosend = "";
 
 function get_levels(input_name, imput_nb_players, socket) {
-  //get the levels from the database that match the search criteria
   if (imput_nb_players == 0) {
     query_tosend =
       "SELECT * FROM levels WHERE level_name Like '%" +

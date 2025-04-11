@@ -45,14 +45,9 @@ socket.on("player-kill", (li, type) => {
       "bullet",
       `/image/${type}.svg`,
       `Kill`,
-      ` ${li[0]} killed ${li[1]}`
+      ` ${li[0]} 🔫 ${li[1]}`
     );
   } else if (type == "mine") {
-    createToast(
-      "mine",
-      `/image/${type}.svg`,
-      `Kill`,
-      ` ${li[0]} exploded ${li[1]}`
-    );
+    createToast("mine", `/image/${type}.svg`, `Kill`, ` ${li[0]} 💣 ${li[1]}`);
   }
 });

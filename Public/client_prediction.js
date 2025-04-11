@@ -54,9 +54,7 @@ function reconciliation_loop() {
       player.mytick = mytick;
     }
   }
-  // Call itself after 16.67ms (60 FPS)
   setTimeout(reconciliation_loop, 16.67);
 }
 
-// Start the game loop
 reconciliation_loop();
