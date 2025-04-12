@@ -7,6 +7,7 @@ const elements = {
   room_selector,
   end_screen_screen,
   spectator_screen,
+  auth,
 };
 
 // the functions to run before showing the ui element
@@ -20,6 +21,7 @@ const before_check = {
   waiting_screen: blur_canvas,
   end_screen_screen: blur_canvas,
   spectator_screen: alwaystrue,
+  auth: alwaystrue,
 };
 
 // the functions to run after hiding the ui element
@@ -33,6 +35,7 @@ const after_hide = {
   waiting_screen: deblur_canvas,
   end_screen_screen: deblur_canvas,
   spectator_screen: alwaystrue,
+  auth: alwaystrue,
 };
 
 // all the ui elements in the html
@@ -44,7 +47,7 @@ room_selector = document.getElementById("room_selector");
 end_screen_screen = document.getElementById("end_screen_screen");
 spectator_screen = document.getElementById("spectator_screen");
 the_canvas = document.getElementById("the_canvas");
-
+auth = document.getElementById("auth");
 // the current page
 current_page = "home";
 // to prevent double clicking

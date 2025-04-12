@@ -34,8 +34,23 @@
               src="icons/login.svg"
               alt="Login Icon"
               class="w-12 h-12 hover:w-14 hover:h-14"
+              onclick="show_ui_element('auth')"
             />
             <h3 id="login_text" class="font-bold">Not logged in</h3>
+          </div>
+        </div>
+
+        <div class="absolute w-44 h-56 left-full top-5 z-50">
+          <div
+            class="position relative -left-44 flex w-full h-full justify-center items-center flex-col"
+          >
+            <img
+              src="icons/podium.svg"
+              alt="Login Icon"
+              class="w-12 h-12 hover:w-14 hover:h-14"
+              onclick="show_ui_element('Rankings')"
+            />
+            <h3 id="login_text" class="font-bold">Rankings</h3>
           </div>
         </div>
 
@@ -258,13 +273,13 @@
         </div>
       </div>
       <div
-        class="absolute w-full h-full flex items-center justify-center flex-col"
-        onclick="return_home()"
+        id="auth"
+        class="absolute w-full h-full flex items-center justify-center flex-col hidden"
       >
+        <div class="absolute w-full h-full" onclick="return_home()"></div>
         <div class="h-24 w-3"></div>
         <div
-          id="login/signup"
-          class="w-1/4 h-1/2 bg-slate-600 flex align-top-center flex-col"
+          class="w-1/4 h-1/2 bg-slate-300 flex align-top-center flex-col z-30"
         >
           <div id="onglets" class="h-1/6 bg-orange-700 flex">
             <input
@@ -281,7 +296,7 @@
             />
           </div>
           <div id="content_login" class="h-full flex flex-col items-center">
-            <h2 class="font-bold">E-mail :</h2>
+            <h2 class="font-bold m-3">E-mail :</h2>
             <input
               class="w-3/4 px-4 py-2.5 text-lg font-bold border focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#aaaaaa] border-[#cccccc]"
               placeholder="example@email.com"
@@ -291,15 +306,31 @@
               name="name"
               required
             />
-            <h2 class="w-3/4 font-bold">Password :</h2>
+            <h2 class="w-3/4 font-bold m-3">Password :</h2>
+            <div class="w-3/4 flex items-center">
+              <input
+                class="w-full px-4 py-2.5 text-lg font-bold border focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#aaaaaa] border-[#cccccc]"
+                placeholder="password"
+                control-id="ControlID-3"
+                type="password"
+                id="login_password_input"
+                name="name"
+                required
+              />
+              <img
+                id="login_password_eye"
+                src="/icons/eye.svg"
+                alt=""
+                class="h-4 w-4 m-2 hover:h-5 hover:w-5"
+                onclick="show_hide_pass('login_password_input','login_password_eye' )"
+              />
+            </div>
+
             <input
-              class="w-3/4 px-4 py-2.5 text-lg font-bold border focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#aaaaaa] border-[#cccccc]"
-              placeholder="password"
-              control-id="ControlID-3"
-              type="password"
-              id="login_password_input"
-              name="name"
-              required
+              class="bg-blue-500 w-1/3 hover:bg-blue-600 text-white text-lg hover:text-xl font-extrabold m-10"
+              type="button"
+              value="SIGNUP"
+              onclick="show_ui_element('room_configuration')"
             />
           </div>
         </div>
@@ -504,6 +535,8 @@
   <script src="./client.js"></script>
   <script src="./toasts.js"></script>
   <script src="./connection.js"></script>
+  <script src="./auth.js"></script>
+
   <script src="./sounds_system.js"></script>
   <script src="./particle_system.js"></script>
   <script src="./client_prediction.js"></script>
