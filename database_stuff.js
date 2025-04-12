@@ -41,27 +41,25 @@ var query_tosend = "";
 function get_levels(input_name, imput_nb_players, socket) {
   if (imput_nb_players == 0) {
     query_tosend =
-      "SELECT * FROM levels WHERE level_name Like '%" +
+      "SELECT levels.id,name,json,creator_id,max_players, AVG(stars) as rating FROM levels join ratings on levels.id = ratings.level_id  WHERE name Like '%" +
       input_name +
-      "%'" +
-      " ORDER BY level_rating ";
+      "%' GROUP BY levels.id ORDER BY AVG(stars)";
   } else {
     query_tosend =
-      "SELECT * FROM levels WHERE level_name Like '%" +
+      "SELECT levels.id,name,json,creator_id,max_players, AVG(stars) as rating FROM levels join ratings on levels.id = ratings.level_id  WHERE name Like '%" +
       input_name +
-      "%' AND level_max_players = " +
+      "%' AND max_players = " +
       imput_nb_players +
-      " ORDER BY level_rating ";
+      " GROUP BY levels.id ORDER BY AVG(stars)";
   }
   fetch_levels(query_tosend, socket);
 }
 
 async function get_max_players(list_id) {
   //get the minimum number of players for the levels in the list
-  query =
-    "SELECT MIN(level_max_players) FROM levels WHERE level_id = " + list_id[0];
+  query = "SELECT MIN(max_players) FROM levels WHERE id = " + list_id[0];
   for (let i = 1; i < list_id.length; i++) {
-    query += " OR level_id = " + list_id[i];
+    query += " OR id = " + list_id[i];
   }
   //console.log(query);
   res = await client.query(query);
@@ -72,14 +70,13 @@ async function get_max_players(list_id) {
 function get_creator_name(level_row) {
   return new Promise((resolve, reject) => {
     client.query(
-      "SELECT player_name FROM players WHERE player_id = " +
-        level_row.creator_id,
+      "SELECT username FROM players WHERE id = " + level_row.creator_id,
       (err, res) => {
         if (err) {
           console.error("Error executing query", err.stack);
           resolve("Unknown");
         } else {
-          resolve(res.rows[0].player_name);
+          resolve(res.rows[0].name);
         }
       }
     );
@@ -96,14 +93,15 @@ function fetch_levels(query_tosend, socket) {
       for (const row of res.rows) {
         const cname = await get_creator_name(row);
         levels.push({
-          level_id: row.level_id,
-          level_name: row.level_name,
-          level_max_players: row.level_max_players,
-          level_rating: row.level_rating,
+          level_id: row.id,
+          level_name: row.name,
+          level_max_players: row.max_players,
+          level_rating: row.rating,
           level_creator_name: cname,
-          level_json: row.level_json,
+          level_json: row.json,
         });
       }
+      console.log(levels);
       socket.emit("recieve_levels", levels);
       return levels;
     }
@@ -113,13 +111,13 @@ function fetch_levels(query_tosend, socket) {
 function get_json_from_id(level_id) {
   return new Promise((resolve, reject) => {
     client.query(
-      "SELECT level_json FROM levels WHERE level_id = " + level_id,
+      "SELECT json FROM levels WHERE id = " + level_id,
       (err, res) => {
         if (err) {
           console.error("Error executing query", err.stack);
           resolve("Error");
         } else {
-          resolve(res.rows[0].level_json.level_layout);
+          resolve(res.rows[0].json.data);
         }
       }
     );
