@@ -274,31 +274,33 @@
       </div>
       <div
         id="auth"
-        class="absolute w-full h-full flex items-center justify-center flex-col hidden"
+        class="absolute w-full h-full flex items-center justify-center flex-col"
       >
         <div class="absolute w-full h-full" onclick="return_home()"></div>
         <div class="h-24 w-3"></div>
         <div
-          class="w-1/4 h-1/2 bg-slate-300 flex align-top-center flex-col z-30"
+          class="w-1/4 h-1/2 bg-slate-400 flex align-top-center flex-col z-30"
         >
-          <div id="onglets" class="h-1/6 bg-orange-700 flex">
+          <div id="onglets" class="h-1/6 flex">
             <input
-              class="bg-blue-500 w-1/2 hover:bg-blue-600 text-white text-lg hover:text-xl font-extrabold"
+              id="login_onglet"
+              class="bg-slate-400 w-1/2 hover:bg-slate-500 text-white text-lg hover:text-xl font-extrabold"
               type="button"
               value="LOGIN"
-              onclick="show_ui_element('room_configuration')"
+              onclick="switch_onglet(content_login)"
             />
             <input
-              class="bg-blue-500 w-1/2 hover:bg-blue-600 text-white text-lg hover:text-xl font-extrabold"
+              id="signup_onglet"
+              class="bg-slate-300 w-1/2 hover:bg-slate-500 text-white text-lg hover:text-xl font-extrabold"
               type="button"
               value="SIGNUP"
-              onclick="show_ui_element('room_configuration')"
+              onclick="switch_onglet(content_signup)"
             />
           </div>
           <div id="content_login" class="h-full flex flex-col items-center">
             <h2 class="font-bold m-3">E-mail :</h2>
             <input
-              class="w-3/4 px-4 py-2.5 text-lg font-bold border focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#aaaaaa] border-[#cccccc]"
+              class="w-3/4 px-4 py-2.5 text-lg font-bold border-2 focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#26aaeb]"
               placeholder="example@email.com"
               control-id="ControlID-3"
               type="email"
@@ -309,7 +311,7 @@
             <h2 class="w-3/4 font-bold m-3">Password :</h2>
             <div class="w-3/4 flex items-center">
               <input
-                class="w-full px-4 py-2.5 text-lg font-bold border focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#aaaaaa] border-[#cccccc]"
+                class="w-full px-4 py-2.5 text-lg font-bold border-2 focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#26aaeb]"
                 placeholder="password"
                 control-id="ControlID-3"
                 type="password"
@@ -329,8 +331,59 @@
             <input
               class="bg-blue-500 w-1/3 hover:bg-blue-600 text-white text-lg hover:text-xl font-extrabold m-10"
               type="button"
+              value="LOGIN"
+              onclick="login()"
+            />
+          </div>
+          <div
+            id="content_signup"
+            class="h-full flex flex-col items-center hidden"
+          >
+            <h2 class="font-bold m-2">Username :</h2>
+            <input
+              class="w-3/4 px-4 py-2.5 text-lg font-bold border-2 focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#26aaeb]"
+              placeholder="username"
+              control-id="ControlID-3"
+              type="text"
+              id="signup_username_input"
+              name="name"
+              required
+            />
+            <h2 class="font-bold m-2">E-mail :</h2>
+            <input
+              class="w-3/4 px-4 py-2.5 text-lg font-bold border-2 focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#26aaeb]"
+              placeholder="example@email.com"
+              control-id="ControlID-3"
+              type="email"
+              id="signup_email_input"
+              name="name"
+              required
+            />
+            <h2 class="w-3/4 font-bold m-2">Password :</h2>
+            <div class="w-3/4 flex items-center">
+              <input
+                class="w-full px-4 py-2.5 text-lg font-bold border-2 focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#26aaeb]"
+                placeholder="password"
+                control-id="ControlID-3"
+                type="password"
+                id="signup_password_input"
+                name="name"
+                required
+              />
+              <img
+                id="signup_password_eye"
+                src="/icons/eye.svg"
+                alt=""
+                class="h-4 w-4 m-2 hover:h-5 hover:w-5"
+                onclick="show_hide_pass('signup_password_input','signup_password_eye' )"
+              />
+            </div>
+
+            <input
+              class="bg-blue-500 w-1/3 hover:bg-blue-600 text-white text-lg hover:text-xl font-extrabold m-5"
+              type="button"
               value="SIGNUP"
-              onclick="show_ui_element('room_configuration')"
+              onclick="signup()"
             />
           </div>
         </div>
@@ -541,7 +594,7 @@
   <script src="./particle_system.js"></script>
   <script src="./client_prediction.js"></script>
   <script src="./canvaStuff.js"></script>
-  <script src="./webjlStuff.js"></script>
+  <!-- <script src="./webjlStuff.js"></script> -->
   <script src="./tankselectslider.js"></script>
   <script src="./level_selector.js"></script>
   <script src="./room_selector.js"></script>

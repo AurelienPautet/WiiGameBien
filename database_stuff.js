@@ -1,4 +1,5 @@
 const { Client } = require("pg");
+const bcrypt = require("bcryptjs");
 
 require("dotenv").config();
 
@@ -60,7 +61,6 @@ async function get_max_players(list_id) {
 
 function get_creator_name(level_row) {
   return new Promise((resolve, reject) => {
-    console.log(level_row.creator_id);
     client.query(
       "SELECT username FROM players WHERE id = $1",
       [level_row.creator_id],
@@ -94,7 +94,6 @@ function fetch_levels(query_tosend, values, socket) {
           level_json: row.json,
         });
       }
-      console.log(levels);
       socket.emit("recieve_levels", levels);
       return levels;
     }
@@ -118,8 +117,72 @@ function get_json_from_id(level_id) {
   });
 }
 
+async function signup(username, email, password, socket) {
+  willreturn = false;
+  let res = await client.query("SELECT * from players where username = $1", [
+    username,
+  ]);
+  if (res.rows.length > 0) {
+    socket.emit("signup_fail", "username");
+    willreturn = true;
+  }
+  res = await client.query("SELECT * from players where email = $1", [email]);
+  if (res.rows.length > 0) {
+    socket.emit("signup_fail", "email");
+    willreturn = true;
+  }
+
+  if (willreturn) {
+    return;
+  }
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+  return new Promise((resolve, reject) => {
+    client.query(
+      "INSERT INTO players (username,email,password_hash) VALUES ($1,$2,$3);",
+      [username, email, hashedPassword],
+      (err, res) => {
+        if (err) {
+          console.error("Error executing query", err.stack);
+        } else {
+          socket.emit("signup_success", username);
+        }
+      }
+    );
+  });
+}
+
+async function login(email, password, socket) {
+  return new Promise((resolve) => {
+    client.query(
+      "SELECT * FROM players WHERE email = $1",
+      [email],
+      async (err, res) => {
+        if (err) {
+          console.error("Error executing query", err.stack);
+          resolve("Error");
+        } else if (res.rows.length == 0) {
+          socket.emit("login_fail", "email");
+          resolve("User not found");
+        } else {
+          const user = res.rows[0];
+          const isMatch = await bcrypt.compare(password, user.password_hash);
+          console.log(isMatch, "isMatch");
+          if (!isMatch) {
+            socket.emit("login_fail", "password");
+          } else {
+            socket.emit("login_success", user.username);
+          }
+        }
+      }
+    );
+  });
+}
+
 module.exports = {
   get_levels,
   get_max_players,
   get_json_from_id,
+  signup,
+  login,
 };

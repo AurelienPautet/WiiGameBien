@@ -10,7 +10,6 @@ console.log("PORT : ", PORT);
 const expressServer = app.listen(PORT);
 
 const socketio = require("socket.io");
-const { Z_ASCII } = require("zlib");
 const io = socketio(expressServer, {
   cors: [
     "http://localhost:7000",
@@ -39,8 +38,13 @@ const {
   rectanglesSeTouchent,
 } = require(__dirname + "/check_collision.js");
 
-const { get_levels, get_max_players, get_json_from_id } = require(__dirname +
-  "/database_stuff.js");
+const {
+  get_levels,
+  get_max_players,
+  get_json_from_id,
+  signup,
+  login,
+} = require(__dirname + "/database_stuff.js");
 
 io.on("connect", (socket) => {
   room_list(socket);
@@ -78,6 +82,15 @@ io.on("connect", (socket) => {
     } catch (error) {
       console.error("Error handling player disconnection:", error);
     }
+  });
+
+  socket.on("signup", (username, email, password) => {
+    console.log("signup", username, email, password);
+    signup(username, email, password, socket);
+  });
+  socket.on("login", (email, password) => {
+    console.log("login", email, password);
+    login(email, password, socket);
   });
 
   socket.on("search_levels", (input_name, input_nb_players) => {

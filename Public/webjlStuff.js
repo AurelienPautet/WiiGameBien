@@ -1,3 +1,7 @@
+//CURRENTLY NOT WORKING
+//But i would like to add shaders to the game and making it pretier
+//using webgl
+
 canvasGL = document.getElementById("webgl_canvas");
 const gl = canvasGL.getContext("webgl");
 
