@@ -41,50 +41,43 @@ var query_tosend = "";
 function get_levels(input_name, imput_nb_players, socket) {
   if (imput_nb_players == 0) {
     query_tosend =
-      "SELECT levels.id,name,json,creator_id,max_players, AVG(stars) as rating FROM levels join ratings on levels.id = ratings.level_id  WHERE name Like '%" +
-      input_name +
-      "%' GROUP BY levels.id ORDER BY AVG(stars)";
+      "SELECT levels.id,name,json,creator_id,max_players, AVG(stars) as rating FROM levels join ratings on levels.id = ratings.level_id  WHERE name Like '%' || $1 || '%' GROUP BY levels.id ORDER BY AVG(stars)";
+    values = [input_name];
   } else {
     query_tosend =
-      "SELECT levels.id,name,json,creator_id,max_players, AVG(stars) as rating FROM levels join ratings on levels.id = ratings.level_id  WHERE name Like '%" +
-      input_name +
-      "%' AND max_players = " +
-      imput_nb_players +
-      " GROUP BY levels.id ORDER BY AVG(stars)";
+      "SELECT levels.id,name,json,creator_id,max_players, AVG(stars) as rating FROM levels join ratings on levels.id = ratings.level_id  WHERE name Like '%' || $1 || '%' AND max_players = $2 GROUP BY levels.id ORDER BY AVG(stars)";
+    values = [input_name, imput_nb_players];
   }
-  fetch_levels(query_tosend, socket);
+  fetch_levels(query_tosend, values, socket);
 }
 
 async function get_max_players(list_id) {
-  //get the minimum number of players for the levels in the list
-  query = "SELECT MIN(max_players) FROM levels WHERE id = " + list_id[0];
-  for (let i = 1; i < list_id.length; i++) {
-    query += " OR id = " + list_id[i];
-  }
-  //console.log(query);
-  res = await client.query(query);
+  query = "SELECT MIN(max_players) FROM levels WHERE id = ANY ($1)";
+  res = await client.query(query, [list_id]);
   //console.log(res.rows[0].min);
   return res.rows[0].min;
 }
 
 function get_creator_name(level_row) {
   return new Promise((resolve, reject) => {
+    console.log(level_row.creator_id);
     client.query(
-      "SELECT username FROM players WHERE id = " + level_row.creator_id,
+      "SELECT username FROM players WHERE id = $1",
+      [level_row.creator_id],
       (err, res) => {
         if (err) {
           console.error("Error executing query", err.stack);
           resolve("Unknown");
         } else {
-          resolve(res.rows[0].name);
+          resolve(res.rows[0].username);
         }
       }
     );
   });
 }
 
-function fetch_levels(query_tosend, socket) {
-  client.query(query_tosend, async (err, res) => {
+function fetch_levels(query_tosend, values, socket) {
+  client.query(query_tosend, values, async (err, res) => {
     if (err) {
       console.error("Error executing query", err.stack);
       return "Error";
@@ -111,7 +104,8 @@ function fetch_levels(query_tosend, socket) {
 function get_json_from_id(level_id) {
   return new Promise((resolve, reject) => {
     client.query(
-      "SELECT json FROM levels WHERE id = " + level_id,
+      "SELECT json FROM levels WHERE id = $1",
+      [level_id],
       (err, res) => {
         if (err) {
           console.error("Error executing query", err.stack);

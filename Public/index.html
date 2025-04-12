@@ -19,7 +19,7 @@
   </head>
 
   <body onload="load_old_tank()" onresize="rescale()">
-    <canvas class="everything contrast-200" id="the_canvas"></canvas>
+    <canvas class="everything" id="the_canvas"></canvas>
     <canvas class="everything z-40 hidden" id="webgl_canvas"></canvas>
     <div id="ui" class="everything relative">
       <div
@@ -27,7 +27,18 @@
         class="bg-slate-200 h-full w-full absolute flex flex-col justify-center items-center"
         onclick="return_home()"
       >
-        <h1 class="text-black text-7xl font-bold m-10">WII TANK</h1>
+        <h1 class="text-black text-7xl font-bold m-10 z-50">WII TANK</h1>
+        <div class="absolute w-44 h-56 left-5 top-5 z-50">
+          <div class="flex w-full h-full justify-center items-center flex-col">
+            <img
+              src="icons/login.svg"
+              alt="Login Icon"
+              class="w-12 h-12 hover:w-14 hover:h-14"
+            />
+            <h3 id="login_text" class="font-bold">Not logged in</h3>
+          </div>
+        </div>
+
         <div
           id="tank_visualiser"
           class="h-1/4 w-1/4 bg-slate-400 flex justify-center items-center relative"
@@ -90,14 +101,13 @@
       </div>
       <div id="notif"></div>
       <div
-        id="waiting_screen"
+        id="spectator_screen"
         class="hidden absolute w-full h-full border-8 border-yellow-400 pointer-events-none"
       >
         <div class="opacity-0 text-4xl">.</div>
         <div class="relative text-4xl font-bold text-yellow-400">
-          Waiting for room to start
+          You are dead looser
         </div>
-        <div class="relative text-4xl font-bold text-yellow-400">3/4 👤</div>
       </div>
       <div
         id="end_screen_screen"
@@ -245,6 +255,53 @@
             id="body_none"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
+        </div>
+      </div>
+      <div
+        class="absolute w-full h-full flex items-center justify-center flex-col"
+        onclick="return_home()"
+      >
+        <div class="h-24 w-3"></div>
+        <div
+          id="login/signup"
+          class="w-1/4 h-1/2 bg-slate-600 flex align-top-center flex-col"
+        >
+          <div id="onglets" class="h-1/6 bg-orange-700 flex">
+            <input
+              class="bg-blue-500 w-1/2 hover:bg-blue-600 text-white text-lg hover:text-xl font-extrabold"
+              type="button"
+              value="LOGIN"
+              onclick="show_ui_element('room_configuration')"
+            />
+            <input
+              class="bg-blue-500 w-1/2 hover:bg-blue-600 text-white text-lg hover:text-xl font-extrabold"
+              type="button"
+              value="SIGNUP"
+              onclick="show_ui_element('room_configuration')"
+            />
+          </div>
+          <div id="content_login" class="h-full flex flex-col items-center">
+            <h2 class="font-bold">E-mail :</h2>
+            <input
+              class="w-3/4 px-4 py-2.5 text-lg font-bold border focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#aaaaaa] border-[#cccccc]"
+              placeholder="example@email.com"
+              control-id="ControlID-3"
+              type="email"
+              id="login_email_input"
+              name="name"
+              required
+            />
+            <h2 class="w-3/4 font-bold">Password :</h2>
+            <input
+              class="w-3/4 px-4 py-2.5 text-lg font-bold border focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#aaaaaa] border-[#cccccc]"
+              placeholder="password"
+              control-id="ControlID-3"
+              type="password"
+              id="login_password_input"
+              name="name"
+              required
+            />
+          </div>
         </div>
       </div>
       <div

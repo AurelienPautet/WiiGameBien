@@ -158,6 +158,19 @@ function draw() {
 
   //draw the bullets on the canvas
   bullets.forEach((bullet) => {
+    if (debug_visual) {
+      c.beginPath();
+      c.fillStyle = "rgba(255,0,0,0.4)";
+      c.strokeStyle = "red";
+      c.rect(
+        bullet.position.x,
+        bullet.position.y,
+        bullet.size.w,
+        bullet.size.h
+      );
+      c.fill();
+      c.stroke();
+    }
     drawImageRot(
       bullet1,
       bullet.position.x,

@@ -6,7 +6,7 @@ const elements = {
   room_configuration,
   room_selector,
   end_screen_screen,
-  waiting_screen,
+  spectator_screen,
 };
 
 // the functions to run before showing the ui element
@@ -19,6 +19,7 @@ const before_check = {
   room_selector: get_player_name,
   waiting_screen: blur_canvas,
   end_screen_screen: blur_canvas,
+  spectator_screen: alwaystrue,
 };
 
 // the functions to run after hiding the ui element
@@ -31,6 +32,7 @@ const after_hide = {
   room_selector: alwaystrue,
   waiting_screen: deblur_canvas,
   end_screen_screen: deblur_canvas,
+  spectator_screen: alwaystrue,
 };
 
 // all the ui elements in the html
@@ -40,7 +42,7 @@ landing_page = document.getElementById("landing_page");
 room_configuration = document.getElementById("room_configuration");
 room_selector = document.getElementById("room_selector");
 end_screen_screen = document.getElementById("end_screen_screen");
-waiting_screen = document.getElementById("waiting_screen");
+spectator_screen = document.getElementById("spectator_screen");
 the_canvas = document.getElementById("the_canvas");
 
 // the current page

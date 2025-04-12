@@ -50,7 +50,6 @@ io.on("connect", (socket) => {
   socket.emit("welcome", socket.id + "has joinded the server");
   socket.emit("serverid", serverid);
   socket.emit("socketid", socket.id);
-  socket.emit("levelset", levelssetnames);
 
   socket.on("disconnect", function () {
     console.log(socket.id, "Got disconnect!");
@@ -150,6 +149,7 @@ tickTockInterval = setTimeout(function toocking() {
   func = setTimeout(toocking, 16.67);
   TimeElapsed = getTimeElapsed();
   fps_corector = TimeElapsed / 16.67;
+
   rooms.forEach((room) => {
     check_for_winns_and_load_next_level(room);
     update_mines(room);
@@ -236,31 +236,6 @@ function getTimeElapsed() {
   oldTime = now;
   return res;
 }
-
-//Read the levels folder and create all the different levelsets
-levelsset = [];
-levelssetnames = [];
-fs.readdir(path.join(__dirname, "./", "levels"), (err, files) => {
-  if (err) console.log(err);
-  else {
-    files.forEach((file) => {
-      levelssetnames.push(file);
-      fs.readdir(
-        path.join(__dirname, "./", "levels", file),
-        (levelerr, levelfiles) => {
-          if (levelerr) {
-            console.log(levelerr);
-          } else {
-            levelsset.push({
-              levelset: file,
-              levelslist: levelfiles,
-            });
-          }
-        }
-      );
-    });
-  }
-});
 
 function get_all_player_stats(room) {
   stats = {};
@@ -494,7 +469,9 @@ async function create_room(name, rounds, list_id, creator) {
   room = new Room(name, rounds, list_id, creator);
   room.maxplayernb = await get_max_players(list_id);
   rooms.push(room);
-  loadlevel(room.levels[0], room);
+  if (room) {
+    loadlevel(room.levels[0], room);
+  }
   room_list(0);
 }
 //Create the default room and load the first level
