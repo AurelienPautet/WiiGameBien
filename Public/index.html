@@ -34,7 +34,7 @@
               src="icons/login.svg"
               alt="Login Icon"
               class="w-12 h-12 hover:w-14 hover:h-14"
-              onclick="show_ui_element('auth')"
+              onclick="show_ui_element('profile_or_auth')"
             />
             <h3 id="login_text" class="font-bold">Not logged in</h3>
           </div>
@@ -56,7 +56,7 @@
 
         <div
           id="tank_visualiser"
-          class="h-1/4 w-1/4 bg-slate-400 flex justify-center items-center relative"
+          class="h-1/4 w-1/4 bg-slate-400 flex justify-center items-center relative rounded-md"
         >
           <img
             id="body_visualiser"
@@ -82,7 +82,7 @@
           class="h-20 w-1/3 flex justify-center items-center"
         >
           <input
-            class="px-4 py-2.5 text-lg font-bold border focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#aaaaaa] border-[#cccccc]"
+            class="px-4 py-2.5 text-lg font-bold border rounded-md focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#aaaaaa] border-[#cccccc]"
             placeholder="Type your name.."
             control-id="ControlID-3"
             type="text"
@@ -99,15 +99,18 @@
             onclick="document.getElementById('player_name_input').value = ''"
           />
         </div>
-        <div id="buttons" class="h-24 w-1/3 flex justify-center items-center">
+        <div
+          id="buttons"
+          class="h-24 w-1/3 flex justify-center items-center rounded-md"
+        >
           <input
-            class="bg-blue-500 h-14 w-28 hover:bg-blue-600 text-white text-lg hover:text-xl m-2 font-extrabold"
+            class="bg-blue-500 h-14 w-28 hover:bg-blue-600 text-white text-lg hover:text-xl m-2 font-extrabold rounded-md"
             type="button"
             value="CREATE"
             onclick="show_ui_element('room_configuration')"
           />
           <input
-            class="bg-blue-500 h-14 w-28 hover:bg-blue-600 text-white text-lg hover:text-xl m-2 font-extrabold"
+            class="bg-blue-500 h-14 w-28 hover:bg-blue-600 text-white text-lg hover:text-xl m-2 font-extrabold rounded-md"
             type="button"
             value="JOIN"
             onclick="show_ui_element('room_selector')"
@@ -145,7 +148,7 @@
       </div>
       <div
         id="tank_select"
-        class="absolute bg-gray-400 h-1/2 w-1/2 left-1/4 top-1/3 hidden"
+        class="absolute bg-gray-400 h-1/2 w-1/2 left-1/4 top-1/3 rounded-lg hidden"
       >
         <div
           id="turret_select"
@@ -272,26 +275,60 @@
           />
         </div>
       </div>
+
+      <div
+        id="profile"
+        class="absolute w-full h-full flex items-center justify-center flex-col hidden"
+      >
+        <div class="absolute w-full h-full" onclick="return_home()"></div>
+        <div class="w-3/4 h-3/4 flex flex-col z-10">
+          <div
+            class="bg-slate-300 w-full h-1/5 flex items-center justify-between rounded-t-xl"
+          >
+            <div class="flex items-center font-extrabold">
+              <img src="icons/login.svg" class="w-20 h-20" />
+              <h1 id="profile_username" class="m-4">Username : Aureplus</h1>
+              <h1 id="profile_email" class="m-4">
+                Email : aurelien@pautet.net
+              </h1>
+            </div>
+            <div
+              class="flex items-center m-3 text-red-600 font-bold hover:font-extrabold group"
+              onclick="logout()"
+            >
+              <img
+                src="icons/logout.svg"
+                class="w-10 h-10 m-2 group-hover:w-11 group-hover:h-11"
+              />
+
+              <h1 class="group-hover:text-xl">Logout</h1>
+            </div>
+          </div>
+          <div class="bg-slate-600 w-full h-full rounded-b-xl">
+            <h1>Stats :</h1>
+          </div>
+        </div>
+      </div>
       <div
         id="auth"
-        class="absolute w-full h-full flex items-center justify-center flex-col"
+        class="absolute w-full h-full flex items-center justify-center flex-col hidden"
       >
         <div class="absolute w-full h-full" onclick="return_home()"></div>
         <div class="h-24 w-3"></div>
         <div
-          class="w-1/4 h-1/2 bg-slate-400 flex align-top-center flex-col z-30"
+          class="w-1/4 h-1/2 bg-slate-400 flex align-top-center flex-col z-30 rounded-md"
         >
           <div id="onglets" class="h-1/6 flex">
             <input
               id="login_onglet"
-              class="bg-slate-400 w-1/2 hover:bg-slate-500 text-white text-lg hover:text-xl font-extrabold"
+              class="bg-slate-400 w-1/2 hover:bg-slate-500 text-white text-lg hover:text-xl font-extrabold rounded-t-md"
               type="button"
               value="LOGIN"
               onclick="switch_onglet(content_login)"
             />
             <input
               id="signup_onglet"
-              class="bg-slate-300 w-1/2 hover:bg-slate-500 text-white text-lg hover:text-xl font-extrabold"
+              class="bg-slate-300 w-1/2 hover:bg-slate-500 text-white text-lg hover:text-xl font-extrabold rounded-t-md"
               type="button"
               value="SIGNUP"
               onclick="switch_onglet(content_signup)"
@@ -300,7 +337,7 @@
           <div id="content_login" class="h-full flex flex-col items-center">
             <h2 class="font-bold m-3">E-mail :</h2>
             <input
-              class="w-3/4 px-4 py-2.5 text-lg font-bold border-2 focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#26aaeb]"
+              class="w-3/4 px-4 py-2.5 text-lg font-bold border-2 rounded-md focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#26aaeb]"
               placeholder="example@email.com"
               control-id="ControlID-3"
               type="email"
@@ -311,7 +348,7 @@
             <h2 class="w-3/4 font-bold m-3">Password :</h2>
             <div class="w-3/4 flex items-center">
               <input
-                class="w-full px-4 py-2.5 text-lg font-bold border-2 focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#26aaeb]"
+                class="w-full px-4 py-2.5 text-lg font-bold border-2 rounded-md focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#26aaeb]"
                 placeholder="password"
                 control-id="ControlID-3"
                 type="password"
@@ -329,7 +366,7 @@
             </div>
 
             <input
-              class="bg-blue-500 w-1/3 hover:bg-blue-600 text-white text-lg hover:text-xl font-extrabold m-10"
+              class="bg-blue-500 w-1/3 hover:bg-blue-600 rounded-md text-white text-lg hover:text-xl font-extrabold m-10"
               type="button"
               value="LOGIN"
               onclick="login()"
@@ -341,17 +378,18 @@
           >
             <h2 class="font-bold m-2">Username :</h2>
             <input
-              class="w-3/4 px-4 py-2.5 text-lg font-bold border-2 focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#26aaeb]"
+              class="w-3/4 px-4 py-2.5 text-lg font-bold border-2 rounded-md focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#26aaeb]"
               placeholder="username"
               control-id="ControlID-3"
               type="text"
               id="signup_username_input"
+              maxlength="30"
               name="name"
               required
             />
             <h2 class="font-bold m-2">E-mail :</h2>
             <input
-              class="w-3/4 px-4 py-2.5 text-lg font-bold border-2 focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#26aaeb]"
+              class="w-3/4 px-4 py-2.5 text-lg font-bold border-2 rounded-md focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#26aaeb]"
               placeholder="example@email.com"
               control-id="ControlID-3"
               type="email"
@@ -362,7 +400,7 @@
             <h2 class="w-3/4 font-bold m-2">Password :</h2>
             <div class="w-3/4 flex items-center">
               <input
-                class="w-full px-4 py-2.5 text-lg font-bold border-2 focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#26aaeb]"
+                class="w-full px-4 py-2.5 text-lg font-bold border-2 rounded-md focus:outline focus:outline-2 focus:outline-offset-2 bg-[#ffffff] text-[#444444] focus:outline-[#26aaeb]"
                 placeholder="password"
                 control-id="ControlID-3"
                 type="password"
@@ -380,7 +418,7 @@
             </div>
 
             <input
-              class="bg-blue-500 w-1/3 hover:bg-blue-600 text-white text-lg hover:text-xl font-extrabold m-5"
+              class="bg-blue-500 w-1/3 rounded-md hover:bg-blue-600 text-white text-lg hover:text-xl font-extrabold m-5"
               type="button"
               value="SIGNUP"
               onclick="signup()"
@@ -588,6 +626,8 @@
   <script src="./client.js"></script>
   <script src="./toasts.js"></script>
   <script src="./connection.js"></script>
+  <script src="./home_ui.js"></script>
+
   <script src="./auth.js"></script>
 
   <script src="./sounds_system.js"></script>
@@ -601,8 +641,6 @@
   <script src="./room_configurator.js"></script>
   <script src="./rescale.js"></script>
   <script src="./blured_ui.js"></script>
-
-  <script src="./home_ui.js"></script>
 </html>
 
 <style></style>

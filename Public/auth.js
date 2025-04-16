@@ -16,6 +16,10 @@ current_onglet = content_login;
 login_onglet = document.getElementById("login_onglet");
 signup_onglet = document.getElementById("signup_onglet");
 
+let logged = false;
+let myusername = "";
+let myemail = "";
+
 function switch_onglet(onglet) {
   console.log(onglet, current_onglet);
   if (current_onglet != onglet) {
@@ -77,7 +81,15 @@ socket.on("signup_fail", (msg) => {
     createToast("info", "/image/info.svg", "Error", "Email already taken");
   }
 });
-socket.on("signup_success", (user) => {
+socket.on("signup_success", (username) => {
+  console.log("signup success", username);
+  logged = true;
+  myusername = username;
+  myemail = email;
+  document.getElementById("profile_username").innerHTML =
+    "Username: " + username;
+  document.getElementById("profile_email").innerHTML = "Email: " + email;
+  change_logged_status();
   createToast("info", "/image/info.svg", "Success", username + " created");
   return_home();
 });
@@ -117,7 +129,32 @@ socket.on("login_fail", (msg) => {
   }
 });
 socket.on("login_success", (username) => {
+  logged = true;
+  myusername = username;
+  myemail = email;
+  change_logged_status();
+  document.getElementById("profile_username").innerHTML =
+    "Username: " + username;
+  document.getElementById("profile_email").innerHTML = "Email: " + email;
+
   console.log("login success", username);
   createToast("info", "/image/info.svg", "Success", username + " logged in");
   return_home();
 });
+
+function change_logged_status() {
+  if (logged) {
+    document.getElementById("login_text").innerHTML = "Logged as " + myusername;
+  } else {
+    document.getElementById("login_text").innerHTML = "Not logged in";
+  }
+}
+
+function logout() {
+  socket.emit("logout");
+  logged = false;
+  change_logged_status();
+  return_home();
+  createToast("info", "/icons/logout.svg", "Success", "Logged out");
+  console.log("logout success");
+}

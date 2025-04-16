@@ -27,6 +27,7 @@ const {
   Frontend_Player,
   Mine,
   Room,
+  User,
 } = require(__dirname + "/class.js");
 const { loadlevel, generateBcollision } = require(__dirname +
   "/level_loader.js");
@@ -44,6 +45,7 @@ const {
   get_json_from_id,
   signup,
   login,
+  logout,
 } = require(__dirname + "/database_stuff.js");
 
 io.on("connect", (socket) => {
@@ -51,6 +53,7 @@ io.on("connect", (socket) => {
   socket.join("lobby" + serverid);
 
   console.log(socket.id, "has joined our server!");
+  console.log("with ip adress", socket.request.connection.remoteAddress);
   socket.emit("welcome", socket.id + "has joinded the server");
   socket.emit("serverid", serverid);
   socket.emit("socketid", socket.id);
@@ -93,6 +96,9 @@ io.on("connect", (socket) => {
     login(email, password, socket);
   });
 
+  socket.on("logout", () => {
+    logout(socket);
+  });
   socket.on("search_levels", (input_name, input_nb_players) => {
     levels = get_levels(input_name, input_nb_players, socket);
   });
@@ -240,6 +246,7 @@ const waitingtime = 5000;
 const timetoeplode = 300;
 const mines_explsion_radius = 90;
 fps_corector = 1;
+users = {};
 //Function to get time elapsed in milliseconds between two moments
 oldTime = performance.now();
 

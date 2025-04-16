@@ -1,3 +1,15 @@
+tank_select = document.getElementById("tank_select");
+mapset_selector = document.getElementById("mapset_selector");
+landing_page = document.getElementById("landing_page");
+room_configuration = document.getElementById("room_configuration");
+room_selector = document.getElementById("room_selector");
+end_screen_screen = document.getElementById("end_screen_screen");
+spectator_screen = document.getElementById("spectator_screen");
+the_canvas = document.getElementById("the_canvas");
+auth = document.getElementById("auth");
+profile = document.getElementById("profile");
+profile_or_auth = auth;
+
 // all the ui elements
 const elements = {
   tank_select,
@@ -8,6 +20,8 @@ const elements = {
   end_screen_screen,
   spectator_screen,
   auth,
+  profile,
+  profile_or_auth,
 };
 
 // the functions to run before showing the ui element
@@ -22,6 +36,8 @@ const before_check = {
   end_screen_screen: blur_canvas,
   spectator_screen: alwaystrue,
   auth: alwaystrue,
+  profile: alwaystrue,
+  profile_or_auth: logged_or_not,
 };
 
 // the functions to run after hiding the ui element
@@ -36,23 +52,16 @@ const after_hide = {
   end_screen_screen: deblur_canvas,
   spectator_screen: alwaystrue,
   auth: alwaystrue,
+  profile_or_auth: alwaystrue,
 };
 
 // all the ui elements in the html
-tank_select = document.getElementById("tank_select");
-mapset_selector = document.getElementById("mapset_selector");
-landing_page = document.getElementById("landing_page");
-room_configuration = document.getElementById("room_configuration");
-room_selector = document.getElementById("room_selector");
-end_screen_screen = document.getElementById("end_screen_screen");
-spectator_screen = document.getElementById("spectator_screen");
-the_canvas = document.getElementById("the_canvas");
-auth = document.getElementById("auth");
-// the current page
-current_page = "home";
-// to prevent double clicking
-waited = false;
 
+// to prevent double clicking
+let waited = false;
+// the current page
+let current_page = "home";
+console.log("current_page", current_page);
 // get the player name from the local storage if it exists
 var playerName = "";
 try {
@@ -76,6 +85,17 @@ function blur_canvas() {
 }
 
 function alwaystrue() {
+  return true;
+}
+
+function logged_or_not() {
+  if (logged) {
+    elements["profile_or_auth"] = profile;
+    profile_or_auth = profile;
+  } else {
+    elements["profile_or_auth"] = auth;
+    profile_or_auth = auth;
+  }
   return true;
 }
 

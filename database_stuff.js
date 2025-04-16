@@ -36,7 +36,16 @@ client
   .catch((err) => console.error("Connection error", err.stack));
 
 module.exports = client;
-
+const {
+  Player,
+  CollisonsBox,
+  Bullet,
+  Block,
+  Frontend_Player,
+  Mine,
+  Room,
+  User,
+} = require(__dirname + "/class.js");
 var query_tosend = "";
 
 function get_levels(input_name, imput_nb_players, socket) {
@@ -117,6 +126,21 @@ function get_json_from_id(level_id) {
   });
 }
 
+async function log_attemps(email, ip_adress, status) {
+  let res = await client.query("SELECT id from players where email = $1", [
+    email,
+  ]);
+  if (res.rows.length == 0) {
+    console.log("User not found big problem");
+    return;
+  }
+  player_id = res.rows[0].id;
+  client.query(
+    "INSERT INTO logings (player_id,ip_address,status) VALUES ($1,$2,$3)",
+    [player_id, ip_adress, status]
+  );
+}
+
 async function signup(username, email, password, socket) {
   willreturn = false;
   let res = await client.query("SELECT * from players where username = $1", [
@@ -145,7 +169,9 @@ async function signup(username, email, password, socket) {
         if (err) {
           console.error("Error executing query", err.stack);
         } else {
-          socket.emit("signup_success", username);
+          socket.emit("signup_success", email);
+          users[socket.id] = new User(email);
+          log_attemps(email, socket.handshake.address, "sign_up_success");
         }
       }
     );
@@ -170,13 +196,26 @@ async function login(email, password, socket) {
           console.log(isMatch, "isMatch");
           if (!isMatch) {
             socket.emit("login_fail", "password");
+            log_attemps(
+              email,
+              socket.handshake.address,
+              "login_failed_wrong_password"
+            );
           } else {
+            users[socket.id] = new User(email);
             socket.emit("login_success", user.username);
+            log_attemps(email, socket.handshake.address, "login_success");
           }
         }
       }
     );
   });
+}
+
+async function logout(socket) {
+  email = users[socket.id].email;
+  delete users[socket.id];
+  log_attemps(email, socket.handshake.address, "logout_success");
 }
 
 module.exports = {
@@ -185,4 +224,5 @@ module.exports = {
   get_json_from_id,
   signup,
   login,
+  logout,
 };
