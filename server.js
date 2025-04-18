@@ -46,6 +46,8 @@ const {
   signup,
   login,
   logout,
+  get_user_info,
+  rate_lvl,
 } = require(__dirname + "/database_stuff.js");
 
 io.on("connect", (socket) => {
@@ -99,6 +101,11 @@ io.on("connect", (socket) => {
   socket.on("logout", () => {
     logout(socket);
   });
+
+  socket.on("rate_lvl", (rate, level_id) => {
+    rate_lvl(rate, level_id, socket);
+  });
+
   socket.on("search_levels", (input_name, input_nb_players) => {
     levels = get_levels(input_name, input_nb_players, socket);
   });
@@ -128,7 +135,12 @@ io.on("connect", (socket) => {
       socket.leave("lobby" + serverid);
       socket.join(room.name);
       io.to(room.name).emit("player-connection", playerName);
-      socket.emit("level_change", room.blocks, room.Bcollision);
+      socket.emit(
+        "level_change",
+        room.blocks,
+        room.Bcollision,
+        room.levels[room.levelid]
+      );
       room_list(0);
     } else {
       socket.emit("id-fail");
@@ -297,7 +309,12 @@ function check_for_winns_and_load_next_level(room) {
         room.bullets = [];
         room.mines = [];
         await loadlevel(room.levels[room.levelid], room);
-        io.to(room.name).emit("level_change", room.blocks, room.Bcollision);
+        io.to(room.name).emit(
+          "level_change",
+          room.blocks,
+          room.Bcollision,
+          room.levels[room.levelid]
+        );
         for (socketid in room.players) {
           player = room.players[socketid];
           player.alive = true;
@@ -425,7 +442,12 @@ function update_mines(room) {
             ] = 10;
             generateBcollision(room);
             room.blocks.splice(m, 1);
-            io.to(room.name).emit("level_change", room.blocks, room.Bcollision);
+            io.to(room.name).emit(
+              "level_change",
+              room.blocks,
+              room.Bcollision,
+              room.levels[room.levelid]
+            );
 
             m -= 1;
           }

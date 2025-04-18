@@ -1,7 +1,7 @@
 //
 //const socket = io("https://wiitank.pautet.net");
-const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
-//const socket = io("http://localhost:7000/");
+//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+const socket = io("http://localhost:7000/");
 
 socket.on("welcome", (data) => {});
 
@@ -60,6 +60,7 @@ playerid = 0;
 players = [];
 blocks = [];
 Bcollision = [];
+level_id = 0;
 bullets = [];
 mines = [];
 debug_visual = false;
@@ -89,7 +90,7 @@ socket.on("tick", (p, bu, m, r, t) => {
     alive = p[mysocketid].alive;
     if (!alive) {
       if (current_page == "home") {
-        show_ui_element("spectator_screen");
+        show_ui_element("!");
       }
     }
   }
@@ -112,9 +113,11 @@ socket.on("tick", (p, bu, m, r, t) => {
   }
 });
 
-socket.on("level_change", (b, Bc) => {
+socket.on("level_change", (b, Bc, lvlid) => {
   blocks = b;
   Bcollision = Bc;
+  level_id = lvlid;
+  console.log("level_change", level_id);
 });
 
 onmousemove = function (e) {

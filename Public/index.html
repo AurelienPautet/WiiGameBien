@@ -129,12 +129,12 @@
       </div>
       <div
         id="end_screen_screen"
-        class="hidden absolute w-full h-full border-8 border-red-500 text-green-500 pointer-events-none"
+        class="hidden absolute w-full h-full border-8 border-red-500 text-green-500 flex items-center flex-col justify-evenly"
       >
         <div class="opacity-0 text-4xl">.</div>
         <div
           id="end_screen_text"
-          class="relative text-4xl font-bold border-green-500 text-red-500"
+          class="h-1/6 text-4xl font-bold border-green-500 text-red-500"
         >
           You won this round
         </div>
@@ -143,7 +143,57 @@
           class="flex h-1/2 w-full flex-col justify-center items-center"
         >
           <div class="h-1/2"></div>
-          <div class="hidden w-full h-1/2 text-2xl font-bold text-white"></div>
+          <div class="hidden w-full h-2/3 text-2xl font-bold text-white"></div>
+        </div>
+        <div
+          class="h-1/6 w-full flex items-center text-2xl font-bold justify-center text-white"
+        >
+          <img src="image/minia/test.png" class="w-32 h-20 m-3" />
+          <h1>LVL 1 2 PLAYER</h1>
+          <h1 class="m-2">by</h1>
+          <h1 class="mr-4">Gamemaster</h1>
+          <div id="starts_holder" class="flex items-center justify-center">
+            <span
+              id="star_0"
+              class="star-empty"
+              onmouseover="star_hover(0)"
+              onmouseleave="star_leave(0)"
+              onclick="star_clicked(0)"
+              >★</span
+            >
+            <span
+              id="star_1"
+              class="star-empty"
+              onmouseover="star_hover(1)"
+              onmouseleave="star_leave(1)"
+              onclick="star_clicked(1)"
+              >★</span
+            >
+            <span
+              id="star_2"
+              class="star-empty"
+              onmouseover="star_hover(2)"
+              onmouseleave="star_leave(2)"
+              onclick="star_clicked(2)"
+              >★</span
+            >
+            <span
+              id="star_3"
+              class="star-empty"
+              onmouseover="star_hover(3)"
+              onmouseleave="star_leave(3)"
+              onclick="star_clicked(3)"
+              >★</span
+            >
+            <span
+              id="star_4"
+              class="star-empty"
+              onmouseover="star_hover(4)"
+              onmouseleave="star_leave(4)"
+              onclick="star_clicked(4)"
+              >★</span
+            >
+          </div>
         </div>
       </div>
       <div

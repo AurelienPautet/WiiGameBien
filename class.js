@@ -9,13 +9,6 @@ const {
   rectanglesSeTouchent,
 } = require(__dirname + "/check_collision.js");
 
-class User {
-  constructor(email) {
-    this.email = email;
-    this.stats_to_add = { wins: 0, kills: 0, deaths: 0, rounds: 0 };
-  }
-}
-
 class Player {
   constructor(position, socketid, name, turretc, bodyc) {
     this.name = name;
@@ -435,5 +428,4 @@ module.exports = {
   Frontend_Player,
   Mine,
   Room,
-  User,
 };

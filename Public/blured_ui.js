@@ -1,4 +1,5 @@
 socket.on("winner", (id, wait, scores, ids_to_name) => {
+  hide_ui_element("spectator_screen");
   show_ui_element("end_screen_screen");
   console.log(scores);
   score_tab = document.getElementById("score_tab");
@@ -100,3 +101,39 @@ function add_in_cascade(parent, child_divs_list, overall_delay) {
     total_delay += beetwen_delay;
   }
 }
+
+function star_hover(i) {
+  for (let j = 0; j < i + 1; j++) {
+    star = document.getElementById("star_" + j);
+    star.classList = "";
+    star.classList.add("star-filled");
+  }
+}
+
+function star_leave(i) {
+  for (let j = 0; j < i + 1; j++) {
+    star = document.getElementById("star_" + j);
+    star.classList = "";
+    star.classList.add("star-empty");
+  }
+}
+
+function star_clicked(i) {
+  for (let j = 0; j < i + 1; j++) {
+    star = document.getElementById("star_" + j);
+    star.classList = "";
+    star.classList.add("star-filled");
+  }
+  socket.emit("rate_lvl", i, level_id);
+}
+
+socket.on("rate_success", (rate, level_id) => {
+  console.log("rate success", rate, level_id);
+  createToast(
+    "info",
+    "/image/info.svg",
+    "Success",
+    "You rated the level with " + rate + " stars"
+  );
+  return_home();
+});

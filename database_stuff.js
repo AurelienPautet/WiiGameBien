@@ -1,52 +1,7 @@
-const { Client } = require("pg");
 const bcrypt = require("bcryptjs");
-
-require("dotenv").config();
-
-DB_PASSWORD = process.env.DB_PASSWORD;
-DB_HOST = process.env.DB_HOST;
-DB_USER = process.env.DB_USER;
-DB_NAME = process.env.DB_NAME;
-DB_PORT = process.env.DB_PORT;
-
-let client;
-console.log(process.env.DATABASE_URL, "DATABASE_URL");
-if (process.env.DATABASE_URL == undefined) {
-  console.log("Using local db");
-  client = new Client({
-    host: DB_HOST,
-    port: DB_PORT,
-    user: DB_USER,
-    password: DB_PASSWORD,
-    database: DB_NAME,
-  });
-} else {
-  console.log("Using heroku db");
-  client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false,
-    },
-  });
-}
-
-client
-  .connect()
-  .then(() => console.log("Connected to PostgreSQL database"))
-  .catch((err) => console.error("Connection error", err.stack));
-
-module.exports = client;
-const {
-  Player,
-  CollisonsBox,
-  Bullet,
-  Block,
-  Frontend_Player,
-  Mine,
-  Room,
-  User,
-} = require(__dirname + "/class.js");
-var query_tosend = "";
+// Removed duplicate import of User
+const client = require(__dirname + "/db_client.js");
+const User = require(__dirname + "/User_class.js");
 
 function get_levels(input_name, imput_nb_players, socket) {
   if (imput_nb_players == 0) {
@@ -157,7 +112,7 @@ async function signup(username, email, password, socket) {
   }
 
   if (willreturn) {
-    return;
+    return false;
   }
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
@@ -167,8 +122,10 @@ async function signup(username, email, password, socket) {
       [username, email, hashedPassword],
       (err, res) => {
         if (err) {
+          resolve(false);
           console.error("Error executing query", err.stack);
         } else {
+          resolve(true);
           socket.emit("signup_success", email);
           users[socket.id] = new User(email);
           log_attemps(email, socket.handshake.address, "sign_up_success");
@@ -186,15 +143,16 @@ async function login(email, password, socket) {
       async (err, res) => {
         if (err) {
           console.error("Error executing query", err.stack);
-          resolve("Error");
+          resolve(false);
         } else if (res.rows.length == 0) {
           socket.emit("login_fail", "email");
-          resolve("User not found");
+          resolve(false);
         } else {
           const user = res.rows[0];
           const isMatch = await bcrypt.compare(password, user.password_hash);
           console.log(isMatch, "isMatch");
           if (!isMatch) {
+            resolve(false);
             socket.emit("login_fail", "password");
             log_attemps(
               email,
@@ -202,6 +160,7 @@ async function login(email, password, socket) {
               "login_failed_wrong_password"
             );
           } else {
+            resolve(true);
             users[socket.id] = new User(email);
             socket.emit("login_success", user.username);
             log_attemps(email, socket.handshake.address, "login_success");
@@ -218,6 +177,32 @@ async function logout(socket) {
   log_attemps(email, socket.handshake.address, "logout_success");
 }
 
+async function rate_lvl(rate, level_id, socket) {
+  console.log("rate_lvl", rate, level_id);
+  try {
+    player_id = users[socket.id].id;
+    return new Promise((resolve) => {
+      client.query(
+        "INSERT INTO ratings (player_id,level_id,stars) VALUES ($1,$2,$3)",
+        [player_id, level_id, rate],
+        (err) => {
+          if (err) {
+            console.error("Error executing query", err.stack);
+            resolve(false);
+          } else {
+            resolve(true);
+            socket.emit("rate_success", rate, level_id);
+          }
+        }
+      );
+    });
+  } catch (err) {
+    console.log(err);
+    socket.emit("rate_fail", "not logged in");
+    return false;
+  }
+}
+
 module.exports = {
   get_levels,
   get_max_players,
@@ -225,4 +210,5 @@ module.exports = {
   signup,
   login,
   logout,
+  rate_lvl,
 };
