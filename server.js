@@ -66,7 +66,9 @@ io.on("connect", (socket) => {
     let roomsf = 0;
     let i = -1;
     room_list(0);
-
+    if (users[socket.id]) {
+      logout(socket);
+    }
     rooms.forEach((r) => {
       e = r.ids.indexOf(socket.id);
       if (e > -1) {

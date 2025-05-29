@@ -14,8 +14,38 @@
       name="viewport"
       content="width=device-width, initial-scale=0.67, user-scalable=no"
     />
-    <link rel="stylesheet" href="tail.css" />
+    <link rel="stylesheet" href="tails.css" />
     <link rel="stylesheet" href="customclass.css" />
+    <style>
+      /* Custom Scrollbar Styling for WebKit browsers (Chrome, Safari, Edge) */
+      /* Apply to all scrollable elements for consistency, but will be overridden by 'hidescrollbar' where it exists */
+      ::-webkit-scrollbar {
+        width: 10px; /* Width for vertical scrollbars */
+        height: 10px; /* Height for horizontal scrollbars */
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #e2e8f0; /* bg-slate-200 */
+        border-radius: 6px; /* rounded-md equivalent */
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #64748b; /* bg-slate-500 */
+        border-radius: 6px; /* rounded-md equivalent */
+        border: 2px solid #e2e8f0; /* Add a slight border to match track */
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #475569; /* bg-slate-600 */
+      }
+
+      /* Firefox scrollbar styling */
+      /* Note: Firefox styling is less flexible than WebKit */
+      html {
+        scrollbar-color: #64748b #e2e8f0; /* thumb color track color */
+        scrollbar-width: thin; /* auto, thin, none */
+      }
+    </style>
   </head>
 
   <body onload="load_old_tank()" onresize="rescale()">
@@ -198,7 +228,7 @@
       </div>
       <div
         id="tank_select"
-        class="absolute bg-gray-400 h-1/2 w-1/2 left-1/4 top-1/3 rounded-lg hidden"
+        class="absolute bg-gray-400 h-1/2 w-1/2 left-1/4 top-1/3 rounded-md hidden"
       >
         <div
           id="turret_select"
@@ -331,11 +361,12 @@
         class="absolute w-full h-full flex items-center justify-center flex-col hidden"
       >
         <div class="absolute w-full h-full" onclick="return_home()"></div>
-        <div class="w-3/4 h-3/4 flex flex-col z-10">
+        <div class="h-24 w-3"></div>
+        <div class="w-3/4 h-3/4 flex flex-col z-10 rounded-md">
           <div
-            class="bg-slate-300 w-full h-1/5 flex items-center justify-between rounded-t-xl"
+            class="bg-slate-300 w-full h-1/5 flex items-center justify-between rounded-t-md"
           >
-            <div class="flex items-center font-extrabold">
+            <div class="flex items-center font-extrabold text-black">
               <img src="icons/login.svg" class="w-20 h-20" />
               <h1 id="profile_username" class="m-4">Username : Aureplus</h1>
               <h1 id="profile_email" class="m-4">
@@ -354,8 +385,9 @@
               <h1 class="group-hover:text-xl">Logout</h1>
             </div>
           </div>
-          <div class="bg-slate-600 w-full h-full rounded-b-xl">
-            <h1>Stats :</h1>
+          <div class="bg-slate-600 w-full h-full rounded-b-md p-4">
+            <h1 class="font-bold text-white">Stats :</h1>
+            <!-- Add more stats content here as needed, following the same styling -->
           </div>
         </div>
       </div>
@@ -408,7 +440,7 @@
               />
               <img
                 id="login_password_eye"
-                src="/icons/eye.svg"
+                src="/icons/eye_closed.svg"
                 alt=""
                 class="h-4 w-4 m-2 hover:h-5 hover:w-5"
                 onclick="show_hide_pass('login_password_input','login_password_eye' )"
@@ -460,7 +492,7 @@
               />
               <img
                 id="signup_password_eye"
-                src="/icons/eye.svg"
+                src="/icons/eye_closed.svg"
                 alt=""
                 class="h-4 w-4 m-2 hover:h-5 hover:w-5"
                 onclick="show_hide_pass('signup_password_input','signup_password_eye' )"
@@ -478,22 +510,22 @@
       </div>
       <div
         id="mapset_selector"
-        class="absolute w-3/4 h-3/4 bg-gray-500 left-1/4 top-1/8 center_ui hidden"
+        class="absolute w-3/4 h-3/4 bg-gray-500 left-1/4 top-1/8 center_ui hidden rounded-md"
       >
         <div
-          class="w-full h-full mx-auto bg-white shadow flex flex-col overflow-hidden"
+          class="w-full h-full mx-auto bg-slate-400 shadow flex flex-col overflow-hidden rounded-md"
         >
           <!-- Header -->
-          <div class="bg-gray-300/50 p-4 flex justify-between items-center">
+          <div class="bg-slate-300/50 p-4 flex justify-between items-center">
             <div class="flex items-center gap-4">
-              <span class="font-bold text-xl">Name/creator:</span>
-              <div class="flex items-center bg-white px-3 py-1">
+              <span class="font-bold text-xl text-black">Name/creator:</span>
+              <div class="flex items-center bg-slate-200 px-3 py-1 rounded-md">
                 <span>🔍</span>
                 <input
                   type="text"
                   id="level_name_input"
                   name="level_name"
-                  class="w-full px-4 py-2 text-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 text-lg font-bold border-none focus:outline-none focus:ring-0 bg-slate-200 text-gray-700"
                   placeholder="Enter level name"
                   required
                   onchange="request_levels()"
@@ -507,7 +539,7 @@
               <select
                 id="level_max_players_drop"
                 name="players"
-                class="px-4 py-2 text-lg border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="px-4 py-2.5 text-lg font-bold border-2 border-gray-300 rounded-md focus:outline focus:outline-2 focus:outline-offset-2 bg-white text-gray-700 focus:outline-blue-500"
                 required
                 onchange="request_levels()"
               >
@@ -526,28 +558,28 @@
           <!-- Map List -->
           <div
             id="map_list"
-            class="p-4 space-y-4 overflow-scroll flex-grow-0"
+            class="p-4 space-y-4 overflow-y-scroll flex-grow-0"
           ></div>
         </div>
       </div>
       <div
         id="room_selector"
-        class="absolute w-3/4 h-3/4 bg-gray-500 left-1/4 top-1/8 center_ui hidden"
+        class="absolute w-3/4 h-3/4 bg-gray-500 left-1/4 top-1/8 center_ui hidden rounded-md"
       >
         <div
-          class="w-full h-full mx-auto bg-white shadow flex flex-col overflow-hidden"
+          class="w-full h-full mx-auto bg-slate-400 shadow flex flex-col overflow-hidden rounded-md"
         >
           <!-- Header -->
-          <div class="bg-gray-300/50 p-4 flex justify-between items-center">
+          <div class="bg-slate-300/50 p-4 flex justify-between items-center">
             <div class="flex items-center gap-4">
-              <span class="font-bold text-xl">Room name:</span>
-              <div class="flex items-center bg-white px-3 py-1">
+              <span class="font-bold text-xl text-black">Room name:</span>
+              <div class="flex items-center bg-slate-200 px-3 py-1 rounded-md">
                 <span>🔍</span>
                 <input
                   type="text"
                   id="room_name_input"
                   name="room_name"
-                  class="w-full px-4 py-2 text-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 text-lg font-bold border-none focus:outline-none focus:ring-0 bg-slate-200 text-gray-700"
                   placeholder="Enter room name"
                   required
                 />
@@ -560,7 +592,7 @@
               <select
                 id="drop_nb_players_room"
                 name="players"
-                class="px-4 py-2 text-lg border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="px-4 py-2.5 text-lg font-bold border-2 border-gray-300 rounded-md focus:outline focus:outline-2 focus:outline-offset-2 bg-white text-gray-700 focus:outline-blue-500"
                 required
               >
                 <option value="1">1</option>
@@ -576,26 +608,26 @@
 
           <!-- Map List -->
           <div
-            class="p-4 space-y-4 overflow-scroll flex-grow-0"
+            class="p-4 space-y-4 overflow-y-scroll flex-grow-0"
             id="room_list"
           ></div>
         </div>
       </div>
       <div
         id="room_configuration"
-        class="absolute w-1/3 h-3/4 bg-gray-300 left-1/3 top-1/4 center_ui2 hidden flex justify-center p-6"
+        class="absolute w-1/3 h-3/4 bg-gray-300 left-1/3 top-1/4 center_ui2 hidden flex justify-center p-6 rounded-md"
       >
         <div class="flex flex-col items-center w-full">
           <!-- Room Name Input -->
           <div class="mb-4 w-full">
-            <label for="room_name" class="block text-white text-lg mb-2"
+            <label for="room_name" class="block text-black text-lg mb-2"
               >Room Name:</label
             >
             <input
               type="text"
               id="room_name_input_create"
               name="room_name"
-              class="w-full px-4 py-2 text-lg border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-4 py-2.5 text-lg font-bold border-2 rounded-md focus:outline focus:outline-2 focus:outline-offset-2 bg-white text-gray-700 focus:outline-blue-500 border-gray-300"
               placeholder="Enter room name ooooo"
               required
             />
@@ -603,7 +635,7 @@
 
           <!-- Public or Private Radio Buttons -->
           <div class="mb-4 w-full">
-            <span class="block text-white text-lg mb-2">Room Type:</span>
+            <span class="block text-black text-lg mb-2">Room Type:</span>
             <div class="flex items-center">
               <input
                 type="radio"
@@ -613,7 +645,7 @@
                 class="mr-2"
                 checked
               />
-              <label for="public" class="text-white mr-4">Public</label>
+              <label for="public" class="text-black mr-4">Public</label>
               <input
                 type="radio"
                 id="private"
@@ -621,19 +653,19 @@
                 value="private"
                 class="mr-2"
               />
-              <label for="private" class="text-white">Private</label>
+              <label for="private" class="text-black">Private</label>
             </div>
           </div>
 
           <!-- Number of Rounds Dropdown -->
           <div class="mb-4 w-full">
-            <label for="rounds" class="block text-white text-lg mb-2"
+            <label for="rounds" class="block text-black text-lg mb-2"
               >Number of Rounds:</label
             >
             <select
               id="room_rounds_select"
               name="rounds"
-              class="w-full px-4 py-2 text-lg border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-4 py-2.5 text-lg font-bold border-2 rounded-md focus:outline focus:outline-2 focus:outline-offset-2 bg-white text-gray-700 focus:outline-blue-500 border-gray-300"
               required
             >
               <option value="1">1 Round</option>
@@ -647,7 +679,7 @@
           <div class="mb-4 w-full">
             <button
               type="button"
-              class="w-full bg-green-500 text-white text-lg py-2 rounded hover:bg-green-600"
+              class="w-full bg-blue-500 text-white text-lg py-2 rounded-md hover:bg-blue-600 font-extrabold"
               onclick="show_ui_element('mapset_selector')"
             >
               Select Map
@@ -658,7 +690,7 @@
           <div class="w-full">
             <button
               type="button"
-              class="w-full bg-blue-500 text-white text-lg py-2 rounded hover:bg-blue-600"
+              class="w-full bg-blue-500 text-white text-lg py-2 rounded-md hover:bg-blue-600 font-extrabold"
               onclick="create_room()"
             >
               Create Room
@@ -692,5 +724,3 @@
   <script src="./rescale.js"></script>
   <script src="./blured_ui.js"></script>
 </html>
-
-<style></style>
