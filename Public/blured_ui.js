@@ -102,30 +102,67 @@ function add_in_cascade(parent, child_divs_list, overall_delay) {
   }
 }
 
+socket.on("your_level_rating", (stars) => {
+  stars = stars;
+});
+
+stars = [0, 0, 0, 0, 0];
+
 function star_hover(i) {
   for (let j = 0; j < i + 1; j++) {
     star = document.getElementById("star_" + j);
     star.classList = "";
     star.classList.add("star-filled");
   }
-}
-
-function star_leave(i) {
-  for (let j = 0; j < i + 1; j++) {
+  for (let j = i + 1; j < 5; j++) {
     star = document.getElementById("star_" + j);
     star.classList = "";
     star.classList.add("star-empty");
   }
 }
 
-function star_clicked(i) {
-  for (let j = 0; j < i + 1; j++) {
+function show_stored_stars() {
+  for (let j = 0; j < 5; j++) {
     star = document.getElementById("star_" + j);
     star.classList = "";
-    star.classList.add("star-filled");
+    if (stars[j] == 1) {
+      star.classList.add("star-filled");
+    } else {
+      star.classList.add("star-empty");
+    }
   }
-  socket.emit("rate_lvl", i, level_id);
 }
+
+function star_clicked(i) {
+  if (logged == false) {
+    createToast(
+      "error",
+      "/image/error.svg",
+      "Error",
+      "You need to be logged in to rate a level"
+    );
+    return;
+  }
+  for (let j = 0; j < 5; j++) {
+    if (j <= i) {
+      stars[j] = 1;
+    } else {
+      stars[j] = 0;
+    }
+  }
+  show_stored_stars();
+  socket.emit("rate_lvl", i + 1, level_id);
+}
+
+socket.on("rate_fail", (reason) => {
+  console.log("rate fail", reason);
+  createToast(
+    "error",
+    "/image/error.svg",
+    "Error",
+    "You can't rate this level because " + reason
+  );
+});
 
 socket.on("rate_success", (rate, level_id) => {
   console.log("rate success", rate, level_id);
@@ -135,5 +172,4 @@ socket.on("rate_success", (rate, level_id) => {
     "Success",
     "You rated the level with " + rate + " stars"
   );
-  return_home();
 });

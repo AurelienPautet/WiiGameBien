@@ -80,7 +80,7 @@ aim = {
 plant = false;
 click = false;
 alive = true;
-
+logged = false;
 socket.on("tick", (p, bu, m, r, t) => {
   bullets = bu;
   mines = m;

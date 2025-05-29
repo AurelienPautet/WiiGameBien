@@ -48,6 +48,7 @@ const {
   logout,
   get_user_info,
   rate_lvl,
+  get_level_rating_from_player,
 } = require(__dirname + "/database_stuff.js");
 
 io.on("connect", (socket) => {
@@ -324,6 +325,13 @@ function check_for_winns_and_load_next_level(room) {
           player.spawnpos = room.spawns[spawnid];
           room.spawns.splice(spawnid, 1);
           player.spawn();
+          if (users[socketid]) {
+            stars = await get_level_rating_from_player(
+              room.levels[room.levelid].id,
+              users[socketid].id
+            );
+            io.to(socketid).emit("your_level_rating", stars ? stars : 0);
+          }
         }
         room.nbliving = Object.keys(room.players).length;
         room.waitingrespawn = false;

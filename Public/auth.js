@@ -84,6 +84,7 @@ socket.on("signup_fail", (msg) => {
 socket.on("signup_success", (username) => {
   console.log("signup success", username);
   logged = true;
+
   myusername = username;
   myemail = email;
   document.getElementById("profile_username").innerHTML =
