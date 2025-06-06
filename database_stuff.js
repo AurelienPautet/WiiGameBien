@@ -14,7 +14,25 @@ function get_levels(input_name, imput_nb_players, socket) {
       "SELECT levels.id, name, content, creator_id, max_players, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' AND max_players = $2 GROUP BY levels.id ORDER BY rating";
     values = [input_name, imput_nb_players];
   }
-  fetch_levels(query_tosend, values, socket);
+  fetch_levels(query_tosend, values, socket, "recieve_levels");
+}
+
+function get_my_levels(input_name, imput_nb_players, socket) {
+  //console.log("get_my_levels", input_name, imput_nb_players);
+  //console.log("users", users);
+  let query_tosend, values;
+  //const player_id = users[socket.id].id;
+  const player_id = 1;
+  if (imput_nb_players == 0) {
+    query_tosend =
+      "SELECT levels.id, name, content, creator_id, max_players, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' AND creator_id = $2 GROUP BY levels.id ORDER BY rating";
+    values = [input_name, player_id];
+  } else {
+    query_tosend =
+      "SELECT levels.id, name, content, creator_id, max_players, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' AND max_players = $2 AND creator_id = $3 GROUP BY levels.id ORDER BY rating";
+    values = [input_name, imput_nb_players, player_id];
+  }
+  fetch_levels(query_tosend, values, socket, "recieve_my_levels");
 }
 
 async function get_max_players(list_id) {
@@ -41,7 +59,7 @@ function get_creator_name(level_row) {
   });
 }
 
-function fetch_levels(query_tosend, values, socket) {
+function fetch_levels(query_tosend, values, socket, response_event) {
   client.query(query_tosend, values, async (err, res) => {
     if (err) {
       console.error("Error executing query fetch_levels", err.stack);
@@ -60,7 +78,7 @@ function fetch_levels(query_tosend, values, socket) {
         });
       }
       //console.log("Levels fetched:", levels);
-      socket.emit("recieve_levels", levels);
+      socket.emit(response_event, levels);
       return levels;
     }
   });
@@ -388,6 +406,7 @@ async function get_user_rank(player_socket_id, ranking_type, socket) {
 
 module.exports = {
   get_levels,
+  get_my_levels,
   get_max_players,
   get_json_from_id,
   signup,

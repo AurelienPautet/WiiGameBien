@@ -41,6 +41,7 @@ const {
 
 const {
   get_levels,
+  get_my_levels,
   get_max_players,
   get_json_from_id,
   signup,
@@ -115,6 +116,10 @@ io.on("connect", (socket) => {
 
   socket.on("search_levels", (input_name, input_nb_players) => {
     levels = get_levels(input_name, input_nb_players, socket);
+  });
+
+  socket.on("search_my_levels", (input_name, input_nb_players) => {
+    levels = get_my_levels(input_name, input_nb_players, socket);
   });
 
   socket.on("new-room", async (name, rounds, list_id, creator) => {
@@ -259,7 +264,7 @@ function room_list(socket) {
     room_players_max.push(room.maxplayernb);
     room_creator_name.push(room.creator);
   });
-  console.log("room_list");
+  //console.log("room_list");
   if (socket != 0) {
     socket.emit(
       "room_list",
@@ -332,7 +337,7 @@ function check_for_winns_and_load_next_level(room) {
       }
       for (socketid in room.players) {
         if (users[socketid]) {
-          console.log("caca");
+          //console.log("caca");
           add_round(
             socketid,
             room.levels[room.levelid],
@@ -566,7 +571,7 @@ async function create_room(name, rounds, list_id, creator) {
     loadlevel(room.levels[0], room);
   }
   room_list(0);
-  console.log(rooms);
+  //console.log(rooms);
 }
 //Create the default room and load the first level
 rooms = [];

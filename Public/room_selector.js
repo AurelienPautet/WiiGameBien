@@ -3,12 +3,12 @@ let room_list = document.getElementById("room_list");
 function addRoom(room_name, creator_name, int_players, int_players_max) {
   let newRoom = document.createElement("div");
   newRoom.innerHTML = `
-            <div id="${room_name}" class="bg-gray-200 rounded-md p-4 flex w-full border-2 hover:bg-gray-300 "onclick="join_room('${room_name}')">
+            <div id="${room_name}" class="text-white bg-slate-500 rounded-md p-4 flex w-full  hover:bg-slate-600"onclick="join_room('${room_name}')">
               <div class="flex justify-between w-full">
                 <div class="ml-4 flex-col flex-grow-0">
                   <h3 class="text-xl font-bold">${room_name} by ${creator_name}</h3>
                   <div class="flex gap-4 mt-2">
-                    <span class="bg-white px-2 py-1">${int_players}/${int_players_max} 👤</span>
+                    <span class="bg-slate-700 px-2 py-1">${int_players}/${int_players_max} 👤</span>
                   </div>
                 </div>
               </div>
@@ -25,7 +25,7 @@ socket.on("room_list", (lname, lcreator, lplayers, lmaxplayers) => {
 });
 
 function join_room(roomname) {
-  document.getElementById(roomname).classList.add("border-blue-400");
+  document.getElementById(roomname).classList.add("border-teal-500");
   console.log(current["body"], current["turret"]);
 
   socket.emit(

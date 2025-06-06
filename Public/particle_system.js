@@ -3,14 +3,10 @@ class Particle {
     this.position = position;
     this.angle = angle;
     this.speed = speed;
-    //list of colors the particle will fade through with the percent of the timelife
     this.steps = steps;
-    //time since the particle was created
     this.timealive = 0;
-    //time the particle will live
     this.timelife = timelife;
     this.radius = radius;
-    //velocity of the particle
     this.velocity = {
       x: -Math.cos((this.angle * 3.14) / 180) * this.speed,
       y: -Math.sin((this.angle * 3.14) / 180) * this.speed,
@@ -19,26 +15,18 @@ class Particle {
   update() {
     this.position.x += this.velocity.x;
     this.position.y += this.velocity.y;
-
-    //reduce the radius of the particle as it gets older
     this.radius =
       this.radius * (1 - 0.3 * (this.timealive / this.timelife) ** 3);
-
-    //reduce the velocity of the particle as it gets older
     this.velocity.x =
       this.velocity.x * (1 - 0.3 * (this.timealive / this.timelife) ** 4);
     this.velocity.y =
       this.velocity.y * (1 - 0.3 * (this.timealive / this.timelife) ** 4);
-
-    //increase the time alive
     this.timealive++;
     this.draw();
   }
   draw() {
-    //draw a circle to represent the particle
     c.beginPath();
     c.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI, false);
-    // get the gradient current color of the particle
     c.fillStyle = steppingradient(this.steps, this.timealive / this.timelife);
     c.fill();
     c.closePath();
@@ -50,16 +38,10 @@ class Chockwave {
     this.position = position;
     this.speed = speed;
     this.width = width;
-
-    //colors of the chockwave
     this.startColor = startColor;
     this.endColor = endColor;
-
-    //time since the particle was created
     this.timealive = 0;
-    //time the particle will live
     this.timelife = timelife;
-
     this.radius = radius;
   }
   update() {
@@ -70,9 +52,8 @@ class Chockwave {
     this.draw();
   }
   draw() {
-    //draw a circle to represent the chockwave
     c.beginPath();
-    c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2, false); // outer (filled)
+    c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2, false);
     c.arc(
       this.position.x,
       this.position.y,
@@ -81,8 +62,6 @@ class Chockwave {
       Math.PI * 2,
       true
     );
-
-    // get the gradient current color of the chockwave
     c.fillStyle = gradientcolor(
       this.startColor,
       this.endColor,
@@ -93,49 +72,32 @@ class Chockwave {
   }
 }
 
-//array to store all the particles
 particles = [];
-//array to store all the chockwaves
 chockwaves = [];
 
 function gradientcolor(startColor, endColor, percentFade) {
-  // create a gradient color between two colors based on the percentFade value
-
-  //calculate the difference between the two colors
   var diffRed = endColor.red - startColor.red;
   var diffGreen = endColor.green - startColor.green;
   var diffBlue = endColor.blue - startColor.blue;
-
-  //calculate the new color based on the percentFade
   diffRed = diffRed * percentFade + startColor.red;
   diffGreen = diffGreen * percentFade + startColor.green;
   diffBlue = diffBlue * percentFade + startColor.blue;
-
-  //return the new color
   return `rgb(${diffRed},${diffGreen},${diffBlue})`;
 }
 
 function steppingradient(steps, percentFade) {
-  // get the gradient with different steps of color of the particle based on the percentFade value
-
-  //sotres the current step of the particle
   current_step = 0;
-
-  //get the current step of the particle
   for (let e = 0; e < steps.length; e++) {
     if (steps[e].percent < percentFade) {
       current_step = e;
     }
   }
-  //get the begin and end of the current step percent
   begin = steps[current_step].percent;
   if (current_step < steps.length - 1) {
     end = steps[current_step + 1].percent;
   } else {
     end = 1;
   }
-
-  //return the gradient color of the particle
   return gradientcolor(
     steps[current_step].color,
     steps[current_step + 1].color,
@@ -144,24 +106,21 @@ function steppingradient(steps, percentFade) {
 }
 
 function getRandomArbitrary(min, max) {
-  //get a random number between min and max
   return Math.random() * (max - min) + min;
 }
 
 function getRandomNormal(min, max) {
-  //get a random number between min and max with a normal distribution
   return randn_bm() * (max - min) + min;
 }
 
 function randn_bm() {
-  //get a random number between 0 and 1 with a normal distribution
   let u = 0,
     v = 0;
-  while (u === 0) u = Math.random(); //Converting [0,1) to (0,1)
+  while (u === 0) u = Math.random();
   while (v === 0) v = Math.random();
   let num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-  num = num / 10.0 + 0.5; // Translate to 0 -> 1
-  if (num > 1 || num < 0) return randn_bm(); // resample between 0 and 1
+  num = num / 10.0 + 0.5;
+  if (num > 1 || num < 0) return randn_bm();
   return num;
 }
 
@@ -186,7 +145,6 @@ socket.on("mine_explosion", (position) => {
 });
 
 function ricochet_sparks(position, angle, num) {
-  //create the ricochet sparks particles and add them to the particles array
   for (let e = 0; e < num; e++) {
     particles.push(
       new Particle(
@@ -459,7 +417,6 @@ function bullet_explosion(position, num) {
       )
     );
   }
-
   for (let e = 0; e < Math.floor(num / 10); e++) {
     particles.push(
       new Particle(

@@ -24,15 +24,15 @@ function switch_onglet(onglet) {
   console.log(onglet, current_onglet);
   if (current_onglet != onglet) {
     if (onglet == content_login) {
-      login_onglet.classList.add("bg-slate-400");
-      login_onglet.classList.remove("bg-slate-300");
-      signup_onglet.classList.remove("bg-slate-400");
-      signup_onglet.classList.add("bg-slate-300");
+      login_onglet.classList.add("bg-slate-700");
+      login_onglet.classList.remove("bg-slate-500");
+      signup_onglet.classList.remove("bg-slate-700");
+      signup_onglet.classList.add("bg-slate-500");
     } else if (onglet == content_signup) {
-      signup_onglet.classList.add("bg-slate-400");
-      signup_onglet.classList.remove("bg-slate-300");
-      login_onglet.classList.remove("bg-slate-400");
-      login_onglet.classList.add("bg-slate-300");
+      signup_onglet.classList.add("bg-slate-700");
+      signup_onglet.classList.remove("bg-slate-500");
+      login_onglet.classList.remove("bg-slate-700");
+      login_onglet.classList.add("bg-slate-500");
     }
     current_onglet.classList.add("hidden");
     onglet.classList.remove("hidden");

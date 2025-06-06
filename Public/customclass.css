@@ -32,22 +32,22 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #e2e8f0;
+  background: #334155;
   border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #64748b;
+  background: #475569;
   border-radius: 6px;
-  border: 2px solid #e2e8f0;
+  border: 2px solid #1e293b;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #64748b;
 }
 
 html {
-  scrollbar-color: #64748b #e2e8f0;
+  scrollbar-color: #475569 #334155;
   scrollbar-width: thin;
 }
 
@@ -82,24 +82,22 @@ html {
   height: 98px;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
 .hidescrollbar::-webkit-scrollbar {
   display: none;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
 .hidescrollbar {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .noSelect {
-  -webkit-touch-callout: none; /* iOS Safari */
-  -webkit-user-select: none; /* Chrome/Safari/Opera */
-  -khtml-user-select: none; /* Konqueror */
-  -moz-user-select: none; /* Firefox */
-  -ms-user-select: none; /* Internet Explorer/Edge */
-  user-select: none; /* Non-prefixed version */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
   pointer-events: none;
 }
 
@@ -124,12 +122,10 @@ html {
   --create_color: #0828fe85;
   --join_color_hoover: #5e73fe85;
   --create_color_hoover: #0828fed5;
-
   --guest_color: #5e73fe85;
   --account_color: #0828fe85;
   --guest_color_hoover: #5e73fe85;
   --account_color_hoover: #0828fed5;
-
   --radius: 10px;
 }
 
@@ -139,7 +135,7 @@ body {
 
 #notif {
   pointer-events: none;
-  user-select: none; /* Propriété standard */
+  user-select: none;
   position: absolute;
   left: 40%;
   top: 0%;
@@ -257,9 +253,9 @@ canvas {
 body {
   font-family: "Poppins", sans-serif;
   -user-select: none;
-  -webkit-user-select: none; /* Chrome/Safari */
-  -moz-user-select: none; /* Firefox */
-  -ms-user-select: none; /* IE10+ */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   background: white;
   height: 100vh;
   width: 100vw;

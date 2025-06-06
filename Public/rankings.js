@@ -7,10 +7,10 @@ function show_rankings(ranking_type) {
   socket.emit("ranking", ranking_type);
   old_ranking = document.getElementById(`ranking_button_${current_ranking}`);
   old_ranking.classList.remove("bg-slate-700");
-  old_ranking.classList.add("bg-slate-500");
+  old_ranking.classList.add("bg-slate-600");
   current_ranking = ranking_type;
   new_ranking = document.getElementById(`ranking_button_${current_ranking}`);
-  new_ranking.classList.remove("bg-slate-500");
+  new_ranking.classList.remove("bg-slate-600");
   new_ranking.classList.add("bg-slate-700");
   show_personal_rank();
 }

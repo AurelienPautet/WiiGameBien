@@ -64,8 +64,6 @@ const after_hide = {
   rankings: alwaystrue,
 };
 
-// all the ui elements in the html
-
 // to prevent double clicking
 let waited = false;
 // the current page
@@ -106,8 +104,12 @@ function get_ranking_initial() {
 function is_logged_in() {
   if (logged === false) {
     createToast("info", "/image/info.svg", "Error", "You are not logged in");
+  } else {
+    socket.emit("search_my_levels", "", 0);
   }
+  socket.emit("search_my_levels", "", 0);
   return true;
+
   //return logged;
 }
 
