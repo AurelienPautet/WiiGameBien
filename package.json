@@ -2,14 +2,14 @@
   "name": "wiigamebien",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "Server/server.js",
   "engines": {
     "node": "23.3.0",
     "npm": "10.9.0"
   },
   "scripts": {
     "dev:tailwind": "npx tailwindcss -i Public/styles.css -o Public/tails.css --watch",
-    "dev:server": "nodemon server.js",
+    "dev:server": "nodemon Server/server.js",
     "dev": "echo \"Use 'npm run dev:tailwind' and 'npm run dev:server' in separate terminals\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

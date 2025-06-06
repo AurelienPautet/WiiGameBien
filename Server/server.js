@@ -4,18 +4,22 @@ const app = express();
 const fs = require("fs");
 const path = require("path");
 
-app.use(express.static("Public"));
+app.use(express.static(path.join(__dirname, "../Public")));
+console.log(path.join(__dirname, "../Public"));
 const PORT = process.env.PORT || 7000;
 console.log("PORT : ", PORT);
 const expressServer = app.listen(PORT);
 
 const socketio = require("socket.io");
 const io = socketio(expressServer, {
-  cors: [
-    "http://localhost:7000",
-    "https://wiitank-2aacc4abc5cb.herokuapp.com/",
-    "https://wiitank.pautet.net/",
-  ],
+  cors: {
+    origin: [
+      "http://localhost:7000",
+      "https://wiitank-2aacc4abc5cb.herokuapp.com",
+      "https://wiitank.pautet.net",
+    ],
+    methods: ["GET", "POST"],
+  },
 });
 module.exports = { io };
 

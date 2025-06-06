@@ -3,3 +3,5 @@
 vscode/
 database_setup.txt
 node_modules/
+
+.env
