@@ -302,24 +302,30 @@ async function get_user_stats(player_socket_id, socket) {
 }
 
 async function get_ranking(ranking_type, socket) {
-  let query;
+  let selectExpr;
   switch (ranking_type) {
     case "KILLS":
-      query =
-        "SELECT username, SUM(kills) as total_data FROM players JOIN rounds ON players.id = rounds.player_id GROUP BY username ORDER BY total_data DESC";
+      selectExpr = "SUM(kills)";
       break;
     case "ROUNDS_PLAYED":
-      query =
-        "SELECT username, COUNT(rounds.id) as total_data FROM players JOIN rounds ON players.id = rounds.player_id GROUP BY username ORDER BY total_data DESC";
+      selectExpr = "COUNT(rounds.id)";
       break;
     case "WINS":
-      query =
-        "SELECT username, SUM(wins) as total_data FROM players JOIN rounds ON players.id = rounds.player_id GROUP BY username ORDER BY total_data DESC";
+      selectExpr = "SUM(wins)";
       break;
     default:
       socket.emit("ranking_error", "Invalid ranking type");
       return;
   }
+
+  const query = `
+    SELECT username, ${selectExpr} as total_data,
+      RANK() OVER (ORDER BY ${selectExpr} DESC) as rank
+    FROM players
+    JOIN rounds ON players.id = rounds.player_id
+    GROUP BY username
+    ORDER BY rank ASC
+  `;
 
   client.query(query, (err, res) => {
     if (err) {
@@ -329,6 +335,55 @@ async function get_ranking(ranking_type, socket) {
       socket.emit("ranking", res.rows, ranking_type);
     }
   });
+}
+
+async function get_user_rank(player_socket_id, ranking_type, socket) {
+  try {
+    const player_id = users[player_socket_id].id;
+
+    let selectExpr;
+    switch (ranking_type) {
+      case "KILLS":
+        selectExpr = "SUM(kills)";
+        break;
+      case "ROUNDS_PLAYED":
+        selectExpr = "COUNT(rounds.id)";
+        break;
+      case "WINS":
+        selectExpr = "SUM(wins)";
+        break;
+      default:
+        socket.emit("personal_ranking", null);
+        return;
+    }
+
+    const query = `
+      SELECT username, total_data, rank FROM (
+        SELECT username, ${selectExpr} as total_data,
+          RANK() OVER (ORDER BY ${selectExpr} DESC) as rank
+        FROM players
+        JOIN rounds ON players.id = rounds.player_id
+        GROUP BY username
+      ) ranked
+      WHERE username = (SELECT username FROM players WHERE id = $1)
+    `;
+
+    const res = await client.query(query, [player_id]);
+
+    if (res.rows.length > 0) {
+      const user = res.rows[0];
+      socket.emit("personal_ranking", {
+        username: user.username,
+        total_data: user.total_data,
+        rank: user.rank,
+      });
+    } else {
+      socket.emit("personal_ranking", null);
+    }
+  } catch (err) {
+    console.error("Error in get_user_rank:", err);
+    socket.emit("personal_ranking", null);
+  }
 }
 
 module.exports = {
@@ -343,4 +398,5 @@ module.exports = {
   add_round,
   get_user_stats,
   get_ranking,
+  get_user_rank,
 };

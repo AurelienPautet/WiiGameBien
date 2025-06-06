@@ -52,6 +52,7 @@ const {
   add_round,
   get_user_stats,
   get_ranking,
+  get_user_rank,
 } = require(__dirname + "/database_stuff.js");
 
 io.on("connect", (socket) => {
@@ -132,6 +133,12 @@ io.on("connect", (socket) => {
   socket.on("ranking", (ranking_type) => {
     //console.log("ranking", ranking_type);
     get_ranking(ranking_type, socket);
+  });
+
+  socket.on("personal_ranking", (mysocketid, ranking_type) => {
+    if (users[mysocketid]) {
+      get_user_rank(mysocketid, ranking_type, socket);
+    }
   });
 
   socket.on("play", (playerName, turretc, bodyc, room_name) => {

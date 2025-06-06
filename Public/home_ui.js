@@ -99,6 +99,7 @@ function alwaystrue() {
 
 function get_ranking_initial() {
   socket.emit("ranking", "KILLS");
+  show_personal_rank();
   return true;
 }
 
