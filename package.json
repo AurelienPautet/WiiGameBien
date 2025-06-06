@@ -10,7 +10,7 @@
   "scripts": {
     "dev:tailwind": "npx tailwindcss -i Public/styles.css -o Public/tails.css --watch",
     "dev:server": "nodemon Server/server.js",
-    "dev": "echo \"Use 'npm run dev:tailwind' and 'npm run dev:server' in separate terminals\"",
+    "dev": "nodemon Server/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
