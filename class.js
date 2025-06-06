@@ -9,6 +9,32 @@ const {
   rectanglesSeTouchent,
 } = require(__dirname + "/check_collision.js");
 
+class Stats {
+  constructor() {
+    this.stats = {
+      wins: 0,
+      kills: 0,
+      deaths: 0,
+      shots: 0,
+      hits: 0,
+      plants: 0,
+      blocks_destroyed: 0,
+    };
+  }
+
+  reset() {
+    this.stats = {
+      wins: 0,
+      kills: 0,
+      deaths: 0,
+      shots: 0,
+      hits: 0,
+      plants: 0,
+      blocks_destroyed: 0,
+    };
+  }
+}
+
 class Player {
   constructor(position, socketid, name, turretc, bodyc) {
     this.name = name;
@@ -18,12 +44,7 @@ class Player {
     this.socketid = socketid;
     this.mytick = 0;
     this.mvtspeed = 3;
-    this.stats = {
-      wins: 0,
-      kills: 0,
-      deaths: 0,
-      rounds: 0,
-    };
+    this.round_stats = new Stats();
     this.spawnpos = {
       x: 0,
       y: 0,
@@ -65,6 +86,7 @@ class Player {
     if (this.bulletcount < 5 && this.alive) {
       room.sounds.shoot = true;
       this.bulletcount++;
+      this.round_stats.stats.shots++;
       room.bullets.push(
         new Bullet({ x: this.endpos.x, y: this.endpos.y }, this.angle, 6, this)
       );
@@ -81,7 +103,7 @@ class Player {
   plant(room) {
     if (this.minecount < 3 && this.alive) {
       room.sounds.plant = true;
-
+      this.round_stats.stats.plants++;
       this.minecount++;
       room.mines.push(
         new Mine(

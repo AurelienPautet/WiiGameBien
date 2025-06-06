@@ -90,7 +90,7 @@ socket.on("tick", (p, bu, m, r, t) => {
     alive = p[mysocketid].alive;
     if (!alive) {
       if (current_page == "home") {
-        show_ui_element("!");
+        show_ui_element("spectator_screen");
       }
     }
   }

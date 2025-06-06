@@ -8,6 +8,8 @@ spectator_screen = document.getElementById("spectator_screen");
 the_canvas = document.getElementById("the_canvas");
 auth = document.getElementById("auth");
 profile = document.getElementById("profile");
+level_editor = document.getElementById("level_editor");
+rankings = document.getElementById("rankings");
 profile_or_auth = auth;
 
 // all the ui elements
@@ -22,6 +24,8 @@ const elements = {
   auth,
   profile,
   profile_or_auth,
+  level_editor,
+  rankings,
 };
 
 // the functions to run before showing the ui element
@@ -38,6 +42,8 @@ const before_check = {
   auth: alwaystrue,
   profile: alwaystrue,
   profile_or_auth: logged_or_not,
+  level_editor: is_logged_in,
+  rankings: alwaystrue,
 };
 
 // the functions to run after hiding the ui element
@@ -53,6 +59,9 @@ const after_hide = {
   spectator_screen: alwaystrue,
   auth: alwaystrue,
   profile_or_auth: alwaystrue,
+  profile: alwaystrue,
+  level_editor: alwaystrue,
+  rankings: alwaystrue,
 };
 
 // all the ui elements in the html
@@ -88,10 +97,19 @@ function alwaystrue() {
   return true;
 }
 
+function is_logged_in() {
+  if (logged === false) {
+    createToast("info", "/image/info.svg", "Error", "You are not logged in");
+  }
+  return true;
+  //return logged;
+}
+
 function logged_or_not() {
   if (logged) {
     elements["profile_or_auth"] = profile;
     profile_or_auth = profile;
+    get_player_stats();
   } else {
     elements["profile_or_auth"] = auth;
     profile_or_auth = auth;

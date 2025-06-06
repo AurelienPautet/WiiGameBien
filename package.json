@@ -8,7 +8,9 @@
     "npm": "10.9.0"
   },
   "scripts": {
-    "dev": "npx tailwindcss -i Public/styles.css -o Public/tail.css && nodemon server.js",
+    "dev:tailwind": "npx tailwindcss -i Public/styles.css -o Public/tails.css --watch",
+    "dev:server": "nodemon server.js",
+    "dev": "echo \"Use 'npm run dev:tailwind' and 'npm run dev:server' in separate terminals\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

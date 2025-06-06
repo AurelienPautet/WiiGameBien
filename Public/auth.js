@@ -141,6 +141,7 @@ socket.on("login_success", (username) => {
   console.log("login success", username);
   createToast("info", "/image/info.svg", "Success", username + " logged in");
   return_home();
+  show_ui_element("profile_or_auth");
 });
 
 function change_logged_status() {

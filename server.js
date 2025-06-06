@@ -49,6 +49,8 @@ const {
   get_user_info,
   rate_lvl,
   get_level_rating_from_player,
+  add_round,
+  get_user_stats,
 } = require(__dirname + "/database_stuff.js");
 
 io.on("connect", (socket) => {
@@ -116,6 +118,14 @@ io.on("connect", (socket) => {
   socket.on("new-room", async (name, rounds, list_id, creator) => {
     create_room(name, rounds, list_id, creator);
     socket.emit("room_created");
+  });
+
+  socket.on("get_player_stats", () => {
+    if (users[socket.id]) {
+      get_user_stats(socket.id, socket);
+    } else {
+      socket.emit("no_user");
+    }
   });
 
   socket.on("play", (playerName, turretc, bodyc, room_name) => {
@@ -276,7 +286,7 @@ function get_all_player_stats(room) {
   stats = {};
   for (socketid in room.players) {
     player = room.players[socketid];
-    stats[socketid] = player.stats;
+    stats[socketid] = player.round_stats.stats;
   }
   return stats;
 }
@@ -288,7 +298,7 @@ function check_for_winns_and_load_next_level(room) {
         for (socketid in room.players) {
           player = room.players[socketid];
           if (player.alive) {
-            player.stats.wins++;
+            player.round_stats.stats.wins++;
             io.to(room.name).emit(
               "winner",
               socketid,
@@ -306,6 +316,18 @@ function check_for_winns_and_load_next_level(room) {
           room.scores,
           room.ids_to_names
         );
+      }
+      for (socketid in room.players) {
+        if (users[socketid]) {
+          console.log("caca");
+          add_round(
+            socketid,
+            room.levels[room.levelid],
+            room.players[socketid].round_stats.stats
+          );
+        }
+        player = room.players[socketid];
+        player.round_stats.reset();
       }
       room.waitingrespawn = true;
       respawnwait = setTimeout(async () => {
@@ -376,6 +398,7 @@ function update_bullets(room) {
       ) {
         room.mines[e].timealive = timetoeplode;
         room.bullets[i].emitter.bulletcount--;
+        room.bullets[i].emitter.round_stats.stats.hits++;
         room.bullets.splice(i, 1);
         i -= 1;
         continue bulleting;
@@ -396,7 +419,9 @@ function update_bullets(room) {
         i != e
       ) {
         room.bullets[i].emitter.bulletcount--;
+        room.bullets[i].emitter.round_stats.stats.hits++;
         room.bullets[e].emitter.bulletcount--;
+        room.bullets[e].emitter.round_stats.stats.hits++;
         io.to(room.name).emit("bullet_explosion", {
           x: room.bullets[i].position.x,
           y: room.bullets[i].position.y,
@@ -420,6 +445,8 @@ function update_bullets(room) {
         room.players[socketid].alive
       ) {
         room.bullets[i].emitter.bulletcount--;
+        room.bullets[i].emitter.round_stats.stats.hits++;
+
         kill(room.bullets[i].emitter, room.players[socketid], room, "bullet");
         room.bullets.splice(i, 1);
         i -= 1;
@@ -446,6 +473,7 @@ function update_mines(room) {
             ) <=
             mines_explsion_radius ** 2
           ) {
+            room.mines[i].emitter.round_stats.stats.blocks_destroyed++;
             room.blocklist[
               (room.blocks[m].position.y / 50) * 23 +
                 room.blocks[m].position.x / 50
@@ -506,8 +534,8 @@ function update_mines(room) {
 
 function kill(killer, killed, room, type) {
   killed.alive = false;
-  killer.stats.kills++;
-  killed.stats.deaths++;
+  killer.round_stats.stats.kills++;
+  killed.round_stats.stats.deaths++;
   room.nbliving--;
   room.sounds.kill = true;
   io.to(room.name).emit("player-kill", [killer.name, killed.name], type);
@@ -525,11 +553,16 @@ async function create_room(name, rounds, list_id, creator) {
     loadlevel(room.levels[0], room);
   }
   room_list(0);
+  console.log(rooms);
 }
 //Create the default room and load the first level
 rooms = [];
 
 create_room("6 players", 10, [2, 3, 4], "GAME MASTER");
+
+setTimeout(() => {
+  create_room("2 players", 10, [1], "GAME MASTERs");
+}, 10000);
 
 //make an id for the server
 function makeid(length) {

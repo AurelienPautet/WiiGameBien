@@ -4,13 +4,14 @@ const client = require(__dirname + "/db_client.js");
 const User = require(__dirname + "/User_class.js");
 
 function get_levels(input_name, imput_nb_players, socket) {
+  let query_tosend, values;
   if (imput_nb_players == 0) {
     query_tosend =
-      "SELECT levels.id,name,json,creator_id,max_players, AVG(stars) as rating FROM levels join ratings on levels.id = ratings.level_id  WHERE name Like '%' || $1 || '%' GROUP BY levels.id ORDER BY AVG(stars)";
+      "SELECT levels.id, name, content, creator_id, max_players, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' GROUP BY levels.id ORDER BY rating";
     values = [input_name];
   } else {
     query_tosend =
-      "SELECT levels.id,name,json,creator_id,max_players, AVG(stars) as rating FROM levels join ratings on levels.id = ratings.level_id  WHERE name Like '%' || $1 || '%' AND max_players = $2 GROUP BY levels.id ORDER BY AVG(stars)";
+      "SELECT levels.id, name, content, creator_id, max_players, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' AND max_players = $2 GROUP BY levels.id ORDER BY rating";
     values = [input_name, imput_nb_players];
   }
   fetch_levels(query_tosend, values, socket);
@@ -43,7 +44,7 @@ function get_creator_name(level_row) {
 function fetch_levels(query_tosend, values, socket) {
   client.query(query_tosend, values, async (err, res) => {
     if (err) {
-      console.error("Error executing query", err.stack);
+      console.error("Error executing query fetch_levels", err.stack);
       return "Error";
     } else {
       levels = [];
@@ -55,9 +56,10 @@ function fetch_levels(query_tosend, values, socket) {
           level_max_players: row.max_players,
           level_rating: row.rating,
           level_creator_name: cname,
-          level_json: row.json,
+          level_json: row.content,
         });
       }
+      //console.log("Levels fetched:", levels);
       socket.emit("recieve_levels", levels);
       return levels;
     }
@@ -67,14 +69,14 @@ function fetch_levels(query_tosend, values, socket) {
 function get_json_from_id(level_id) {
   return new Promise((resolve, reject) => {
     client.query(
-      "SELECT json FROM levels WHERE id = $1",
+      "SELECT content FROM levels WHERE id = $1",
       [level_id],
       (err, res) => {
         if (err) {
           console.error("Error executing query", err.stack);
           resolve("Error");
         } else {
-          resolve(res.rows[0].json.data);
+          resolve(res.rows[0].content.data);
         }
       }
     );
@@ -250,6 +252,54 @@ async function rate_lvl(rate, level_id, socket) {
   }
 }
 
+async function add_round(player_socket_id, level_id, stats_to_add) {
+  console.log("adding rounds", player_socket_id, level_id, stats_to_add);
+  try {
+    player_id = users[player_socket_id].id;
+    client.query(
+      "INSERT INTO rounds (player_id, level_id, kills, deaths, wins, shots, hits, plants, blocks_destroyed) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+      [
+        player_id,
+        level_id,
+        stats_to_add.kills,
+        stats_to_add.deaths,
+        stats_to_add.wins,
+        stats_to_add.shots,
+        stats_to_add.hits,
+        stats_to_add.plants,
+        stats_to_add.blocks_destroyed,
+      ],
+      (err) => {
+        if (err) {
+          console.error("Error executing query", err.stack);
+        } else {
+          console.log("Round added successfully");
+        }
+      }
+    );
+  } catch (err) {
+    console.error("Error adding round:", err);
+  }
+}
+
+async function get_user_stats(player_socket_id, socket) {
+  try {
+    player_id = users[player_socket_id].id;
+    const res = await client.query(
+      "SELECT SUM(kills) as kills, SUM(deaths) as deaths, SUM(wins) as wins, SUM(shots) as shots, SUM(hits) as hits, SUM(plants) as plants, SUM(blocks_destroyed) as blocks_destroyed, COUNT(id) as rounds_played FROM rounds WHERE player_id = $1",
+      [player_id]
+    );
+    if (res.rows.length > 0) {
+      console.log("User stats:", res.rows[0]);
+      socket.emit("player_stats", res.rows[0]);
+    } else {
+      socket.emit("player_stats", null);
+    }
+  } catch (err) {
+    console.error("Error getting user stats:", err);
+    socket.emit("player_stats", null);
+  }
+}
 module.exports = {
   get_levels,
   get_max_players,
@@ -259,4 +309,6 @@ module.exports = {
   logout,
   rate_lvl,
   get_level_rating_from_player,
+  add_round,
+  get_user_stats,
 };

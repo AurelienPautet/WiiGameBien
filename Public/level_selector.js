@@ -34,7 +34,7 @@ function add_map(map_name, map_id, creator_name, int_players, star, img_src) {
 
   // Set the inner HTML of the new map element
   newMap.innerHTML = `
-                        <div id="${map_id}" class="bg-gray-200 p-4 flex w-full border-2 hover:bg-gray-300 "onclick="select_map('${map_id}')">
+                        <div id="${map_id}" class="bg-gray-200 rounded-md p-4 flex w-full border-2 hover:bg-gray-300 "onclick="select_map('${map_id}')">
                             <img src="${img_src}" alt="" class="w-32 h-24" />
                             <div class="flex justify-between w-full">
                                 <div class="ml-4 flex-col flex-grow-0">
@@ -68,6 +68,12 @@ function add_map(map_name, map_id, creator_name, int_players, star, img_src) {
 }
 
 function request_levels() {
+  console.log(
+    "Requesting levels with name:",
+    level_name_input.value,
+    "and max players:",
+    level_max_players_drop.value
+  );
   // Function to request levels from the server based on the search parameters
   // the server will the do a database query and return the levels that match the search parameters
   socket.emit(
@@ -81,6 +87,7 @@ function request_levels() {
 socket.emit("search_levels", "", 0);
 
 socket.on("recieve_levels", (levels) => {
+  console.log("Received levels from server:", levels);
   // Function to receive levels from the server and add them to the map list
   // Clear the map list
   remove_all_maps();

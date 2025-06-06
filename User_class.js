@@ -22,14 +22,9 @@ async function get_user_info(email) {
 class User {
   constructor(email) {
     this.email = email;
-    this.stats_to_add = { wins: 0, kills: 0, deaths: 0, rounds: 0 };
     get_user_info(email).then((res) => {
       this.username = res.username;
       this.id = res.id;
-      this.wins = res.wins;
-      this.kills = res.kills;
-      this.deaths = res.deaths;
-      this.rounds = res.rounds;
     });
   }
 }
