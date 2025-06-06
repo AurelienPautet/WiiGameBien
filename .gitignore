@@ -1,7 +1,7 @@
 # Node.js dependencies
 /.env
-vscode/
+/.vscode/
 database_setup.txt
-node_modules/
+/node_modules/
 
 .env
