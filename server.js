@@ -51,6 +51,7 @@ const {
   get_level_rating_from_player,
   add_round,
   get_user_stats,
+  get_ranking,
 } = require(__dirname + "/database_stuff.js");
 
 io.on("connect", (socket) => {
@@ -126,6 +127,11 @@ io.on("connect", (socket) => {
     } else {
       socket.emit("no_user");
     }
+  });
+
+  socket.on("ranking", (ranking_type) => {
+    //console.log("ranking", ranking_type);
+    get_ranking(ranking_type, socket);
   });
 
   socket.on("play", (playerName, turretc, bodyc, room_name) => {

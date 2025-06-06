@@ -300,6 +300,37 @@ async function get_user_stats(player_socket_id, socket) {
     socket.emit("player_stats", null);
   }
 }
+
+async function get_ranking(ranking_type, socket) {
+  let query;
+  switch (ranking_type) {
+    case "KILLS":
+      query =
+        "SELECT username, SUM(kills) as total_data FROM players JOIN rounds ON players.id = rounds.player_id GROUP BY username ORDER BY total_data DESC";
+      break;
+    case "ROUNDS_PLAYED":
+      query =
+        "SELECT username, COUNT(rounds.id) as total_data FROM players JOIN rounds ON players.id = rounds.player_id GROUP BY username ORDER BY total_data DESC";
+      break;
+    case "WINS":
+      query =
+        "SELECT username, SUM(wins) as total_data FROM players JOIN rounds ON players.id = rounds.player_id GROUP BY username ORDER BY total_data DESC";
+      break;
+    default:
+      socket.emit("ranking_error", "Invalid ranking type");
+      return;
+  }
+
+  client.query(query, (err, res) => {
+    if (err) {
+      console.error("Error executing query", err.stack);
+      socket.emit("ranking_error", "problem with database");
+    } else {
+      socket.emit("ranking", res.rows, ranking_type);
+    }
+  });
+}
+
 module.exports = {
   get_levels,
   get_max_players,
@@ -311,4 +342,5 @@ module.exports = {
   get_level_rating_from_player,
   add_round,
   get_user_stats,
+  get_ranking,
 };

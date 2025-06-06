@@ -43,7 +43,7 @@ const before_check = {
   profile: alwaystrue,
   profile_or_auth: logged_or_not,
   level_editor: is_logged_in,
-  rankings: alwaystrue,
+  rankings: get_ranking_initial,
 };
 
 // the functions to run after hiding the ui element
@@ -94,6 +94,11 @@ function blur_canvas() {
 }
 
 function alwaystrue() {
+  return true;
+}
+
+function get_ranking_initial() {
+  socket.emit("ranking", "KILLS");
   return true;
 }
 

@@ -48,7 +48,7 @@
               class="flex w-full h-full justify-center items-center flex-col"
             >
               <img
-                src="icons/paint-brush.png"
+                src="icons/blueprint.png"
                 alt="Login Icon"
                 class="w-12 h-12 hover:w-14 hover:h-14"
                 onclick="show_ui_element('level_editor')"
@@ -375,30 +375,39 @@
         <div class="absolute w-full h-full" onclick="return_home()"></div>
         <div class="h-24 w-3"></div>
         <div
-          class="w-3/4 h-3/4 flex flex-col z-10 rounded-md bg-slate-600 text-white p-10"
+          class="w-3/4 h-3/4 flex justify-normal flex-col z-10 rounded-md bg-slate-600 text-white p-10"
         >
-          <h1>Rankings</h1>
-          <div class="w-full h-12 flex flex-row justify-stretch">
+          <h1 class="text-center mb-5 text-xl">Rankings</h1>
+          <div class="w-full h-12 flex flex-row">
             <div
-              class="bg-slate-700 h-full w-full rounded-t-lg flex items-center justify-center text-center"
+              id="ranking_button_KILLS"
+              class="bg-slate-700 mr-1 h-full w-full rounded-t-lg flex items-center justify-center text-center"
+              onclick="show_rankings('KILLS')"
             >
               KILLS
             </div>
-            <div class="bg-slate-500 h-full w-full rounded-t-lg"></div>
+            <div
+              id="ranking_button_WINS"
+              class="bg-slate-500 ml-1 mr-1 h-full w-full rounded-t-lg flex items-center justify-center text-center"
+              onclick="show_rankings('WINS')"
+            >
+              WINS
+            </div>
+            <div
+              id="ranking_button_ROUNDS_PLAYED"
+              class="bg-slate-500 ml-1 h-full w-full rounded-t-lg flex items-center justify-center text-center"
+              onclick="show_rankings('ROUNDS_PLAYED')"
+            >
+              ROUNDS PLAYED
+            </div>
           </div>
-          <div class="w-full h-full bg-slate-700 flex flex-col">
+          <div class="w-full h-5/6 flex flex-col bg-slate-700">
             <div
               id="rankings_content"
-              class="w-full h-full flex flex-col overflow-y-scroll p-2"
-            >
-              <div
-                class="w-full h-14 rounded-lg bg-slate-500 flex flex-row items-center mt-2 mb-2"
-              >
-                <h1 class="mr-4 ml-2 text-2xl w-10 text-center">1</h1>
-                <img src="./icons/login.svg" class="w-10 h-10" />
-                <h1 class="m-2">Aureplus</h1>
-                <h1 class="mr-10 ml-auto">100 KILLS</h1>
-              </div>
+              class="w-full flex flex-col p-2 overflow-y-scroll flex-grow-0"
+            ></div>
+            <div class="w-full h-1 bg-white mt-2 mb-2"></div>
+            <div class="w-full h-20 bg-slate-700 p-2">
               <div
                 class="w-full h-14 rounded-lg bg-slate-500 flex flex-row items-center mt-2 mb-2"
               >
@@ -406,17 +415,6 @@
                 <img src="./icons/login.svg" class="w-10 h-10" />
                 <h1 class="m-2">Aureplus</h1>
                 <h1 class="mr-10 ml-auto">1 KILLS</h1>
-              </div>
-            </div>
-            <div class="w-full h-1 bg-white mt-2 mb-2"></div>
-            <div class="w-full h-20 bg-slate-700 p-2">
-              <div
-                class="w-full h-14 rounded-lg bg-slate-500 flex flex-row items-center mb-2"
-              >
-                <img src="./icons/login.svg" class="w-10 h-10" />
-                <h1 class="m-2">1</h1>
-                <h1 class="m-2">Aureplus</h1>
-                <h1 class="m-2">100 KILLS</h1>
               </div>
             </div>
           </div>
@@ -772,7 +770,7 @@
       ></div>
 
       <div
-        class="hidden grid md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-4 p-4 w-full"
+        class="hidden grid bg-yellow-500 bg-zinc-500 bg-yellow-700 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-4 p-4 w-full"
       ></div>
       <div class="hidden border-yellow-500"></div>
     </div>
@@ -785,6 +783,8 @@
 
   <script src="./auth.js"></script>
   <script src="./profile.js"></script>
+
+  <script src="./rankings.js"></script>
 
   <script src="./sounds_system.js"></script>
   <script src="./particle_system.js"></script>
