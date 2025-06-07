@@ -3,5 +3,7 @@
 /.vscode/
 database_setup.txt
 /node_modules/
-
+/package-lock.json
+/command.md
 .env
+tailwind.config.js

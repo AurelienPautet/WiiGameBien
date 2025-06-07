@@ -69,6 +69,21 @@ function add_my_map(
   my_map_list.prepend(newMap);
 }
 
+function edit_map(map_id) {
+  //console.log("Editing map with ID:", map_id);
+  socket.emit("edit_map", map_id);
+}
+
+function delete_map(map_id) {
+  //console.log("Deleting map with ID:", map_id);
+  socket.emit("delete_map", map_id);
+}
+
+function create_new_level() {
+  //console.log("Creating new level");
+  socket.emit("create_new_level");
+}
+
 function request_my_levels() {
   //console.log(
   //  "Requesting levels with name:",
@@ -96,7 +111,28 @@ socket.on("recieve_my_levels", (levels) => {
       "./image/minia/test.png"
     );
   }
+  add_new_map_button();
 });
+
+function add_new_map_button() {
+  console.log("Adding new map button");
+  button = document.createElement("div");
+  button.className =
+    "text-white bg-slate-500 hover:bg-slate-600 rounded-md p-4 flex w-full cursor-pointer";
+  button.onclick = button.onclick = function () {
+    show_ui_element("level_editor");
+  };
+  button.innerHTML = `
+    <div class="flex items-center justify-center w-32 h-24 bg-green-800 rounded">
+      <span class="text-4xl">+</span>
+    </div>
+    <div class="ml-4 flex flex-col justify-center">
+      <h3 class="text-xl font-bold">Create New Level</h3>
+      <p class="mt-2 ">Start building your own map!</p>
+    </div>
+  `;
+  my_map_list.prepend(button);
+}
 
 function remove_all_my_maps() {
   my_map_list.innerHTML = "";

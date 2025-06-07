@@ -8,8 +8,9 @@ spectator_screen = document.getElementById("spectator_screen");
 the_canvas = document.getElementById("the_canvas");
 auth = document.getElementById("auth");
 profile = document.getElementById("profile");
-level_editor = document.getElementById("level_editor");
+my_level_selector = document.getElementById("my_level_selector");
 rankings = document.getElementById("rankings");
+level_editor = document.getElementById("level_editor");
 profile_or_auth = auth;
 
 // all the ui elements
@@ -24,8 +25,9 @@ const elements = {
   auth,
   profile,
   profile_or_auth,
-  level_editor,
+  my_level_selector,
   rankings,
+  level_editor,
 };
 
 // the functions to run before showing the ui element
@@ -42,8 +44,9 @@ const before_check = {
   auth: alwaystrue,
   profile: alwaystrue,
   profile_or_auth: logged_or_not,
-  level_editor: is_logged_in,
+  my_level_selector: is_logged_in,
   rankings: get_ranking_initial,
+  level_editor: alwaystrue,
 };
 
 // the functions to run after hiding the ui element
@@ -60,8 +63,9 @@ const after_hide = {
   auth: alwaystrue,
   profile_or_auth: alwaystrue,
   profile: alwaystrue,
-  level_editor: alwaystrue,
+  my_level_selector: alwaystrue,
   rankings: alwaystrue,
+  level_editor: alwaystrue,
 };
 
 // to prevent double clicking

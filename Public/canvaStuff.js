@@ -43,8 +43,8 @@ body_violetF.src = "image/tank_player/body_violetF.png";
 turret_violetF = new Image();
 turret_violetF.src = "image/tank_player/turret_violetF.png";
 
-let theme = 1;
-let maxtheme = 5;
+let theme = 6;
+let maxtheme = 6;
 
 block1 = new Image();
 block2 = new Image();

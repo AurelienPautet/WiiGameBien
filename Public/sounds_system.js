@@ -63,7 +63,7 @@ socket.on("tick_sounds", (sounds) => {
     //playaudio("sounds/tir.wav");
   }
   if (sounds.explose) {
-    console.log("boom");
+    //console.log("boom");
     playsound(exploses, sound_explose);
 
     //sound_tir.cloneNode().play();
