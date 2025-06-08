@@ -135,6 +135,13 @@
             value="JOIN"
             onclick="show_ui_element('room_selector')"
           />
+
+          <input
+            class="bg-teal-500 h-14 w-28 hover:bg-teal-600 text-white text-lg hover:text-xl m-2 font-extrabold rounded-md"
+            type="button"
+            value="SOLO"
+            onclick="launch_solo_room()"
+          />
         </div>
       </div>
       <div id="notif" class="z-50"></div>
@@ -937,7 +944,6 @@
   <script src="./src/js/game_js/sounds_system.js" defer></script>
   <script src="./src/js/game_js/particle_system.js" defer></script>
   <script src="./src/js/game_js/client_prediction.js" defer></script>
-  <script src="./src/js/game_js/possible_shots.js" defer></script>
   <script src="./src/js/game_js/blured_ui.js" defer></script>
   <script src="./src/js/game_js/canvaStuff.js" defer></script>
 
@@ -949,7 +955,21 @@
   <script src="./src/js/ui_js/room_configurator.js" defer></script>
   <script src="./src/js/ui_js/rescale.js" defer></script>
 
+  <script type="module" src="./scripts/check_collision.js" defer></script>
+
   <script src="./class/test.js" defer></script>
   <script src="./class/Stats.js" defer></script>
   <script src="./class/Player.js" defer></script>
+  <script src="./class/Room.js" defer></script>
+  <script src="./class/Bullet.js" defer></script>
+  <script src="./class/Block.js" defer></script>
+  <script src="./class/CollisonsBox.js" defer></script>
+
+  <script src="./class/Mine.js" defer></script>
+  <script type="module" src="./scripts/level_loader.js" defer></script>
+
+  <script type="module" src="./class/possible_shots_balls.js" defer></script>
+
+  <script src="./src/js/solo_room/solo_room_server.js" defer></script>
+  <script src="./src/js/solo_room/fake_io.js" defer></script>
 </html>

@@ -44,6 +44,17 @@ setInterval(async () => {
       room_name,
       mytick,
     });
+  } else if (playing_solo) {
+    solo_tick = {
+      mysocketid,
+      playerid,
+      direction,
+      plant,
+      click,
+      aim,
+      room_name,
+      mytick,
+    };
   }
   mytick++;
   click = false;
@@ -56,6 +67,8 @@ mysocketid = "";
 room_name = 0;
 trying = false;
 playing = false;
+playing_solo = false;
+solo_tick = {};
 playerid = 0;
 players = [];
 blocks = [];

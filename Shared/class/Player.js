@@ -1,12 +1,15 @@
-const {
-  rectRect,
-  colliderect,
-} = require("../../Shared/scripts/check_collision.js");
-const Bullet = require("../../Shared/class/Bullet.js");
-const Mine = require("../../Shared/class/Mine.js");
-const Stats = require("../../Shared/class/Stats.js");
-
-const mvtspeed = 3;
+try {
+  ({
+    rectRect,
+    colliderect,
+  } = require("../../Shared/scripts/check_collision.js"));
+  Bullet = require("../../Shared/class/Bullet.js");
+  Mine = require("../../Shared/class/Mine.js");
+  Stats = require("../../Shared/class/Stats.js");
+  const mvtspeed = 3;
+} catch (e) {
+  console.error("Error requiring dependencies in Player.js:", e);
+}
 
 class Player {
   constructor(position, socketid, name, turretc, bodyc) {

@@ -1,4 +1,9 @@
-const { detectCollision } = require("../../Shared/scripts/check_collision.js");
+try {
+  detectCollision =
+    require("../../Shared/scripts/check_collision.js").detectCollision;
+} catch (error) {
+  console.error("Error requiring detectCollision:", error);
+}
 
 class Bullet {
   constructor(position, angle, speed, emitter, room) {

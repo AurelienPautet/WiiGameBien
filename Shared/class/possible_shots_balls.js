@@ -6,11 +6,12 @@ class possible_shot_points {
     radius,
     initial_player
   ) {
-    this.initial_player = structuredClone(initial_player);
-    this.initial_position = structuredClone(initial_position);
-    this.position = structuredClone(initial_position);
-    this.position.x = initial_position.x + 35 * Math.cos(initial_angle);
-    this.position.y = initial_position.y + 35 * Math.sin(initial_angle);
+    this.initial_player = initial_player;
+    this.initial_position = initial_position;
+    this.position = {
+      x: initial_position.x + 35 * Math.cos(initial_angle),
+      y: initial_position.y + 35 * Math.sin(initial_angle),
+    };
     this.angle = initial_angle;
     this.bounce = 0;
     this.step_size = step_size;
@@ -38,9 +39,10 @@ class possible_shot_points {
       y: this.position.y + this.step_size * Math.sin(this.angle),
     };
 
-    mines.forEach((mine) => {
+    for (let i = 0; i < mines.length; i++) {
+      const mine = mines[i];
       if (
-        rectRect(
+        rectRect2(
           this.position.x,
           this.position.y,
           this.radius * 2,
@@ -52,40 +54,57 @@ class possible_shot_points {
         )
       ) {
         this.bounce = 4;
-        this.draw();
+        this.draw("yellow");
 
         return;
       }
-    });
+    }
 
-    bullets.forEach((bullet) => {
+    for (let i = 0; i < bullets.length; i++) {
+      const bullet = bullets[i];
       if (
-        rectRect(
+        rectRect2(
           this.position.x,
           this.position.y,
           this.radius * 2,
           this.radius * 2,
-          bullet.position.x - bullet.radius,
-          bullet.position.y - bullet.radius,
-          bullet.radius * 2,
-          bullet.radius * 2
+          bullet.position.x,
+          bullet.position.y,
+          bullet.size.w,
+          bullet.size.h
         )
       ) {
         this.bounce = 4;
-        this.draw();
+        this.draw("blue");
 
         return;
       }
-    });
+    }
 
     for (socketid in players) {
       player = players[socketid];
       if (player.socketid == this.initial_player.socketid) {
-        continue;
+        if (
+          rectRect2(
+            this.position.x,
+            this.position.y,
+            this.radius * 2,
+            this.radius * 2,
+            player.position.x,
+            player.position.y,
+            player.size.w,
+            player.size.h
+          )
+        ) {
+          this.bounce = 4;
+          this.draw("orange");
+
+          return;
+        }
       }
       if (
         player.alive &&
-        rectRect(
+        rectRect2(
           this.position.x,
           this.position.y,
           this.radius * 2,
@@ -97,14 +116,14 @@ class possible_shot_points {
         )
       ) {
         this.bounce = 4;
-        this.draw();
+        this.draw("green");
 
         return;
       }
     }
 
     Bcollision.forEach((block) => {
-      const res = detectCollisions(
+      const res = detectCollisions2(
         block.position.x,
         block.position.y,
         block.size.w,
@@ -130,14 +149,14 @@ class possible_shot_points {
       if (res === "") {
         return;
       }
-      this.draw();
+      this.draw("red");
     });
     this.calls++;
   }
-  draw() {
+  draw(color) {
     c.beginPath();
     c.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI);
-    c.fillStyle = this.bounce > 3 ? "blue" : "red";
+    c.fillStyle = color;
     c.fill();
     c.closePath();
   }
@@ -164,9 +183,7 @@ function launch_possible_shots(N, step_size, radius) {
   }
 }
 
-launch_possible_shots(10, 1, 5);
-
-function rectRect(r1x, r1y, r1w, r1h, r2x, r2y, r2w, r2h) {
+function rectRect2(r1x, r1y, r1w, r1h, r2x, r2y, r2w, r2h) {
   if (
     r1x + r1w >= r2x &&
     r1x <= r2x + r2w &&
@@ -178,7 +195,7 @@ function rectRect(r1x, r1y, r1w, r1h, r2x, r2y, r2w, r2h) {
   return false;
 }
 
-function detectCollisions(r1x, r1y, r1w, r1h, r2x, r2y, r2w, r2h) {
+function detectCollisions2(r1x, r1y, r1w, r1h, r2x, r2y, r2w, r2h) {
   if (
     r1x + r1w >= r2x &&
     r1x <= r2x + r2w &&
@@ -203,4 +220,18 @@ function detectCollisions(r1x, r1y, r1w, r1h, r2x, r2y, r2w, r2h) {
     if (minOverlap === overlapBottom) return "bottom";
   }
   return "";
+}
+
+if (typeof module === "object" && module.exports) {
+  // Node.js environment
+  console.log("Loading level_loader.js in Node.js environment");
+  module.exports = {
+    launch_possible_shots,
+  };
+} else {
+  // Browser environment
+  console.log("Loading level_loader.js in browser environment");
+  if (!window.launch_possible_shots) {
+    window.launch_possible_shots = launch_possible_shots;
+  }
 }

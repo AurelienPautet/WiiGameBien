@@ -71,6 +71,18 @@ io.on("connect", (socket) => {
     room_list(0);
   });
 
+  socket.on("get_json_from_id", (level_id) => {
+    //console.log("get_json_from_id", level_id);
+    get_json_from_id(level_id)
+      .then((json) => {
+        socket.emit("recieve_json_from_id", json);
+      })
+      .catch((error) => {
+        console.error("Error getting JSON from ID:", error);
+        socket.emit("error_getting_json", "Failed to retrieve level data.");
+      });
+  });
+
   socket.on("signup", (username, email, password) => {
     //console.log("signup", username, email, password);
     signup(username, email, password, socket);

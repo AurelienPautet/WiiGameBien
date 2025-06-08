@@ -159,10 +159,33 @@ function rectanglesSeTouchent(
 
   return horizontale && verticale;
 }
-module.exports = {
-  rectRect,
-  detectCollision,
-  colliderect,
-  distance,
-  rectanglesSeTouchent,
-};
+
+if (typeof module === "object" && module.exports) {
+  // Node.js environment
+  console.log("Loading level_loader.js in Node.js environment");
+  module.exports = {
+    rectRect,
+    detectCollision,
+    colliderect,
+    distance,
+    rectanglesSeTouchent,
+  };
+} else {
+  // Browser environment
+  console.log("Loading level_loader.js in browser environment");
+  if (!window.rectRect) {
+    window.rectRect = rectRect;
+  }
+  if (!window.detectCollision) {
+    window.detectCollision = detectCollision;
+  }
+  if (!window.colliderect) {
+    window.colliderect = colliderect;
+  }
+  if (!window.distance) {
+    window.distance = distance;
+  }
+  if (!window.rectanglesSeTouchent) {
+    window.rectanglesSeTouchent = rectanglesSeTouchent;
+  }
+}

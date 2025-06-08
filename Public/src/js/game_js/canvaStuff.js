@@ -272,8 +272,8 @@ function draw() {
     }
   }
 
-  if (debug_visual) {
-    launch_possible_shots(50, 10, 10);
+  if (true) {
+    launch_possible_shots(50, 20, 10);
   }
 }
 

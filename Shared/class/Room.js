@@ -1,11 +1,15 @@
-const {
-  rectanglesSeTouchent,
-  rectRect,
-  distance,
-} = require("../../Shared/scripts/check_collision.js");
+try {
+  ({
+    rectanglesSeTouchent,
+    rectRect,
+    distance,
+  } = require("../../Shared/scripts/check_collision.js"));
 
-const { generateBcollision } = require("../../Shared/scripts/level_loader.js");
-const Player = require("../../Shared/class/Player.js");
+  ({ generateBcollision } = require("../../Shared/scripts/level_loader.js"));
+  Player = require("../../Shared/class/Player.js");
+} catch (error) {
+  console.error("Error requiring dependencies in Room.js:", error);
+}
 
 class Room {
   constructor(name, rounds, levels, creator, io = null) {
@@ -38,6 +42,7 @@ class Room {
     this.timetoeplode = 300;
     this.mines_explsion_radius = 90;
     this.waitingtime = 5000;
+    this.fps_corector = 1;
   }
 
   spawn_new_player(playerName, turretc, bodyc, socketid) {
@@ -174,13 +179,13 @@ class Room {
   update_players() {
     //console.log("Updating players in room:", this.players);
     for (let sckid in this.players) {
-      this.players[sckid].update(this, fps_corector);
+      this.players[sckid].update(this, this.fps_corector);
     }
   }
 
   update_bullets() {
     bulleting: for (let i = 0; i < this.bullets.length; i++) {
-      this.bullets[i].update(this, fps_corector);
+      this.bullets[i].update(this, this.fps_corector);
       if (this.bullets[i].bounce >= 3) {
         this.emit_to_room("bullet_explosion", {
           position: {

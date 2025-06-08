@@ -1,36 +1,14 @@
-const Block = require("../../Shared/class/Block.js");
-const CollisonsBox = require("../../Shared/class/CollisonsBox.js");
-
-async function loadlevel(level_json, room) {
-  room.blocklist = level_json;
-  room.blocks = [];
-  room.spawns = [];
-
-  for (let l = 0; l <= 16; l++) {
-    for (let c = 0; c <= 23; c++) {
-      if (room.blocklist[l * 23 + c] == 1) {
-        room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 1));
-      }
-      if (room.blocklist[l * 23 + c] == 2) {
-        room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 2));
-      }
-      if (room.blocklist[l * 23 + c] == 3) {
-        room.spawns.push({ x: c * 50, y: l * 50 });
-      }
-    }
-  }
-  generateBcollision(room);
-}
+console.log("Loading level_loader.js");
 
 function generateBcollision(room) {
   //generate the collision boxes for the blocks in the level and merge them if they are touching each other to reduce the number of collision boxes to check
-  boxed = [];
-  i = 0;
+  let boxed = [];
+  let i = 0;
   room.Bcollision = [];
   //generate the collision boxes for the blocks
   while (i < room.blocklist.length) {
-    l = 1;
-    col = 1;
+    let l = 1;
+    let col = 1;
     if (
       (room.blocklist[i] == 1 || room.blocklist[i] == 2) &&
       boxed.includes(i) == false
@@ -163,11 +141,44 @@ function generateBcollision(room) {
   }
 }
 
-try {
+async function loadlevel(level_json, room) {
+  room.blocklist = level_json;
+  room.blocks = [];
+  room.spawns = [];
+
+  for (let l = 0; l <= 16; l++) {
+    for (let c = 0; c <= 23; c++) {
+      if (room.blocklist[l * 23 + c] == 1) {
+        room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 1));
+      }
+      if (room.blocklist[l * 23 + c] == 2) {
+        room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 2));
+      }
+      if (room.blocklist[l * 23 + c] == 3) {
+        room.spawns.push({ x: c * 50, y: l * 50 });
+      }
+    }
+  }
+  generateBcollision(room);
+}
+
+if (typeof module === "object" && module.exports) {
+  // Node.js environment
+  console.log("Loading level_loader.js in Node.js environment");
   module.exports = {
     loadlevel,
     generateBcollision,
   };
-} catch (error) {
-  console.error("Error exporting level loader functions:", error);
+
+  Block = require("../class/Block.js");
+  CollisonsBox = require("../class/CollisonsBox.js");
+} else {
+  // Browser environment
+  console.log("Loading level_loader.js in browser environment");
+  if (!window.generateBcollision) {
+    window.generateBcollision = generateBcollision;
+  }
+  if (!window.loadlevel) {
+    window.loadlevel = loadlevel;
+  }
 }
