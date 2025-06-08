@@ -11,41 +11,41 @@ fading_canvas.height = 800;
 debug = "rgba(255, 0, 0, 0)";
 
 body_blue = new Image();
-body_blue.src = "image/tank_player/body_blue.png";
+body_blue.src = "ressources/image/tank_player/body_blue.png";
 turret_blue = new Image();
-turret_blue.src = "image/tank_player/turret_blue.png";
+turret_blue.src = "ressources/image/tank_player/turret_blue.png";
 body_orange = new Image();
-body_orange.src = "image/tank_player/body_orange.png";
+body_orange.src = "ressources/image/tank_player/body_orange.png";
 turret_orange = new Image();
-turret_orange.src = "image/tank_player/turret_orange.png";
+turret_orange.src = "ressources/image/tank_player/turret_orange.png";
 body_green = new Image();
-body_green.src = "image/tank_player/body_green.png";
+body_green.src = "ressources/image/tank_player/body_green.png";
 turret_green = new Image();
-turret_green.src = "image/tank_player/turret_green.png";
+turret_green.src = "ressources/image/tank_player/turret_green.png";
 body_red = new Image();
-body_red.src = "image/tank_player/body_red.png";
+body_red.src = "ressources/image/tank_player/body_red.png";
 turret_red = new Image();
-turret_red.src = "image/tank_player/turret_red.png";
+turret_red.src = "ressources/image/tank_player/turret_red.png";
 body_violet = new Image();
-body_violet.src = "image/tank_player/body_violet.png";
+body_violet.src = "ressources/image/tank_player/body_violet.png";
 turret_violet = new Image();
-turret_violet.src = "image/tank_player/turret_violet.png";
+turret_violet.src = "ressources/image/tank_player/turret_violet.png";
 body_yellow = new Image();
-body_yellow.src = "image/tank_player/body_yellow.png";
+body_yellow.src = "ressources/image/tank_player/body_yellow.png";
 turret_yellow = new Image();
-turret_yellow.src = "image/tank_player/turret_yellow.png";
+turret_yellow.src = "ressources/image/tank_player/turret_yellow.png";
 body_blueF = new Image();
-body_blueF.src = "image/tank_player/body_blueF.png";
+body_blueF.src = "ressources/image/tank_player/body_blueF.png";
 turret_blueF = new Image();
-turret_blueF.src = "image/tank_player/turret_blueF.png";
+turret_blueF.src = "ressources/image/tank_player/turret_blueF.png";
 body_turquoise = new Image();
-body_turquoise.src = "image/tank_player/body_turquoise.png";
+body_turquoise.src = "ressources/image/tank_player/body_turquoise.png";
 turret_turquoise = new Image();
-turret_turquoise.src = "image/tank_player/turret_turquoise.png";
+turret_turquoise.src = "ressources/image/tank_player/turret_turquoise.png";
 body_violetF = new Image();
-body_violetF.src = "image/tank_player/body_violetF.png";
+body_violetF.src = "ressources/image/tank_player/body_violetF.png";
 turret_violetF = new Image();
-turret_violetF.src = "image/tank_player/turret_violetF.png";
+turret_violetF.src = "ressources/image/tank_player/turret_violetF.png";
 
 let theme = 6;
 let maxtheme = 6;
@@ -61,16 +61,16 @@ editor_block2 = document.getElementById("editor_block2");
 editor_block3 = document.getElementById("editor_block3");
 editor_block4 = document.getElementById("editor_block4");
 
-dead.src = "image/dead.png";
+dead.src = "ressources/image/dead.png";
 
 loadtheme(theme);
 function loadtheme() {
-  editor_block1.src = `image/block/Cube${theme}-1.png`;
-  editor_block2.src = `image/block/Cube${theme}-2.png`;
-  block1.src = `image/block/Cube${theme}-1.png`;
-  block2.src = `image/block/Cube${theme}-2.png`;
-  bullet1.src = `image/bullet/bullet-${theme}.png`;
-  bg.src = `image/bg${theme}.png`;
+  editor_block1.src = `ressources/image/block/Cube${theme}-1.png`;
+  editor_block2.src = `ressources/image/block/Cube${theme}-2.png`;
+  block1.src = `ressources/image/block/Cube${theme}-1.png`;
+  block2.src = `ressources/image/block/Cube${theme}-2.png`;
+  bullet1.src = `ressources/image/bullet/bullet-${theme}.png`;
+  bg.src = `ressources/image/bg${theme}.png`;
 }
 
 draw();
@@ -273,7 +273,7 @@ function draw() {
   }
 
   if (debug_visual) {
-    launch_possible_shots(100, 5, 5);
+    launch_possible_shots(50, 10, 10);
   }
 }
 

@@ -186,7 +186,7 @@ function save_canvas_as_thumbnail() {
   if (max_players === 0) {
     createToast(
       "error",
-      "/image/error.svg",
+      "/ressources/image/error.svg",
       "Error",
       "You need at least one spawn point for players!"
     );
@@ -195,7 +195,7 @@ function save_canvas_as_thumbnail() {
   if (max_players > 8) {
     createToast(
       "error",
-      "/image/error.svg",
+      "/ressources/image/error.svg",
       "Error",
       "You cannot have more than 8 spawn points for players!"
     );
@@ -205,7 +205,7 @@ function save_canvas_as_thumbnail() {
   if (level_name.trim() === "") {
     createToast(
       "error",
-      "/image/error.svg",
+      "/ressources/image/error.svg",
       "Error",
       "Level name cannot be empty!"
     );
@@ -214,7 +214,7 @@ function save_canvas_as_thumbnail() {
   if (level_name.length > 30) {
     createToast(
       "error",
-      "/image/error.svg",
+      "/ressources/image/error.svg",
       "Error",
       "Level name cannot be longer than 30 characters!"
     );
@@ -239,7 +239,7 @@ socket.on("save_level_success", (level_id) => {
   //console.log("Level saved successfully with ID:", level_id);
   createToast(
     "info",
-    "/image/info.svg",
+    "/ressources/image/info.svg",
     "Success",
     "Level saved successfully with name: " + level_name
   );
@@ -250,7 +250,7 @@ socket.on("save_level_fail", (reason) => {
   //console.log("Level save failed:", reason);
   createToast(
     "error",
-    "/image/error.svg",
+    "/ressources/image/error.svg",
     "Error",
     "Failed to save level: " + reason
   );

@@ -1,39 +1,25 @@
-const { get_json_from_id } = require(__dirname + "/database_stuff.js");
+const Block = require("../../Shared/class/Block.js");
+const CollisonsBox = require("../../Shared/class/CollisonsBox.js");
 
-const {
-  Player,
-  CollisonsBox,
-  Bullet,
-  Block,
-  Frontend_Player,
-  Mine,
-} = require(__dirname + "/class.js");
+async function loadlevel(level_json, room) {
+  room.blocklist = level_json;
+  room.blocks = [];
+  room.spawns = [];
 
-async function loadlevel(level_id, room) {
-  //load the level from the json file and create the blocks and the spawns for the players and the collision boxes
-  return new Promise((resolve) => {
-    get_json_from_id(level_id).then((blocklist) => {
-      room.blocklist = blocklist;
-      room.blocks = [];
-      room.spawns = [];
-
-      for (let l = 0; l <= 16; l++) {
-        for (let c = 0; c <= 23; c++) {
-          if (room.blocklist[l * 23 + c] == 1) {
-            room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 1));
-          }
-          if (room.blocklist[l * 23 + c] == 2) {
-            room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 2));
-          }
-          if (room.blocklist[l * 23 + c] == 3) {
-            room.spawns.push({ x: c * 50, y: l * 50 });
-          }
-        }
+  for (let l = 0; l <= 16; l++) {
+    for (let c = 0; c <= 23; c++) {
+      if (room.blocklist[l * 23 + c] == 1) {
+        room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 1));
       }
-      generateBcollision(room);
-      resolve();
-    });
-  });
+      if (room.blocklist[l * 23 + c] == 2) {
+        room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 2));
+      }
+      if (room.blocklist[l * 23 + c] == 3) {
+        room.spawns.push({ x: c * 50, y: l * 50 });
+      }
+    }
+  }
+  generateBcollision(room);
 }
 
 function generateBcollision(room) {
@@ -177,7 +163,11 @@ function generateBcollision(room) {
   }
 }
 
-module.exports = {
-  loadlevel,
-  generateBcollision,
-};
+try {
+  module.exports = {
+    loadlevel,
+    generateBcollision,
+  };
+} catch (error) {
+  console.error("Error exporting level loader functions:", error);
+}

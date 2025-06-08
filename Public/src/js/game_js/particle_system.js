@@ -137,24 +137,25 @@ function randn_bm() {
   return num;
 }
 
-socket.on("ricochet_explosion", (position, angle) => {
-  ricochet_sparks(position, angle, 20);
+socket.on("ricochet_explosion", (data) => {
+  console.log("ricochet_explosion", data);
+  ricochet_sparks(data.position, data.angle, 20);
 });
 
-socket.on("bullet_explosion", (position) => {
-  bullet_explosion(position, 100);
+socket.on("bullet_explosion", (data) => {
+  bullet_explosion(data.position, 100);
 });
 
-socket.on("shoot_explosion", (position, angle) => {
-  shoot_explosion(position, angle, 30);
+socket.on("shoot_explosion", (data) => {
+  shoot_explosion(data.position, data.angle, 30);
 });
 
-socket.on("player_explosion", (position) => {
-  explosion(position, 100);
+socket.on("player_explosion", (data) => {
+  explosion(data.position, 100);
 });
 
-socket.on("mine_explosion", (position) => {
-  explosion(position, 100);
+socket.on("mine_explosion", (data) => {
+  explosion(data.position, 100);
 });
 
 function ricochet_sparks(position, angle, num) {

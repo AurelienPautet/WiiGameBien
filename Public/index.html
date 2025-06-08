@@ -7,15 +7,15 @@
       content="width=device-width, initial-scale=1.0, user-scalable=no"
     />
     <title>WIITANK</title>
-    <link rel="icon" href="/image/icon.ico" />
+    <link rel="icon" href="/ressources/image/icon.ico" />
 
     <script src="/socket.io/socket.io.min.js"></script>
     <meta
       name="viewport"
       content="width=device-width, initial-scale=0.67, user-scalable=no"
     />
-    <link rel="stylesheet" href="tails.css" />
-    <link rel="stylesheet" href="customclass.css" />
+    <link rel="stylesheet" href="src/css/tails.css" />
+    <link rel="stylesheet" href="src/css/customclass.css" />
   </head>
 
   <body onload="load_old_tank()" onresize="rescale()" class="bg-slate-500">
@@ -33,7 +33,7 @@
         <div class="absolute w-44 h-56 left-5 top-5 z-50">
           <div class="flex w-full h-full justify-center items-center flex-col">
             <img
-              src="icons/login.svg"
+              src="ressources/icons/login.svg"
               alt="Login Icon"
               class="w-12 h-12 hover:w-14 hover:h-14"
               onclick="show_ui_element('profile_or_auth')"
@@ -50,7 +50,7 @@
               class="flex w-full h-full justify-center items-center flex-col"
             >
               <img
-                src="icons/blueprint.svg"
+                src="ressources/icons/blueprint.svg"
                 alt="Login Icon"
                 class="w-12 h-12 hover:w-14 hover:h-14"
                 onclick="show_ui_element('my_level_selector')"
@@ -65,7 +65,7 @@
             class="position relative -left-44 flex w-full h-full justify-center items-center flex-col"
           >
             <img
-              src="icons/podium.svg"
+              src="ressources/icons/podium.svg"
               alt="Login Icon"
               class="w-12 h-12 hover:w-14 hover:h-14"
               onclick="show_ui_element('rankings')"
@@ -81,18 +81,18 @@
           <img
             id="body_visualiser"
             class="bodysize absolute"
-            src="/image/tank_player/body_orange.png"
+            src="/ressources/image/tank_player/body_orange.png"
             alt=""
           />
           <img
             id="turret_visualiser"
             class="turretsize absolute top-14 left-14"
-            src="/image/tank_player/turret_orange.png"
+            src="/ressources/image/tank_player/turret_orange.png"
             alt=""
           />
           <img
             class="absolute top-3 right-3 h-8 w-8 hover:h-9 hover:w-9"
-            src="/icons/paint-brush.svg"
+            src="/ressources/icons/paint-brush.svg"
             alt=""
             onclick="show_ui_element('tank_select')"
           />
@@ -113,7 +113,7 @@
           />
 
           <img
-            src="/icons/close.svg"
+            src="/ressources/icons/close.svg"
             alt=""
             class="h-4 w-4 hover:h-5 hover:w-5 absolute crosspx inputtext font-bold group-hover:"
             onclick="document.getElementById('player_name_input').value = ''"
@@ -232,67 +232,67 @@
           >
             <img
               id="turret_arrow_left"
-              src="/icons/arrow.svg"
+              src="/ressources/icons/arrow.svg"
               class="w-14 h-14 scale-x-[-1]"
             />
             <img
               id="turret_arrow_right"
-              src="/icons/arrow.svg"
+              src="/ressources/icons/arrow.svg"
               class="w-14 h-14"
             />
           </div>
           <img
-            src="/image/tank_player/turret_none.png"
+            src="/ressources/image/tank_player/turret_none.png"
             id="turret_none"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
           <img
-            src="/image/tank_player/turret_blue.png"
+            src="/ressources/image/tank_player/turret_blue.png"
             id="turret_blue"
             class="w-2/5 h-2/3 m-2 snap-center noSelect"
           />
           <img
-            src="/image/tank_player/turret_orange.png"
+            src="/ressources/image/tank_player/turret_orange.png"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
             id="turret_orange"
           />
           <img
-            src="/image/tank_player/turret_red.png"
+            src="/ressources/image/tank_player/turret_red.png"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
             id="turret_red"
           />
           <img
-            src="/image/tank_player/turret_green.png"
+            src="/ressources/image/tank_player/turret_green.png"
             id="turret_green"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
           <img
-            src="/image/tank_player/turret_violet.png"
+            src="/ressources/image/tank_player/turret_violet.png"
             id="turret_violet"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
           <img
-            src="/image/tank_player/turret_yellow.png"
+            src="/ressources/image/tank_player/turret_yellow.png"
             id="turret_yellow"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
           <img
-            src="/image/tank_player/turret_blueF.png"
+            src="/ressources/image/tank_player/turret_blueF.png"
             id="turret_blueF"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
           <img
-            src="/image/tank_player/turret_turquoise.png"
+            src="/ressources/image/tank_player/turret_turquoise.png"
             id="turret_turquoise"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
           <img
-            src="/image/tank_player/turret_violetF.png"
+            src="/ressources/image/tank_player/turret_violetF.png"
             id="turret_violetF"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
           <img
-            src="/image/tank_player/turret_none.png"
+            src="/ressources/image/tank_player/turret_none.png"
             id="turret_none"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
@@ -308,68 +308,68 @@
           >
             <img
               id="body_arrow_left"
-              src="/icons/arrow.svg"
+              src="/ressources/icons/arrow.svg"
               class="w-14 h-14 scale-x-[-1]"
             />
             <img
               id="body_arrow_right"
-              src="/icons/arrow.svg"
+              src="/ressources/icons/arrow.svg"
               class="w-14 h-14"
             />
           </div>
 
           <img
-            src="/image/tank_player/body_none.png"
+            src="/ressources/image/tank_player/body_none.png"
             id="body_none"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
           <img
-            src="/image/tank_player/body_blue.png"
+            src="/ressources/image/tank_player/body_blue.png"
             id="body_blue"
             class="w-2/5 h-2/3 m-2 snap-center noSelect"
           />
           <img
-            src="/image/tank_player/body_orange.png"
+            src="/ressources/image/tank_player/body_orange.png"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
             id="body_orange"
           />
           <img
-            src="/image/tank_player/body_red.png"
+            src="/ressources/image/tank_player/body_red.png"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
             id="body_red"
           />
           <img
-            src="/image/tank_player/body_green.png"
+            src="/ressources/image/tank_player/body_green.png"
             id="body_green"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
           <img
-            src="/image/tank_player/body_violet.png"
+            src="/ressources/image/tank_player/body_violet.png"
             id="body_violet"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
           <img
-            src="/image/tank_player/body_yellow.png"
+            src="/ressources/image/tank_player/body_yellow.png"
             id="body_yellow"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
           <img
-            src="/image/tank_player/body_blueF.png"
+            src="/ressources/image/tank_player/body_blueF.png"
             id="body_blueF"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
           <img
-            src="/image/tank_player/body_turquoise.png"
+            src="/ressources/image/tank_player/body_turquoise.png"
             id="body_turquoise"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
           <img
-            src="/image/tank_player/body_violetF.png"
+            src="/ressources/image/tank_player/body_violetF.png"
             id="body_violetF"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
           <img
-            src="/image/tank_player/body_none.png"
+            src="/ressources/image/tank_player/body_none.png"
             id="body_none"
             class="w-1/4 h-1/2 m-2 snap-center noSelect"
           />
@@ -451,13 +451,13 @@
               />
             </div>
             <img
-              src="./icons/save.svg"
+              src="./ressources/icons/save.svg"
               alt="Save"
               class="h-8 w-8 ml-2 mr-4 hover:h-9 hover:w-9 cursor-pointer"
               onclick="save_level()"
             />
             <img
-              src="./icons/close2.svg"
+              src="./ressources/icons/close2.svg"
               alt="Close"
               class="h-8 w-8 ml-2 mr-4 hover:h-9 hover:w-9 cursor-pointer"
               onclick="show_ui_element('my_level_selector')"
@@ -475,25 +475,25 @@
                   >
                     <img
                       id="editor_block1"
-                      src="/image/block/Cube1-1.png"
+                      src="/ressources/image/block/Cube1-1.png"
                       class="w-14 h-14 hover:w-16 hover:h-16 m-2 hover:m-1 relative hover:left-3 left-3 cursor-pointer"
                       onclick="select_block(1)"
                     />
                     <img
                       id="editor_block2"
-                      src="/image/block/Cube1-2.png"
+                      src="/ressources/image/block/Cube1-2.png"
                       class="w-14 h-14 hover:w-16 hover:h-16 m-2 hover:m-1 relative hover:left-3 cursor-pointer"
                       onclick="select_block(2)"
                     />
                     <img
                       id="editor_block4"
-                      src="/image/block/Cube1-3.png"
+                      src="/ressources/image/block/Cube1-3.png"
                       class="w-14 h-14 hover:w-16 hover:h-16 m-2 hover:m-1 relative hover:left-3 cursor-pointer"
                       onclick="select_block(4)"
                     />
                     <img
                       id="editor_block3"
-                      src="/image/block/Cube1-4.png"
+                      src="/ressources/image/block/Cube1-4.png"
                       class="w-14 h-14 hover:w-16 hover:h-16 m-2 hover:m-1 relative hover:left-3 cursor-pointer"
                       onclick="select_block(3)"
                     />
@@ -563,7 +563,7 @@
                 class="w-full h-14 rounded-lg bg-slate-500 flex flex-row items-center mt-2 mb-2"
               >
                 <h1 class="mr-4 ml-2 text-2xl w-10 text-center">1000</h1>
-                <img src="./icons/login.svg" class="w-10 h-10" />
+                <img src="./ressources/icons/login.svg" class="w-10 h-10" />
                 <h1 class="m-2">Aureplus</h1>
                 <h1 class="mr-10 ml-auto">1 KILLS</h1>
               </div>
@@ -584,7 +584,7 @@
             class="bg-slate-800 w-full h-1/5 flex items-center justify-between rounded-t-md"
           >
             <div class="flex items-center font-extrabold text-white">
-              <img src="icons/login.svg" class="w-20 h-20" />
+              <img src="ressources/icons/login.svg" class="w-20 h-20" />
               <h1 id="profile_username" class="m-4">Username : Aureplus</h1>
               <h1 id="profile_email" class="m-4">
                 Email : aurelien@pautet.net
@@ -595,7 +595,7 @@
               onclick="logout()"
             >
               <img
-                src="icons/logout.svg"
+                src="ressources/icons/logout.svg"
                 class="w-10 h-10 m-2 group-hover:w-11 group-hover:h-11"
               />
 
@@ -658,7 +658,7 @@
               />
               <img
                 id="login_password_eye"
-                src="/icons/eye_closed.svg"
+                src="/ressources/icons/eye_closed.svg"
                 alt=""
                 class="h-4 w-4 m-2 hover:h-5 hover:w-5"
                 onclick="show_hide_pass('login_password_input','login_password_eye' )"
@@ -710,7 +710,7 @@
               />
               <img
                 id="signup_password_eye"
-                src="/icons/eye_closed.svg"
+                src="/ressources/icons/eye_closed.svg"
                 alt=""
                 class="h-4 w-4 m-2 hover:h-5 hover:w-5"
                 onclick="show_hide_pass('signup_password_input','signup_password_eye' )"
@@ -927,30 +927,29 @@
     </div>
   </body>
 
-  <script src="./client.js"></script>
-  <script src="./toasts.js"></script>
-  <script src="./connection.js"></script>
-  <script src="./home_ui.js"></script>
+  <script src="./src/js/client.js" defer></script>
+  <script src="./src/js/ui_js/toasts.js" defer></script>
+  <script src="./src/js/ui_js/home_ui.js" defer></script>
+  <script src="./src/js/ui_js/auth.js" defer></script>
+  <script src="./src/js/ui_js/profile.js" defer></script>
+  <script src="./src/js/ui_js/rankings.js" defer></script>
+  <script src="./src/js/ui_js/my_level_selector.js" defer></script>
+  <script src="./src/js/game_js/sounds_system.js" defer></script>
+  <script src="./src/js/game_js/particle_system.js" defer></script>
+  <script src="./src/js/game_js/client_prediction.js" defer></script>
+  <script src="./src/js/game_js/possible_shots.js" defer></script>
+  <script src="./src/js/game_js/blured_ui.js" defer></script>
+  <script src="./src/js/game_js/canvaStuff.js" defer></script>
 
-  <script src="./auth.js"></script>
-  <script src="./profile.js"></script>
+  <script src="./src/js/ui_js/level_editor.js" defer></script>
+  <!-- <script src="./webjlStuff.js" defer></script> -->
+  <script src="./src/js/ui_js/tankselectslider.js" defer></script>
+  <script src="./src/js/ui_js/level_selector.js" defer></script>
+  <script src="./src/js/ui_js/room_selector.js" defer></script>
+  <script src="./src/js/ui_js/room_configurator.js" defer></script>
+  <script src="./src/js/ui_js/rescale.js" defer></script>
 
-  <script src="./rankings.js"></script>
-  <script src="./my_level_selector.js"></script>
-
-  <script src="./sounds_system.js"></script>
-  <script src="./particle_system.js"></script>
-  <script src="./client_prediction.js"></script>
-  <script src="./possible_shots.js"></script>
-
-  <script src="./canvaStuff.js"></script>
-
-  <script src="./level_editor.js"></script>
-  <!-- <script src="./webjlStuff.js"></script> -->
-  <script src="./tankselectslider.js"></script>
-  <script src="./level_selector.js"></script>
-  <script src="./room_selector.js"></script>
-  <script src="./room_configurator.js"></script>
-  <script src="./rescale.js"></script>
-  <script src="./blured_ui.js"></script>
+  <script src="./class/test.js" defer></script>
+  <script src="./class/Stats.js" defer></script>
+  <script src="./class/Player.js" defer></script>
 </html>

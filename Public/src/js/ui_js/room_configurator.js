@@ -8,7 +8,12 @@ function create_room() {
 
   if (room_name_input.value == "") {
     //create a toast to inform the user that the room name is empty
-    createToast("info", "/image/info.svg", "Error", "Enter a room name");
+    createToast(
+      "info",
+      "/ressources/image/info.svg",
+      "Error",
+      "Enter a room name"
+    );
     return;
   }
   if (is_selected_not_empty() == false) {

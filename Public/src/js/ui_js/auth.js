@@ -3,10 +3,10 @@ function show_hide_pass(input_id, eye_id) {
   var y = document.getElementById(eye_id);
   if (x.type === "password") {
     x.type = "text";
-    y.src = "/icons/eye.svg";
+    y.src = "/ressources/icons/eye.svg";
   } else {
     x.type = "password";
-    y.src = "/icons/eye_closed.svg";
+    y.src = "/ressources/icons/eye_closed.svg";
   }
 }
 
@@ -50,17 +50,32 @@ function signup() {
 
   username = document.getElementById("signup_username_input").value;
   if (username == "") {
-    createToast("info", "/image/info.svg", "Error", "Enter a username ");
+    createToast(
+      "info",
+      "/ressources/image/info.svg",
+      "Error",
+      "Enter a username "
+    );
     return;
   }
   email = document.getElementById("signup_email_input").value;
   if (email == "") {
-    createToast("info", "/image/info.svg", "Error", "Enter an email ");
+    createToast(
+      "info",
+      "/ressources/image/info.svg",
+      "Error",
+      "Enter an email "
+    );
     return;
   }
   password = document.getElementById("signup_password_input").value;
   if (password == "") {
-    createToast("info", "/image/info.svg", "Error", "Enter a password ");
+    createToast(
+      "info",
+      "/ressources/image/info.svg",
+      "Error",
+      "Enter a password "
+    );
     return;
   }
   //console.log(username, email, password, "signup");
@@ -72,13 +87,23 @@ socket.on("signup_fail", (msg) => {
     document
       .getElementById("signup_username_input")
       .classList.add("border-red-500");
-    createToast("info", "/image/info.svg", "Error", "Username already taken");
+    createToast(
+      "info",
+      "/ressources/image/info.svg",
+      "Error",
+      "Username already taken"
+    );
   }
   if (msg == "email") {
     document
       .getElementById("signup_email_input")
       .classList.add("border-red-500");
-    createToast("info", "/image/info.svg", "Error", "Email already taken");
+    createToast(
+      "info",
+      "/ressources/image/info.svg",
+      "Error",
+      "Email already taken"
+    );
   }
 });
 socket.on("signup_success", (username) => {
@@ -91,7 +116,12 @@ socket.on("signup_success", (username) => {
     "Username: " + username;
   document.getElementById("profile_email").innerHTML = "Email: " + email;
   change_logged_status();
-  createToast("info", "/image/info.svg", "Success", username + " created");
+  createToast(
+    "info",
+    "/ressources/image/info.svg",
+    "Success",
+    username + " created"
+  );
   return_home();
 });
 
@@ -104,12 +134,22 @@ function login() {
     .classList.remove("border-red-500");
   email = document.getElementById("login_email_input").value;
   if (email == "") {
-    createToast("info", "/image/info.svg", "Error", "Enter an email ");
+    createToast(
+      "info",
+      "/ressources/image/info.svg",
+      "Error",
+      "Enter an email "
+    );
     return;
   }
   password = document.getElementById("login_password_input").value;
   if (password == "") {
-    createToast("info", "/image/info.svg", "Error", "Enter a password ");
+    createToast(
+      "info",
+      "/ressources/image/info.svg",
+      "Error",
+      "Enter a password "
+    );
     return;
   }
   //console.log(email, password, "login");
@@ -120,13 +160,23 @@ socket.on("login_fail", (msg) => {
     document
       .getElementById("login_email_input")
       .classList.add("border-red-500");
-    createToast("info", "/image/info.svg", "Error", "Email not found");
+    createToast(
+      "info",
+      "/ressources/image/info.svg",
+      "Error",
+      "Email not found"
+    );
   }
   if (msg == "password") {
     document
       .getElementById("login_password_input")
       .classList.add("border-red-500");
-    createToast("info", "/image/info.svg", "Error", "Invalid password");
+    createToast(
+      "info",
+      "/ressources/image/info.svg",
+      "Error",
+      "Invalid password"
+    );
   }
 });
 socket.on("login_success", (username) => {
@@ -139,7 +189,12 @@ socket.on("login_success", (username) => {
   document.getElementById("profile_email").innerHTML = "Email: " + email;
 
   //console.log("login success", username);
-  createToast("info", "/image/info.svg", "Success", username + " logged in");
+  createToast(
+    "info",
+    "/ressources/image/info.svg",
+    "Success",
+    username + " logged in"
+  );
   return_home();
   show_ui_element("profile_or_auth");
 });
@@ -157,6 +212,6 @@ function logout() {
   logged = false;
   change_logged_status();
   return_home();
-  createToast("info", "/icons/logout.svg", "Success", "Logged out");
+  createToast("info", "/ressources/icons/logout.svg", "Success", "Logged out");
   //console.log("logout success");
 }

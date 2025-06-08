@@ -1,0 +1,200 @@
+const {
+  rectRect,
+  colliderect,
+} = require("../../Shared/scripts/check_collision.js");
+const Bullet = require("../../Shared/class/Bullet.js");
+const Mine = require("../../Shared/class/Mine.js");
+const Stats = require("../../Shared/class/Stats.js");
+
+const mvtspeed = 3;
+
+class Player {
+  constructor(position, socketid, name, turretc, bodyc) {
+    this.name = name;
+    this.bodyc = bodyc;
+    this.turretc = turretc;
+    this.position = position;
+    this.socketid = socketid;
+    this.mytick = 0;
+    this.mvtspeed = 3;
+    this.round_stats = new Stats();
+    this.spawnpos = {
+      x: 0,
+      y: 0,
+    };
+    this.velocity = {
+      x: 0,
+      y: 0,
+    };
+    this.size = {
+      w: 45,
+      h: 45,
+    };
+    this.turretsize = {
+      w: 60,
+      h: 33,
+    };
+    this.angle = 0;
+    this.endpos = {
+      x: 0,
+      y: 0,
+    };
+    this.direction = {
+      x: 0,
+      y: 0,
+    };
+    this.bulletcount = 0;
+    this.minecount = 0;
+    this.aim = {
+      x: 0,
+      y: 0,
+    };
+    this.alive = true;
+  }
+  spawn() {
+    this.position = structuredClone(this.spawnpos);
+  }
+  shoot(room) {
+    this.endofbarrel();
+    if (this.bulletcount < 5 && this.alive) {
+      new Bullet(
+        { x: this.endpos.x, y: this.endpos.y },
+        this.angle,
+        6,
+        this,
+        room
+      );
+    }
+  }
+  plant(room) {
+    if (this.minecount < 3 && this.alive) {
+      new Mine(
+        {
+          x: this.position.x + this.size.w / 2,
+          y: this.position.y + this.size.h / 2,
+        },
+        this,
+        room
+      );
+    }
+  }
+
+  update(room, fps_corector) {
+    this.CalculateAngle();
+
+    //change the angle of the image depending on the mvt direction
+    if (this.alive) {
+      if (this.direction.x > 0) {
+        this.velocity.x = mvtspeed;
+      } else if (this.direction.x < 0) {
+        this.velocity.x = -mvtspeed;
+      } else {
+        this.velocity.x = 0;
+      }
+      if (this.direction.y > 0) {
+        this.velocity.y = mvtspeed;
+      } else if (this.direction.y < 0) {
+        this.velocity.y = -mvtspeed;
+      } else {
+        this.velocity.y = 0;
+      }
+    }
+    for (let i = 0; i < room.Bcollision.length; i++) {
+      this.BodyCollision(room.Bcollision[i]);
+    }
+    for (let socket_id in room.players) {
+      if (room.players[socket_id].alive && this != room.players[socket_id]) {
+        this.BodyCollision(room.players[socket_id]);
+      }
+    }
+    if (this.velocity.x > 0) {
+      this.rotation = 0;
+    } else if (this.velocity.x < 0) {
+      this.rotation = 0;
+    } else if (this.velocity.y < 0) {
+      this.rotation = 90;
+    } else if (this.velocity.y > 0) {
+      this.rotation = 90;
+    }
+    if (this.velocity.x < 0 && this.velocity.y < 0) {
+      this.rotation = 45;
+    } else if (this.velocity.x > 0 && this.velocity.y < 0) {
+      this.rotation = -45;
+    } else if (this.velocity.x > 0 && this.velocity.y > 0) {
+      this.rotation = 45;
+    } else if (this.velocity.x < 0 && this.velocity.y > 0) {
+      this.rotation = -45;
+    }
+
+    //handle the movement
+
+    if (this.velocity.x != 0 && this.velocity.y != 0) {
+      this.velocity.x = this.velocity.x / Math.sqrt(2);
+      this.velocity.y = this.velocity.y / Math.sqrt(2);
+    }
+    if (this.alive) {
+      this.position.x += this.velocity.x * fps_corector;
+      this.position.y += this.velocity.y * fps_corector;
+    }
+  }
+  endofbarrel() {
+    this.endpos.x = this.position.x + 2.5 * (this.size.w / 6);
+    this.endpos.y = this.position.y + 2.5 * (this.size.h / 6);
+    this.hyp = 45;
+    this.endpos.x -= Math.cos(this.angle * (Math.PI / 180)) * this.hyp;
+    this.endpos.y -= Math.sin(this.angle * (Math.PI / 180)) * this.hyp;
+  }
+  CalculateAngle() {
+    let adjacent = this.aim.x - (this.position.x + this.size.w / 2);
+    let opposite = this.aim.y - (this.position.y + this.size.h / 2);
+    let angle = Math.atan(opposite / adjacent);
+    if (adjacent < 0) {
+      this.angle = (angle * 180) / Math.PI;
+    } else {
+      this.angle = (angle * 180) / Math.PI + 180;
+    }
+  }
+  BulletCollision(obj) {
+    return (this.side = rectRect(
+      this.position.y,
+      this.position.x,
+      this.size.w,
+      this.size.h,
+      obj.position.y,
+      obj.position.x,
+      obj.size.w,
+      obj.size.h
+    ));
+  }
+  BodyCollision(obj) {
+    this.side = colliderect(
+      this.position.y,
+      this.position.x,
+      this.size.w,
+      this.size.h,
+      obj.position.y,
+      obj.position.x,
+      obj.size.w,
+      obj.size.h,
+      3
+    );
+    if (this.side == "right") {
+      if (this.velocity.x > 0) this.velocity.x = 0;
+    }
+    if (this.side == "left") {
+      if (this.velocity.x < 0) this.velocity.x = 0;
+    }
+    if (this.side == "up") {
+      if (this.velocity.y < 0) this.velocity.y = 0;
+    }
+    if (this.side == "down") {
+      if (this.velocity.y > 0) this.velocity.y = 0;
+    }
+  }
+}
+
+try {
+  module.exports = Player;
+} catch (e) {
+  console.error("Error exporting Player class:", e);
+}

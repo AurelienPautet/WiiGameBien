@@ -107,7 +107,12 @@ function get_ranking_initial() {
 
 function is_logged_in() {
   if (logged === false) {
-    createToast("info", "/image/info.svg", "Error", "You are not logged in");
+    createToast(
+      "info",
+      "/ressources/image/info.svg",
+      "Error",
+      "You are not logged in"
+    );
   } else {
     socket.emit("search_my_levels", "", 0);
   }
@@ -167,7 +172,12 @@ function get_player_name() {
   if (playerName.length > 0) {
     return true;
   } else {
-    createToast("info", "/image/info.svg", "Error", "Enter a playerName ");
+    createToast(
+      "info",
+      "/ressources/image/info.svg",
+      "Error",
+      "Enter a playerName "
+    );
     return false;
   }
 }
@@ -176,16 +186,19 @@ function is_selected_not_empty() {
   if (selected_map.length > 0) {
     return true;
   } else {
-    createToast("info", "/image/info.svg", "Error", "Select a map");
+    createToast("info", "/ressources/image/info.svg", "Error", "Select a map");
     return false;
   }
 }
 
 function update_tank_visualiser() {
   document.getElementById("body_visualiser").src =
-    "/image/tank_player/" + "body_" + colors["body"][current["body"]] + ".png";
+    "/ressources/image/tank_player/" +
+    "body_" +
+    colors["body"][current["body"]] +
+    ".png";
   document.getElementById("turret_visualiser").src =
-    "/image/tank_player/" +
+    "/ressources/image/tank_player/" +
     "turret_" +
     colors["turret"][current["turret"]] +
     ".png";
@@ -220,3 +233,6 @@ function showgame() {
   return_home();
   landing_page.classList.add("hidden");
 }
+
+window.show_ui_element = show_ui_element;
+window.return_home = return_home;

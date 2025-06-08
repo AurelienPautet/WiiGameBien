@@ -62,7 +62,7 @@ socket.on("personal_ranking", (data) => {
   card.className = `w-full h-14 rounded-lg ${bg_color} flex flex-row items-center mt-2 mb-2`;
   card.innerHTML = `
   <h1 class="mr-4 ml-2 text-2xl w-10 text-center">${data.rank}</h1>
-  <img src="./icons/login.svg" class="w-10 h-10" />
+  <img src="./ressources/icons/login.svg" class="w-10 h-10" />
   <h1 class="m-2">${data.username} (YOU)</h1>
   <h1 class="mr-10 ml-auto">${data.total_data} ${current_ranking}</h1>
 `;
@@ -79,7 +79,7 @@ function show_personal_rank() {
     card.className = `w-full h-14 rounded-lg bg-slate-500 flex flex-row items-center mt-2 mb-2`;
     card.innerHTML = `
     <h1 class="mr-4 ml-2 text-2xl w-10 text-center">XXX</h1>
-    <img src="./icons/login.svg" class="w-10 h-10" />
+    <img src="./ressources/icons/login.svg" class="w-10 h-10" />
     <h1 class="m-2">Login to see your own rank</h1>
     <h1 class="mr-10 ml-auto">XXX ${current_ranking}</h1>
   `;
@@ -99,7 +99,7 @@ function add_rank_card(
   card.className = `w-full h-14 rounded-lg ${special_color} flex flex-row items-center mt-2 mb-2`;
   card.innerHTML = `
         <h1 class="mr-4 ml-2 text-2xl w-10 text-center">${rank}</h1>
-        <img src="./icons/login.svg" class="w-10 h-10" />
+        <img src="./ressources/icons/login.svg" class="w-10 h-10" />
         <h1 class="m-2">${name}</h1>
         <h1 class="mr-10 ml-auto">${value} ${unity}</h1>
     `;

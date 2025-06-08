@@ -2,12 +2,12 @@
 // https://howlerjs.com/
 //but flemmmmmmmmmmmmm
 
-var sound_tir = new Audio("sounds/tir.mp3");
-var sound_kill = new Audio("sounds/kill.mp3");
-var sound_explose = new Audio("sounds/eplose.mp3");
-var sound_fuse = new Audio("sounds/fuse.mp3");
-var sound_plant = new Audio("sounds/plant.mp3");
-var sound_ricochet = new Audio("sounds/ricochet.mp3");
+var sound_tir = new Audio("ressources/sounds/tir.mp3");
+var sound_kill = new Audio("ressources/sounds/kill.mp3");
+var sound_explose = new Audio("ressources/sounds/eplose.mp3");
+var sound_fuse = new Audio("ressources/sounds/fuse.mp3");
+var sound_plant = new Audio("ressources/sounds/plant.mp3");
+var sound_ricochet = new Audio("ressources/sounds/ricochet.mp3");
 
 tirs = [];
 plants = [];

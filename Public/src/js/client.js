@@ -23,7 +23,7 @@ socket.on("id", (pid, socketid) => {
 });
 
 socket.on("id-fail", () => {
-  createToast("info", "/image/info.svg", "Error", "Room full");
+  createToast("info", "/ressources/image/info.svg", "Error", "Room full");
   //console.log("room full");
 });
 
@@ -81,42 +81,29 @@ plant = false;
 click = false;
 alive = true;
 logged = false;
-socket.on("tick", (p, bu, m, r, t) => {
-  bullets = bu;
-  mines = m;
-  room_name = r;
-  mytick = t;
-  if (p[mysocketid]) {
-    alive = p[mysocketid].alive;
+socket.on("tick", (data) => {
+  //console.log("tick", data.players);
+  bullets = data.bullets;
+  mines = data.mines;
+  room_name = data.name;
+  mytick = data.tick;
+  players = data.players;
+  if (data.players[mysocketid]) {
+    alive = data.players[mysocketid].alive;
     if (!alive) {
       if (current_page == "home") {
         show_ui_element("spectator_screen");
       }
     }
   }
-  for (socketid in p) {
-    if (!players[socketid]) {
-      players[socketid] = p[socketid];
-    } else {
-      players[socketid].position = p[socketid].position;
-      players[socketid].angle = p[socketid].angle;
-      players[socketid].alive = p[socketid].alive;
-      players[socketid].rotation = p[socketid].rotation;
-      players[socketid].direction = p[socketid].direction;
-      players[socketid].mytick = p[socketid].mytick;
-    }
-  }
-  for (socketid in players) {
-    if (!p[socketid]) {
-      delete players[socketid];
-    }
-  }
 });
 
-socket.on("level_change", (b, Bc, lvlid) => {
-  blocks = b;
-  Bcollision = Bc;
-  level_id = lvlid;
+socket.on("level_change", (data) => {
+  console.log("level_change", data);
+  console.log("level_change", data.blocks);
+  blocks = data.blocks;
+  Bcollision = data.Bcollision;
+  level_id = data.level_id;
   //console.log("level_change", level_id);
 });
 

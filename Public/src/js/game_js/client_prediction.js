@@ -1,34 +1,3 @@
-class Frontend_Player {
-  constructor(
-    position,
-    socketid,
-    name,
-    turretc,
-    bodyc,
-    angle,
-    alive,
-    rotation
-  ) {
-    this.name = name;
-    this.bodyc = bodyc;
-    this.turretc = turretc;
-    this.position = position;
-    this.socketid = socketid;
-    this.size = {
-      w: 48,
-      h: 48,
-    };
-    this.turretsize = {
-      w: 60,
-      h: 33,
-    };
-    this.angle = angle;
-    this.alive = alive;
-    this.rotation = rotation;
-    this.direction = direction;
-  }
-}
-
 player_reonciliation = false;
 
 function reconciliation_loop() {

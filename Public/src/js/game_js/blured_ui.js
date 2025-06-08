@@ -1,4 +1,9 @@
-socket.on("winner", (id, wait, scores, ids_to_name) => {
+socket.on("winner", (data) => {
+  id = data.socketid;
+  wait = data.waitingtime;
+  scores = data.player_scores;
+  ids_to_name = data.ids_to_name;
+
   hide_ui_element("spectator_screen");
   show_ui_element("end_screen_screen");
   //console.log(scores);
@@ -149,7 +154,7 @@ function star_clicked(i) {
   if (logged == false) {
     createToast(
       "error",
-      "/image/error.svg",
+      "/ressources/image/error.svg",
       "Error",
       "You need to be logged in to rate a level"
     );
@@ -170,7 +175,7 @@ socket.on("rate_fail", (reason) => {
   //console.log("rate fail", reason);
   createToast(
     "error",
-    "/image/error.svg",
+    "/ressources/image/error.svg",
     "Error",
     "You can't rate this level because " + reason
   );
@@ -180,7 +185,7 @@ socket.on("rate_success", (rate, level_id) => {
   //console.log("rate success", rate, level_id);
   createToast(
     "info",
-    "/image/info.svg",
+    "/ressources/image/info.svg",
     "Success",
     "You rated the level with " + rate + " stars"
   );

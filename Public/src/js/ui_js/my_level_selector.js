@@ -53,12 +53,12 @@ function add_my_map(
                                 </div>
                                                   <div class="flex">
                     <img
-                      src="./icons/edit.svg"
+                      src="./ressources/icons/edit.svg"
                       class="w-6 h-6 m-3 hover:w-8 hover:h-8 hover:m-1"
                       onclick="edit_map('${map_id}')"
                     />
                     <img
-                      src="./icons/bin.png"
+                      src="./ressources/icons/bin.png"
                       class="w-6 h-6 m-3 hover:w-8 hover:h-8 hover:m-1"
                       onclick="delete_map('${map_id}')"
                     />

@@ -201,7 +201,7 @@ body {
   right: 0;
   text-align: center;
   overflow: hidden;
-  cursor: url("/image/crosair2.svg") 12 12, crosshair;
+  cursor: url("/ressources/image/crosair2.svg") 12 12, crosshair;
 }
 .fullscreen_message {
   width: 100%;

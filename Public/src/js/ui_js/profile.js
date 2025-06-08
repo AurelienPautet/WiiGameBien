@@ -29,32 +29,67 @@ socket.on("player_stats", (stats) => {
           "Rounds Played",
           rounds_played,
           "",
-          "/assets/icons/rounds.png"
+          "/assets/ressources/icons/rounds.png"
         )}
-        ${create_stats_card("Wins", wins, "", "/assets/icons/wins.png")}
+        ${create_stats_card(
+          "Wins",
+          wins,
+          "",
+          "/assets/ressources/icons/wins.png"
+        )}
         ${create_stats_card(
           "Win Rate",
           win_rate,
           "%",
-          "/assets/icons/winrate.png"
+          "/assets/ressources/icons/winrate.png"
         )}
-        ${create_stats_card("Kills", kills, "", "/assets/icons/kills.png")}
-        ${create_stats_card("Deaths", deaths, "", "/assets/icons/deaths.png")}
-        ${create_stats_card("K/D Ratio", kd_ratio, "", "/assets/icons/kd.png")}
-        ${create_stats_card("Shots", shots, "", "/assets/icons/shots.png")}
-        ${create_stats_card("Hits", hits, "", "/assets/icons/hits.png")}
+        ${create_stats_card(
+          "Kills",
+          kills,
+          "",
+          "/assets/ressources/icons/kills.png"
+        )}
+        ${create_stats_card(
+          "Deaths",
+          deaths,
+          "",
+          "/assets/ressources/icons/deaths.png"
+        )}
+        ${create_stats_card(
+          "K/D Ratio",
+          kd_ratio,
+          "",
+          "/assets/ressources/icons/kd.png"
+        )}
+        ${create_stats_card(
+          "Shots",
+          shots,
+          "",
+          "/assets/ressources/icons/shots.png"
+        )}
+        ${create_stats_card(
+          "Hits",
+          hits,
+          "",
+          "/assets/ressources/icons/hits.png"
+        )}
         ${create_stats_card(
           "Accuracy",
           accuracy,
           "%",
-          "/assets/icons/accuracy.png"
+          "/assets/ressources/icons/accuracy.png"
         )}
-        ${create_stats_card("Plants", plants, "", "/assets/icons/plants.png")}
+        ${create_stats_card(
+          "Plants",
+          plants,
+          "",
+          "/assets/ressources/icons/plants.png"
+        )}
         ${create_stats_card(
           "Blocks Destroyed",
           blocks_destroyed,
           "",
-          "/assets/icons/blocks.png"
+          "/assets/ressources/icons/blocks.png"
         )}
       </div>
     `;

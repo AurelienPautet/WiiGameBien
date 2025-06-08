@@ -1,9 +1,6 @@
-//div that holds all the toast notifications
 let notifications = document.getElementById("notif");
 
 function createToast(type, icon, title, text) {
-  //create a new toast notification
-  //with the given type, icon, title and text
   let newToast = document.createElement("div");
   newToast.innerHTML = `
             <div class="toast select-none" id="${type}">
@@ -15,7 +12,6 @@ function createToast(type, icon, title, text) {
             </div>`;
   notifications.prepend(newToast);
 
-  //remove the toast after 5 seconds
   newToast.timeOut = setTimeout(() => newToast.remove(), 50000);
 }
 
@@ -23,7 +19,7 @@ socket.on("player-connection", (name) => {
   //console.log(name);
   createToast(
     "connection",
-    "/image/connection.svg",
+    "/ressources/image/connection.svg",
     "Connection",
     name + " connected"
   );
@@ -33,21 +29,28 @@ socket.on("player-disconnection", (name) => {
   //console.log(name);
   createToast(
     "disconnection",
-    "/image/disconnection.svg",
+    "/ressources/image/disconnection.svg",
     "Disconnection",
     name + " disconnected"
   );
 });
 
-socket.on("player-kill", (li, type) => {
+socket.on("player-kill", (data) => {
+  let li = data.players;
+  let type = data.type;
   if (type == "bullet") {
     createToast(
       "bullet",
-      `/image/${type}.svg`,
+      `/ressources/image/${type}.svg`,
       `Kill`,
       ` ${li[0]} 🔫 ${li[1]}`
     );
   } else if (type == "mine") {
-    createToast("mine", `/image/${type}.svg`, `Kill`, ` ${li[0]} 💣 ${li[1]}`);
+    createToast(
+      "mine",
+      `/ressources/image/${type}.svg`,
+      `Kill`,
+      ` ${li[0]} 💣 ${li[1]}`
+    );
   }
 });
