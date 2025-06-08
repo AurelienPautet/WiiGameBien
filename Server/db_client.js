@@ -10,7 +10,7 @@ DB_NAME = process.env.DB_NAME;
 DB_PORT = process.env.DB_PORT;
 
 let client;
-console.log(process.env.DATABASE_URL, "DATABASE_URL");
+//console.log(process.env.DATABASE_URL, "DATABASE_URL");
 if (process.env.DATABASE_URL == undefined) {
   console.log("Using local db");
   client = new Client({

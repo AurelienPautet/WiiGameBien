@@ -21,7 +21,7 @@ let myusername = "";
 let myemail = "";
 
 function switch_onglet(onglet) {
-  console.log(onglet, current_onglet);
+  //console.log(onglet, current_onglet);
   if (current_onglet != onglet) {
     if (onglet == content_login) {
       login_onglet.classList.add("bg-slate-700");
@@ -63,7 +63,7 @@ function signup() {
     createToast("info", "/image/info.svg", "Error", "Enter a password ");
     return;
   }
-  console.log(username, email, password, "signup");
+  //console.log(username, email, password, "signup");
   socket.emit("signup", username, email, password);
 }
 
@@ -82,7 +82,7 @@ socket.on("signup_fail", (msg) => {
   }
 });
 socket.on("signup_success", (username) => {
-  console.log("signup success", username);
+  //console.log("signup success", username);
   logged = true;
 
   myusername = username;
@@ -112,7 +112,7 @@ function login() {
     createToast("info", "/image/info.svg", "Error", "Enter a password ");
     return;
   }
-  console.log(email, password, "login");
+  //console.log(email, password, "login");
   socket.emit("login", email, password);
 }
 socket.on("login_fail", (msg) => {
@@ -138,7 +138,7 @@ socket.on("login_success", (username) => {
     "Username: " + username;
   document.getElementById("profile_email").innerHTML = "Email: " + email;
 
-  console.log("login success", username);
+  //console.log("login success", username);
   createToast("info", "/image/info.svg", "Success", username + " logged in");
   return_home();
   show_ui_element("profile_or_auth");
@@ -158,5 +158,5 @@ function logout() {
   change_logged_status();
   return_home();
   createToast("info", "/icons/logout.svg", "Success", "Logged out");
-  console.log("logout success");
+  //console.log("logout success");
 }

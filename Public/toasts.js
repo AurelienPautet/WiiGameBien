@@ -20,7 +20,7 @@ function createToast(type, icon, title, text) {
 }
 
 socket.on("player-connection", (name) => {
-  console.log(name);
+  //console.log(name);
   createToast(
     "connection",
     "/image/connection.svg",
@@ -30,7 +30,7 @@ socket.on("player-connection", (name) => {
 });
 
 socket.on("player-disconnection", (name) => {
-  console.log(name);
+  //console.log(name);
   createToast(
     "disconnection",
     "/image/disconnection.svg",

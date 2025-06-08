@@ -18,11 +18,16 @@ function get_levels(input_name, imput_nb_players, socket) {
 }
 
 function get_my_levels(input_name, imput_nb_players, socket) {
-  //console.log("get_my_levels", input_name, imput_nb_players);
-  //console.log("users", users);
+  ////console.log("get_my_levels", input_name, imput_nb_players);
+  ////console.log("users", users);
   let query_tosend, values;
-  //const player_id = users[socket.id].id;
-  const player_id = 1;
+  if (!users[socket.id]) {
+    //console.log("User not logged in, using default player_id -1");
+    player_id = -1; // Default player_id if not logged in
+  } else {
+    player_id = users[socket.id].id; // Ensure player_id is defined, default to -1 if not logged in
+  }
+  //const player_id = 1;
   if (imput_nb_players == 0) {
     query_tosend =
       "SELECT levels.id, name, content, creator_id, max_players, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' AND creator_id = $2 GROUP BY levels.id ORDER BY rating";
@@ -35,10 +40,97 @@ function get_my_levels(input_name, imput_nb_players, socket) {
   fetch_levels(query_tosend, values, socket, "recieve_my_levels");
 }
 
+function get_level_from_id(level_id, socket, response_event) {
+  let query_tosend =
+    "SELECT levels.id, name, content, creator_id, max_players, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE levels.id = $1 GROUP BY levels.id";
+
+  return fetch_levels(query_tosend, [level_id], socket, response_event);
+}
+
+function save_level(
+  level_id,
+  levelData,
+  hexData,
+  level_name,
+  max_players,
+  socket
+) {
+  const player_id = users[socket.id].id;
+
+  if (level_id != -1) {
+    client.query(
+      "Select * from levels where id = $1 and creator_id = $2",
+      [level_id, player_id],
+      (err, res) => {
+        if (err) {
+          console.error("Error executing query", err.stack);
+          socket.emit("save_level_fail", "problem with database");
+          return;
+        } else if (res.rows.length == 0) {
+          socket.emit("save_level_fail", "not your level");
+          return;
+        }
+      }
+    );
+
+    client.query(
+      "UPDATE levels SET name = $1, content = $2, max_players = $3 WHERE id = $4 AND creator_id = $5",
+      [level_name, levelData, max_players, level_id, player_id],
+      (err) => {
+        if (err) {
+          console.error("Error executing query", err.stack);
+          socket.emit("save_level_fail", "problem with database");
+          return;
+        }
+      }
+    );
+
+    client.query(
+      "UPDATE levels_img SET img = $1::bytea WHERE level_id = $2",
+      [Buffer.from(hexData, "hex"), level_id],
+      (err) => {
+        if (err) {
+          console.error("Error executing query", err.stack);
+          socket.emit("save_level_fail", "problem with database");
+          return;
+        } else {
+          socket.emit("save_level_success", level_id);
+        }
+      }
+    );
+  } else {
+    client.query(
+      "INSERT INTO levels (name, content, creator_id, max_players) VALUES ($1, $2, $3, $4) RETURNING id",
+      [level_name, levelData, player_id, max_players],
+      (err, res) => {
+        if (err) {
+          console.error("Error executing query", err.stack);
+          socket.emit("save_level_fail", "problem with database");
+          return;
+        } else {
+          newLevelId = res.rows[0].id;
+          client.query(
+            "INSERT INTO levels_img (level_id, img) VALUES ($1, $2)",
+            [newLevelId, Buffer.from(hexData, "hex")],
+            (err2) => {
+              if (err2) {
+                console.error("Error executing query", err2.stack);
+                socket.emit("save_level_fail", "problem with database");
+              } else {
+                socket.emit("save_level_success", newLevelId);
+              }
+            }
+          );
+        }
+      }
+    );
+  }
+}
+
 async function get_max_players(list_id) {
   query = "SELECT MIN(max_players) FROM levels WHERE id = ANY ($1)";
   res = await client.query(query, [list_id]);
-  //console.log(res.rows[0].min);
+  ////console.log(res.rows[0].min);
   return res.rows[0].min;
 }
 
@@ -60,6 +152,7 @@ function get_creator_name(level_row) {
 }
 
 function fetch_levels(query_tosend, values, socket, response_event) {
+  //console.log("fetch_levels", query_tosend, values, socket, response_event);
   client.query(query_tosend, values, async (err, res) => {
     if (err) {
       console.error("Error executing query fetch_levels", err.stack);
@@ -68,6 +161,8 @@ function fetch_levels(query_tosend, values, socket, response_event) {
       levels = [];
       for (const row of res.rows) {
         const cname = await get_creator_name(row);
+        const img = await get_img_from_level_id(row.id);
+
         levels.push({
           level_id: row.id,
           level_name: row.name,
@@ -75,12 +170,32 @@ function fetch_levels(query_tosend, values, socket, response_event) {
           level_rating: row.rating,
           level_creator_name: cname,
           level_json: row.content,
+          level_img: img,
         });
       }
       //console.log("Levels fetched:", levels);
       socket.emit(response_event, levels);
       return levels;
     }
+  });
+}
+
+function get_img_from_level_id(level_id) {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "SELECT img FROM levels_img WHERE level_id = $1",
+      [level_id],
+      (err, res) => {
+        if (err) {
+          console.error("Error executing query", err.stack);
+          resolve(null);
+        } else if (res.rows.length == 0) {
+          resolve(null); // No image found for this level
+        } else {
+          resolve(res.rows[0].img.toString("hex"));
+        }
+      }
+    );
   });
 }
 
@@ -106,7 +221,7 @@ async function log_attemps(email, ip_adress, status) {
     email,
   ]);
   if (res.rows.length == 0) {
-    console.log("User not found big problem");
+    //console.log("User not found big problem");
     return;
   }
   player_id = res.rows[0].id;
@@ -170,7 +285,7 @@ async function login(email, password, socket) {
         } else {
           const user = res.rows[0];
           const isMatch = await bcrypt.compare(password, user.password_hash);
-          console.log(isMatch, "isMatch");
+          //console.log(isMatch, "isMatch");
           if (!isMatch) {
             resolve(false);
             socket.emit("login_fail", "password");
@@ -217,7 +332,7 @@ async function get_level_rating_from_player(level_id, player_id) {
 }
 
 async function rate_lvl(rate, level_id, socket) {
-  console.log("rate_lvl", rate, level_id);
+  //console.log("rate_lvl", rate, level_id);
   try {
     player_id = users[socket.id].id;
     return new Promise((resolve) => {
@@ -264,14 +379,14 @@ async function rate_lvl(rate, level_id, socket) {
       );
     });
   } catch (err) {
-    console.log(err);
+    //console.log(err);
     socket.emit("rate_fail", "not logged in");
     return false;
   }
 }
 
 async function add_round(player_socket_id, level_id, stats_to_add) {
-  console.log("adding rounds", player_socket_id, level_id, stats_to_add);
+  //console.log("adding rounds", player_socket_id, level_id, stats_to_add);
   try {
     player_id = users[player_socket_id].id;
     client.query(
@@ -291,7 +406,7 @@ async function add_round(player_socket_id, level_id, stats_to_add) {
         if (err) {
           console.error("Error executing query", err.stack);
         } else {
-          console.log("Round added successfully");
+          //console.log("Round added successfully");
         }
       }
     );
@@ -308,7 +423,7 @@ async function get_user_stats(player_socket_id, socket) {
       [player_id]
     );
     if (res.rows.length > 0) {
-      console.log("User stats:", res.rows[0]);
+      ////console.log("User stats:", res.rows[0]);
       socket.emit("player_stats", res.rows[0]);
     } else {
       socket.emit("player_stats", null);
@@ -407,6 +522,8 @@ async function get_user_rank(player_socket_id, ranking_type, socket) {
 module.exports = {
   get_levels,
   get_my_levels,
+  get_level_from_id,
+  save_level,
   get_max_players,
   get_json_from_id,
   signup,

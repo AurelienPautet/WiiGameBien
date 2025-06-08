@@ -72,13 +72,13 @@ const after_hide = {
 let waited = false;
 // the current page
 let current_page = "home";
-console.log("current_page", current_page);
+//console.log("current_page", current_page);
 // get the player name from the local storage if it exists
 var playerName = "";
 try {
   playerName = localStorage.getItem("playerName");
   document.getElementById("player_name_input").value = playerName;
-  console.log(playerName);
+  //console.log(playerName);
   if (playerName == null) {
     playerName = "";
   }
@@ -111,10 +111,10 @@ function is_logged_in() {
   } else {
     socket.emit("search_my_levels", "", 0);
   }
-  socket.emit("search_my_levels", "", 0);
-  return true;
+  //socket.emit("search_my_levels", "", 0);
+  //return true;
 
-  //return logged;
+  return logged;
 }
 
 function logged_or_not() {
@@ -135,9 +135,9 @@ function show_ui_element(elementid) {
   if (!res) {
     return;
   }
-  console.log("showing", elementid);
+  //console.log("showing", elementid);
   current_page = elementid;
-  console.log(elements, elements[elementid]);
+  //console.log(elements, elements[elementid]);
   landing_page.classList.add("blur");
   elements[elementid].classList.remove("hidden");
   waited = false;
@@ -152,7 +152,7 @@ function hide_ui_element(elementid) {
   try {
     after_hide[elementid]();
   } catch (err) {
-    console.log(err);
+    //console.log(err);
   }
   current_page = "home";
   landing_page.classList.remove("blur");
@@ -163,7 +163,7 @@ function get_player_name() {
   playerName = document.getElementById("player_name_input").value;
   localStorage.setItem("playerName", playerName);
 
-  console.log("playerName", playerName);
+  //console.log("playerName", playerName);
   if (playerName.length > 0) {
     return true;
   } else {
@@ -192,7 +192,7 @@ function update_tank_visualiser() {
 }
 
 function return_home() {
-  console.log("returning home", current_page, waited);
+  //console.log("returning home", current_page, waited);
 
   if (current_page == "tank_select" && waited) {
     hide_ui_element("tank_select");

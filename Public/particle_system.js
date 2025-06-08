@@ -25,6 +25,19 @@ class Particle {
     this.draw();
   }
   draw() {
+    fc.beginPath();
+    fc.arc(
+      this.position.x,
+      this.position.y,
+      this.radius,
+      0,
+      2 * Math.PI,
+      false
+    );
+    fc.fillStyle = steppingradient(this.steps, this.timealive / this.timelife);
+    fc.fill();
+    fc.closePath();
+
     c.beginPath();
     c.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI, false);
     c.fillStyle = steppingradient(this.steps, this.timealive / this.timelife);

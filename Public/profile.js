@@ -1,10 +1,10 @@
 function get_player_stats() {
-  console.log("Requesting player stats");
+  //console.log("Requesting player stats");
   socket.emit("get_player_stats");
 }
 
 socket.on("player_stats", (stats) => {
-  console.log("Received player stats:", stats);
+  //console.log("Received player stats:", stats);
   const player_stats_div = document.getElementById("player_stats");
 
   const kills = stats.kills || 0;

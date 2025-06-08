@@ -26,7 +26,7 @@ socket.on("room_list", (lname, lcreator, lplayers, lmaxplayers) => {
 
 function join_room(roomname) {
   document.getElementById(roomname).classList.add("border-teal-500");
-  console.log(current["body"], current["turret"]);
+  //console.log(current["body"], current["turret"]);
 
   socket.emit(
     "play",

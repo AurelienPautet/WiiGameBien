@@ -19,7 +19,9 @@
   </head>
 
   <body onload="load_old_tank()" onresize="rescale()" class="bg-slate-500">
+    <canvas class="everything" id="the_fading_canvas"></canvas>
     <canvas class="everything" id="the_canvas"></canvas>
+
     <canvas class="everything z-30 hidden" id="webgl_canvas"></canvas>
     <div id="ui" class="everything relative">
       <div
@@ -147,7 +149,7 @@
       </div>
       <div
         id="end_screen_screen"
-        class="hidden absolute w-full h-full border-8 border-red-500 text-green-500 flex items-center flex-col justify-evenly"
+        class="hidden absolute z-50 w-full h-full border-8 border-red-500 text-green-500 flex items-center flex-col justify-evenly"
       >
         <div class="opacity-0 text-4xl">.</div>
         <div id="end_screen_text" class="h-1/6 text-4xl font-bold text-red-500">
@@ -163,10 +165,14 @@
         <div
           class="h-1/6 w-full flex items-center text-2xl font-bold justify-center text-white"
         >
-          <img src="image/minia/test.png" class="w-32 h-20 m-3" />
-          <h1>LVL 1 2 PLAYER</h1>
+          <img
+            id="blurred_level_thumbnail"
+            src="image/minia/test.png"
+            class="w-32 h-20 m-3"
+          />
+          <h1 id="blurred_level_name">LVL 1 2 PLAYER</h1>
           <h1 class="m-2">by</h1>
-          <h1 class="mr-4">Gamemaster</h1>
+          <h1 id="blurred_level_creator_name" class="mr-4">Gamemaster</h1>
           <div id="starts_holder" class="flex items-center justify-center">
             <span
               id="star_0"
@@ -224,8 +230,16 @@
           <div
             class="absolute w-full h-full flex items-center justify-between p-14 noSelect"
           >
-            <img src="/icons/arrow.svg" class="w-14 h-14 scale-x-[-1]" />
-            <img src="/icons/arrow.svg" class="w-14 h-14" />
+            <img
+              id="turret_arrow_left"
+              src="/icons/arrow.svg"
+              class="w-14 h-14 scale-x-[-1]"
+            />
+            <img
+              id="turret_arrow_right"
+              src="/icons/arrow.svg"
+              class="w-14 h-14"
+            />
           </div>
           <img
             src="/image/tank_player/turret_none.png"
@@ -292,8 +306,16 @@
           <div
             class="absolute w-full h-full flex items-center justify-between p-14 noSelect"
           >
-            <img src="/icons/arrow.svg" class="w-14 h-14 scale-x-[-1]" />
-            <img src="/icons/arrow.svg" class="w-14 h-14" />
+            <img
+              id="body_arrow_left"
+              src="/icons/arrow.svg"
+              class="w-14 h-14 scale-x-[-1]"
+            />
+            <img
+              id="body_arrow_right"
+              src="/icons/arrow.svg"
+              class="w-14 h-14"
+            />
           </div>
 
           <img
@@ -423,7 +445,7 @@
               <h1 class="text-xl p-5">Level Name :</h1>
               <input
                 type="text"
-                id="level_name_input"
+                id="editor_level_name_input"
                 class="bg-slate-500 text-white placeholder:text-slate-300 p-2 rounded-md focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-teal-500"
                 placeholder="Enter level name"
               />
@@ -452,28 +474,28 @@
                     class="w-full h-full flex flex-col items-center justify-center space-y-2"
                   >
                     <img
+                      id="editor_block1"
                       src="/image/block/Cube1-1.png"
-                      alt="Grass Block"
                       class="w-14 h-14 hover:w-16 hover:h-16 m-2 hover:m-1 relative hover:left-3 left-3 cursor-pointer"
-                      onclick="select_block('Wall')"
+                      onclick="select_block(1)"
                     />
                     <img
+                      id="editor_block2"
                       src="/image/block/Cube1-2.png"
-                      alt="Grass Block"
                       class="w-14 h-14 hover:w-16 hover:h-16 m-2 hover:m-1 relative hover:left-3 cursor-pointer"
-                      onclick="select_block('Destructible Wall')"
+                      onclick="select_block(2)"
                     />
                     <img
+                      id="editor_block4"
                       src="/image/block/Cube1-3.png"
-                      alt="Grass Block"
                       class="w-14 h-14 hover:w-16 hover:h-16 m-2 hover:m-1 relative hover:left-3 cursor-pointer"
-                      onclick="select_block('Hole')"
+                      onclick="select_block(4)"
                     />
                     <img
+                      id="editor_block3"
                       src="/image/block/Cube1-4.png"
-                      alt="Grass Block"
                       class="w-14 h-14 hover:w-16 hover:h-16 m-2 hover:m-1 relative hover:left-3 cursor-pointer"
-                      onclick="select_block('Spawn')"
+                      onclick="select_block(3)"
                     />
                   </div>
                 </div>
@@ -482,6 +504,7 @@
             <div class="h-full w-full bg-slate-700">
               <div class="flex items-center justify-center h-full">
                 <canvas
+                  id="editor_canvas"
                   width="920"
                   height="640"
                   class="block bg-slate-500 z-50"
@@ -894,7 +917,7 @@
         </div>
       </div>
       <div
-        class="w-6 h-6 m-3 hover:w-8 hover:h-8 hover:m-1 hidden blur text-yellow-500 bg-gray-200 p-4 w-full border-2 hover:bg-gray-300 ml-4 flex-col flex-grow-0 gap-4 mt-2 text-xl font-bold bg-white px-2 py-1 border-blue-400"
+        class="w-6 border-green-500 h-6 m-3 hover:w-8 hover:h-8 hover:m-1 hidden blur text-yellow-500 bg-gray-200 p-4 w-full border-2 hover:bg-gray-300 ml-4 flex-col flex-grow-0 gap-4 mt-2 text-xl font-bold bg-white px-2 py-1 border-blue-400"
       ></div>
 
       <div
@@ -918,7 +941,11 @@
   <script src="./sounds_system.js"></script>
   <script src="./particle_system.js"></script>
   <script src="./client_prediction.js"></script>
+  <script src="./possible_shots.js"></script>
+
   <script src="./canvaStuff.js"></script>
+
+  <script src="./level_editor.js"></script>
   <!-- <script src="./webjlStuff.js"></script> -->
   <script src="./tankselectslider.js"></script>
   <script src="./level_selector.js"></script>

@@ -5,9 +5,9 @@ const fs = require("fs");
 const path = require("path");
 
 app.use(express.static(path.join(__dirname, "../Public")));
-console.log(path.join(__dirname, "../Public"));
+//console.log(path.join(__dirname, "../Public"));
 const PORT = process.env.PORT || 7000;
-console.log("PORT : ", PORT);
+//console.log("PORT : ", PORT);
 const expressServer = app.listen(PORT);
 
 const socketio = require("socket.io");
@@ -46,6 +46,8 @@ const {
 const {
   get_levels,
   get_my_levels,
+  get_level_from_id,
+  save_level,
   get_max_players,
   get_json_from_id,
   signup,
@@ -102,11 +104,11 @@ io.on("connect", (socket) => {
   });
 
   socket.on("signup", (username, email, password) => {
-    console.log("signup", username, email, password);
+    //console.log("signup", username, email, password);
     signup(username, email, password, socket);
   });
   socket.on("login", (email, password) => {
-    console.log("login", email, password);
+    //console.log("login", email, password);
     login(email, password, socket);
   });
 
@@ -140,7 +142,7 @@ io.on("connect", (socket) => {
   });
 
   socket.on("ranking", (ranking_type) => {
-    //console.log("ranking", ranking_type);
+    ////console.log("ranking", ranking_type);
     get_ranking(ranking_type, socket);
   });
 
@@ -149,6 +151,20 @@ io.on("connect", (socket) => {
       get_user_rank(mysocketid, ranking_type, socket);
     }
   });
+
+  socket.on("load_level_editor", (level_id) => {
+    //console.log("load_level_editor", level_id);
+    get_level_from_id(level_id, socket, "recieve_level_from_id");
+  });
+
+  socket.on(
+    "save_level",
+    (level_id, levelData, hexData, level_name, max_players) => {
+      //console.log(
+
+      save_level(level_id, levelData, hexData, level_name, max_players, socket);
+    }
+  );
 
   socket.on("play", (playerName, turretc, bodyc, room_name) => {
     room = rooms.find((item) => item.name === room_name);
@@ -170,6 +186,11 @@ io.on("connect", (socket) => {
       socket.leave("lobby" + serverid);
       socket.join(room.name);
       io.to(room.name).emit("player-connection", playerName);
+      levels = get_level_from_id(
+        room.levels[room.levelid],
+        socket,
+        "level_change_info"
+      );
       socket.emit(
         "level_change",
         room.blocks,
@@ -268,7 +289,7 @@ function room_list(socket) {
     room_players_max.push(room.maxplayernb);
     room_creator_name.push(room.creator);
   });
-  //console.log("room_list");
+  ////console.log("room_list");
   if (socket != 0) {
     socket.emit(
       "room_list",
@@ -341,7 +362,7 @@ function check_for_winns_and_load_next_level(room) {
       }
       for (socketid in room.players) {
         if (users[socketid]) {
-          //console.log("caca");
+          ////console.log("caca");
           add_round(
             socketid,
             room.levels[room.levelid],
@@ -356,6 +377,11 @@ function check_for_winns_and_load_next_level(room) {
         room.bullets = [];
         room.mines = [];
         await loadlevel(room.levels[room.levelid], room);
+        levels = get_level_from_id(
+          room.levels[room.levelid],
+          io.to(room.name),
+          "level_change_info"
+        );
         io.to(room.name).emit(
           "level_change",
           room.blocks,
@@ -575,7 +601,7 @@ async function create_room(name, rounds, list_id, creator) {
     loadlevel(room.levels[0], room);
   }
   room_list(0);
-  //console.log(rooms);
+  ////console.log(rooms);
 }
 //Create the default room and load the first level
 rooms = [];
@@ -601,4 +627,4 @@ function makeid(length) {
 }
 
 serverid = makeid(15);
-console.log(serverid);
+//console.log(serverid);

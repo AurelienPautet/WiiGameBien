@@ -1,8 +1,12 @@
-const canvas = document.querySelector("canvas");
+const canvas = document.getElementById("the_canvas");
+const fading_canvas = document.getElementById("the_fading_canvas");
 const c = canvas.getContext("2d");
+const fc = fading_canvas.getContext("2d");
 
 canvas.width = 1150;
 canvas.height = 800;
+fading_canvas.width = 1150;
+fading_canvas.height = 800;
 
 debug = "rgba(255, 0, 0, 0)";
 
@@ -52,10 +56,17 @@ bullet1 = new Image();
 bg = new Image();
 dead = new Image();
 
+editor_block1 = document.getElementById("editor_block1");
+editor_block2 = document.getElementById("editor_block2");
+editor_block3 = document.getElementById("editor_block3");
+editor_block4 = document.getElementById("editor_block4");
+
 dead.src = "image/dead.png";
 
 loadtheme(theme);
 function loadtheme() {
+  editor_block1.src = `image/block/Cube${theme}-1.png`;
+  editor_block2.src = `image/block/Cube${theme}-2.png`;
   block1.src = `image/block/Cube${theme}-1.png`;
   block2.src = `image/block/Cube${theme}-2.png`;
   bullet1.src = `image/bullet/bullet-${theme}.png`;
@@ -63,11 +74,13 @@ function loadtheme() {
 }
 
 draw();
+fc.globalAlpha = 0.05;
+c.globalAlpha = 1;
 
 function draw() {
   window.requestAnimationFrame(draw);
-
-  c.drawImage(bg, 0, 0, canvas.width, canvas.height);
+  fc.drawImage(bg, 0, 0, fading_canvas.width, fading_canvas.height);
+  c.clearRect(0, 0, canvas.width, canvas.height);
 
   mines.forEach((mine) => {
     if (mine.timealive > 220) {
@@ -102,6 +115,13 @@ function draw() {
 
   blocks.forEach((block) => {
     if (block.type == 1) {
+      /*       fc.drawImage(
+        block1,
+        block.position.x,
+        block.position.y,
+        block.size.w,
+        block.size.h
+      ); */
       c.drawImage(
         block1,
         block.position.x,
@@ -111,6 +131,13 @@ function draw() {
       );
     }
     if (block.type == 2) {
+      /*       fc.drawImage(
+        block2,
+        block.position.x,
+        block.position.y,
+        block.size.w,
+        block.size.h
+      ); */
       c.drawImage(
         block2,
         block.position.x,
@@ -145,10 +172,20 @@ function draw() {
         bullet.size.w,
         bullet.size.h
       );
-      c.fill();
-      c.stroke();
+      fc.fill();
+      fc.stroke();
     }
     drawImageRot(
+      fc,
+      bullet1,
+      bullet.position.x,
+      bullet.position.y,
+      bullet.size.w,
+      bullet.size.h,
+      bullet.angle
+    );
+    drawImageRot(
+      c,
       bullet1,
       bullet.position.x,
       bullet.position.y,
@@ -162,6 +199,7 @@ function draw() {
     player = players[socketid];
     if (player.alive) {
       drawImageRot(
+        c,
         eval("body_" + player.bodyc),
         player.position.x,
         player.position.y,
@@ -170,6 +208,16 @@ function draw() {
         player.rotation
       );
 
+      /*       drawImageRot(
+        fc,
+        eval("body_" + playqqer.bodyc),
+        player.position.x,
+        player.position.y,
+        player.size.w,
+        player.size.h,
+        player.rotation
+      );
+ */
       drawTurretRot(
         eval("turret_" + player.turretc),
         player.position.x,
@@ -180,6 +228,7 @@ function draw() {
       );
     } else {
       drawImageRot(
+        fc,
         dead,
         player.position.x,
         player.position.y,
@@ -222,9 +271,13 @@ function draw() {
       e -= 1;
     }
   }
+
+  if (debug_visual) {
+    launch_possible_shots(100, 5, 5);
+  }
 }
 
-function drawImageRot(img, x, y, width, height, deg) {
+function drawImageRot(c, img, x, y, width, height, deg) {
   c.save();
   var rad = (deg * Math.PI) / 180;
   c.translate(x + width / 2, y + height / 2);

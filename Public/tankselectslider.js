@@ -24,6 +24,29 @@ let body_colors = [
 let colors = { body: body_colors, turret: turret_colors };
 let current = { body: 0, turret: 0 };
 
+function manage_arrow() {
+  if (current.body === 0) {
+    document.getElementById("body_arrow_left").style.visibility = "hidden";
+  } else {
+    document.getElementById("body_arrow_left").style.visibility = "visible";
+  }
+  if (current.body === body_colors.length - 1) {
+    document.getElementById("body_arrow_right").style.visibility = "hidden";
+  } else {
+    document.getElementById("body_arrow_right").style.visibility = "visible";
+  }
+  if (current.turret === 0) {
+    document.getElementById("turret_arrow_left").style.visibility = "hidden";
+  } else {
+    document.getElementById("turret_arrow_left").style.visibility = "visible";
+  }
+  if (current.turret === turret_colors.length - 1) {
+    document.getElementById("turret_arrow_right").style.visibility = "hidden";
+  } else {
+    document.getElementById("turret_arrow_right").style.visibility = "visible";
+  }
+}
+
 let scrollone = 154.6666717529297;
 
 function load_old_tank() {
@@ -31,10 +54,10 @@ function load_old_tank() {
   try {
     current["body"] = parseInt(localStorage.getItem("body"), 10);
     current["turret"] = parseInt(localStorage.getItem("turret"), 10);
-    console.log(current["body"], current["turret"]);
+    //console.log(current["body"], current["turret"]);
 
     if (isNaN(current["body"]) || isNaN(current["turret"])) {
-      console.log("nan");
+      //console.log("nan");
       random_tank();
     } else {
       update_tank_visualiser();
@@ -67,6 +90,7 @@ function update_slider(name_str) {
 }
 
 function slide(name_str) {
+  manage_arrow();
   let i = document.getElementById(name_str + "_select").scrollLeft / scrollone;
   i = Math.floor(i);
 
@@ -122,7 +146,7 @@ turret_select.addEventListener("mousemove", (e) => {
   e.preventDefault();
 
   x = MouseX;
-  console.log(`${x - startX}px`);
+  //console.log(`${x - startX}px`);
   turret_select.scrollLeft = startScroll + x - startX;
 });
 
@@ -141,13 +165,13 @@ body_select.addEventListener("mousemove", (e) => {
   e.preventDefault();
 
   x = MouseX;
-  console.log(`${x - startX}px`);
+  //console.log(`${x - startX}px`);
   body_select.scrollLeft = startScroll + x - startX;
 });
 
 function dragdown(name_str) {
   pressed[name_str] = true;
-  console.log("draging");
+  //console.log("draging");
   startScroll = container.scrollLeft;
   startX = MouseX;
   container.style.cursor = "grabbing";
@@ -155,6 +179,6 @@ function dragdown(name_str) {
 
 function dragup(name_str) {
   pressed[name_str] = false;
-  console.log("dragup");
+  //console.log("dragup");
 }
  */

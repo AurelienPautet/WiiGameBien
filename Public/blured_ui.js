@@ -1,10 +1,21 @@
 socket.on("winner", (id, wait, scores, ids_to_name) => {
   hide_ui_element("spectator_screen");
   show_ui_element("end_screen_screen");
-  console.log(scores);
+  //console.log(scores);
   score_tab = document.getElementById("score_tab");
   score_tab.innerHTML = "";
-  console.log(scores);
+  document.getElementById("blurred_level_name").innerHTML = level_playing_name;
+  document.getElementById("blurred_level_creator_name").innerHTML =
+    level_playing_creator_name;
+
+  try {
+    document.getElementById("blurred_level_thumbnail").src =
+      load_image_from_hex_ArrayBuffer(level_img);
+  } catch (e) {
+    console.error("Error loading level thumbnail:", e);
+  }
+
+  //console.log(scores);
   scores = Object.fromEntries(
     Object.entries(scores).sort(([, a], [, b]) => b.wins - a.wins)
   );
@@ -17,7 +28,7 @@ socket.on("winner", (id, wait, scores, ids_to_name) => {
     ...Object.values(scores).map((player) => player.deaths)
   );
 
-  console.log(higest_score, "higest_score");
+  //console.log(higest_score, "higest_score");
   for (var _id in scores) {
     player_score_info = document.createElement("div");
     if (scores[_id].wins != higest_score) {
@@ -42,7 +53,7 @@ socket.on("winner", (id, wait, scores, ids_to_name) => {
 
     childs_list_to_add.push(player_score_info);
   }
-  console.log(childs_list_to_add);
+  //console.log(childs_list_to_add);
   add_in_cascade(score_tab, childs_list_to_add, 0.2 * wait);
   document
     .getElementById("end_screen_screen")
@@ -75,8 +86,9 @@ socket.on("winner", (id, wait, scores, ids_to_name) => {
   }
 
   setTimeout(() => {
-    console.log("hide");
+    //console.log("hide");
     hide_ui_element("end_screen_screen");
+    fc.clearRect(0, 0, fading_canvas.width, fading_canvas.height);
   }, wait);
 });
 
@@ -93,7 +105,7 @@ function add_in_cascade(parent, child_divs_list, overall_delay) {
 
   for (let i = 0; i < child_divs_list.length; i++) {
     setTimeout(() => {
-      console.log("add");
+      //console.log("add");
       parent.appendChild(child_divs_list[i]);
     }, total_delay);
 
@@ -155,7 +167,7 @@ function star_clicked(i) {
 }
 
 socket.on("rate_fail", (reason) => {
-  console.log("rate fail", reason);
+  //console.log("rate fail", reason);
   createToast(
     "error",
     "/image/error.svg",
@@ -165,7 +177,7 @@ socket.on("rate_fail", (reason) => {
 });
 
 socket.on("rate_success", (rate, level_id) => {
-  console.log("rate success", rate, level_id);
+  //console.log("rate success", rate, level_id);
   createToast(
     "info",
     "/image/info.svg",

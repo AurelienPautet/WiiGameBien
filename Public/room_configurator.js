@@ -3,8 +3,8 @@ room_rounds_select = document.getElementById("room_rounds_select");
 
 function create_room() {
   //send the room name to the server to create the room
-  console.log("Creating room");
-  console.log(room_name_input.value);
+  //console.log("Creating room");
+  //console.log(room_name_input.value);
 
   if (room_name_input.value == "") {
     //create a toast to inform the user that the room name is empty

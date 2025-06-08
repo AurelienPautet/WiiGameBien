@@ -47,12 +47,6 @@ function add_map(map_name, map_id, creator_name, int_players, star, img_src) {
 }
 
 function request_levels() {
-  console.log(
-    "Requesting levels with name:",
-    level_name_input.value,
-    "and max players:",
-    level_max_players_drop.value
-  );
   socket.emit(
     "search_levels",
     level_name_input.value,
@@ -63,7 +57,7 @@ function request_levels() {
 socket.emit("search_levels", "", 0);
 
 socket.on("recieve_levels", (levels) => {
-  console.log("Received levels from server:", levels);
+  //console.log("Received levels from server:", levels);
   remove_all_maps();
   for (let i = 0; i < levels.length; i++) {
     add_map(
@@ -72,11 +66,16 @@ socket.on("recieve_levels", (levels) => {
       levels[i].level_creator_name,
       levels[i].level_max_players,
       levels[i].level_rating,
-      "./image/minia/test.png"
+      load_image_from_hex_ArrayBuffer(levels[i].level_img)
     );
   }
   readd_selection();
 });
+
+function load_image_from_hex_ArrayBuffer(hexArray) {
+  dataUrl = HexToJpeg(hexArray);
+  return dataUrl;
+}
 
 function readd_selection() {
   for (let i = 0; i < selected_map.length; i++) {

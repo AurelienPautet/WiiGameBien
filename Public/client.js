@@ -7,7 +7,7 @@ socket.on("welcome", (data) => {});
 
 socket.on("serverid", (data) => {
   serverid = data;
-  console.log(serverid);
+  //console.log(serverid);
 });
 
 socket.on("socketid", (socketid) => {
@@ -24,11 +24,11 @@ socket.on("id", (pid, socketid) => {
 
 socket.on("id-fail", () => {
   createToast("info", "/image/info.svg", "Error", "Room full");
-  console.log("room full");
+  //console.log("room full");
 });
 
 socket.on("wrongserver", () => {
-  console.log("wrong server");
+  //console.log("wrong server");
   window.location.reload();
 });
 
@@ -117,7 +117,13 @@ socket.on("level_change", (b, Bc, lvlid) => {
   blocks = b;
   Bcollision = Bc;
   level_id = lvlid;
-  console.log("level_change", level_id);
+  //console.log("level_change", level_id);
+});
+
+socket.on("level_change_info", (levels) => {
+  level_playing_creator_name = levels[0].level_creator_name;
+  level_playing_name = levels[0].level_name;
+  level_img = levels[0].level_img;
 });
 
 onmousemove = function (e) {

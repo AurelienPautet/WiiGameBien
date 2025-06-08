@@ -23,7 +23,7 @@ function add_my_map(
     }
   }
   newMap.innerHTML = `
-                        <div id="${map_id}" class=" text-white bg-slate-500 hover:bg-slate-600 rounded-md p-4 flex w-full   "onclick="select_map('${map_id}')">
+                        <div id="${map_id}" class=" text-white bg-slate-500 hover:bg-slate-600 rounded-md p-4 flex w-full   "onclick="edit_map('${map_id}')">
                             <img src="${img_src}" alt="" class="w-32 h-24" />
                             <div class="flex justify-between w-full">
                                 <div class="ml-4 flex-col flex-grow-0">
@@ -70,22 +70,25 @@ function add_my_map(
 }
 
 function edit_map(map_id) {
-  //console.log("Editing map with ID:", map_id);
-  socket.emit("edit_map", map_id);
+  edited_level_id = map_id;
+  show_ui_element("level_editor");
+  load_level_in_editor(map_id);
+  ////console.log("Editing map with ID:", map_id);
 }
 
 function delete_map(map_id) {
-  //console.log("Deleting map with ID:", map_id);
+  ////console.log("Deleting map with ID:", map_id);
   socket.emit("delete_map", map_id);
 }
 
 function create_new_level() {
-  //console.log("Creating new level");
-  socket.emit("create_new_level");
+  show_ui_element("level_editor");
+  edited_level_id = -1;
+  load_level_in_editor(-1);
 }
 
 function request_my_levels() {
-  //console.log(
+  ////console.log(
   //  "Requesting levels with name:",
   //  my_level_name_input.value,
   //  "and max players:",
@@ -99,7 +102,7 @@ function request_my_levels() {
 }
 
 socket.on("recieve_my_levels", (levels) => {
-  //console.log("Received levels from server:", levels);
+  ////console.log("Received levels from server:", levels);
   remove_all_my_maps();
   for (let i = 0; i < levels.length; i++) {
     add_my_map(
@@ -108,19 +111,19 @@ socket.on("recieve_my_levels", (levels) => {
       levels[i].level_creator_name,
       levels[i].level_max_players,
       levels[i].level_rating,
-      "./image/minia/test.png"
+      load_image_from_hex_ArrayBuffer(levels[i].level_img)
     );
   }
   add_new_map_button();
 });
 
 function add_new_map_button() {
-  console.log("Adding new map button");
+  //console.log("Adding new map button");
   button = document.createElement("div");
   button.className =
     "text-white bg-slate-500 hover:bg-slate-600 rounded-md p-4 flex w-full cursor-pointer";
   button.onclick = button.onclick = function () {
-    show_ui_element("level_editor");
+    create_new_level();
   };
   button.innerHTML = `
     <div class="flex items-center justify-center w-32 h-24 bg-green-800 rounded">

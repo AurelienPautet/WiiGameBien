@@ -1,7 +1,7 @@
 // Get the user's window width and height
 rescale();
 function rescale() {
-  console.log("rescaling the window to fit the canvas");
+  //console.log("rescaling the window to fit the canvas");
   // Get the user's window width and height
   windowWidth = window.innerWidth;
   windowHeight = window.innerHeight;

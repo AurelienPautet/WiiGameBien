@@ -3,7 +3,7 @@ personal_rank_content = document.getElementById("personal_rank_content");
 current_ranking = "KILLS";
 
 function show_rankings(ranking_type) {
-  //console.log("show_rankings", ranking_type);
+  ////console.log("show_rankings", ranking_type);
   socket.emit("ranking", ranking_type);
   old_ranking = document.getElementById(`ranking_button_${current_ranking}`);
   old_ranking.classList.remove("bg-slate-700");
@@ -71,7 +71,7 @@ socket.on("personal_ranking", (data) => {
 });
 
 function show_personal_rank() {
-  console.log("update_personal_rank", logged);
+  //console.log("update_personal_rank", logged);
   if (logged) {
     socket.emit("personal_ranking", socket.id, current_ranking);
   } else {
