@@ -1,9 +1,11 @@
 function launch_solo_room() {
-  create_room("Solo Room", 1, [11], "GAME MASTER");
+  create_room("Solo Room", 1, [10], "GAME MASTER");
 }
 
 function loop() {
   setTimeout(loop, 1000 / 60);
+  make_player_invicible();
+  make_player_invicible("bot0");
 
   blocks = localroom.blocks;
   mines = localroom.mines;
@@ -11,6 +13,10 @@ function loop() {
   bullets = localroom.bullets;
   players = localroom.players;
   localroom.update();
+}
+
+function make_player_invicible(socketid = mysocketid) {
+  localroom.players[socketid].alive = true;
 }
 
 let localroom = null;

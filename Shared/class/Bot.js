@@ -1,19 +1,16 @@
 class Bot extends Player {
   constructor(position, socketid, name, turretc, bodyc) {
     super(position, socketid, name, turretc, bodyc);
+
     this.killing_aims = [];
     this.last_shoot = {
       mytick: 15,
       angle: 0,
     };
-    this.min_interval_shoot = 30;
+    this.last_random_move = 0;
     this.desired_angle = 2.4;
     this.idle_desired_angle = 2.4;
-    this.angle_increments = Math.PI / 120;
-    this.precision = 0.2;
-    this.number_of_rays = 50;
-    this.size_of_rays = 15;
-    this.steps_of_rays = 15;
+
     this.should_go_to = {
       right: false,
       left: false,
@@ -26,7 +23,6 @@ class Bot extends Player {
       up: false,
       down: false,
     };
-    this.last_random_move = 0;
     this.idle_should_go_to = {
       right: false,
       left: false,
@@ -34,11 +30,60 @@ class Bot extends Player {
       down: false,
     };
     this.mine_go_to = false;
+
+    this.min_interval_shoot = 5;
+    this.max_rotation_speed = Math.PI / 120;
+    this.max_bulletcount = 200;
+    this.shoot_speed = 4;
+    this.precision = 0.1; //default 0.2
+    this.number_of_rays = 50;
+    this.bullet_size = {
+      w: 7,
+      h: 7,
+    };
+    this.size_of_rays = 10;
+    this.steps_of_rays = 10;
+    this.shoot_max_bounce = 2;
     this.can = {
       move: true,
       shoot: true,
       plant: true,
+      spam: false,
     };
+    // Bot parameters
+    /*    
+    TURRRET HIGH SHOOTS
+this.min_interval_shoot = 8;
+    this.max_rotation_speed = Math.PI / 200;
+    this.max_bulletcount = 30;
+    this.shoot_speed = 4;
+    this.precision = 0.8; //default 0.2
+    this.number_of_rays = 50;
+    this.size_of_rays = 10;
+    this.steps_of_rays = 10;
+    this.shoot_max_bounce = 1;
+    this.can = {
+      move: false,
+      shoot: true,
+      plant: true,
+      spam: false,
+    }; */
+
+    /*     PRECISE SNIPER
+        this.min_interval_shoot = 30;
+    this.max_rotation_speed = Math.PI / 120;
+    this.max_bulletcount = 1;
+    this.shoot_speed = 12;
+    this.precision = 0.01; //default 0.2
+    this.number_of_rays = 50;
+    this.size_of_rays = 10;
+    this.steps_of_rays = 10;
+    this.can = {
+      move: false,
+      shoot: true,
+      plant: true,
+      spam: false,
+    }; */
   }
 
   update(room, fps_corector) {
@@ -123,8 +168,8 @@ class Bot extends Player {
   aim_and_shoot() {
     launch_possible_shots(
       this.number_of_rays,
-      this.size_of_rays,
       this.steps_of_rays,
+      this.bullet_size.w / 2,
       this,
       {
         bullets: false,
@@ -136,24 +181,29 @@ class Bot extends Player {
 
     if (this.killing_aims && this.killing_aims.length > 0) {
       let i = 0;
-      let difference = Math.abs(
-        this.angleDifference(this.last_shoot.angle, this.killing_aims[i].angle)
-      );
 
-      while (
-        i < this.killing_aims.length - 1 &&
-        difference < Math.PI + 0.05 &&
-        difference > Math.PI - 0.05
-      ) {
-        i++;
-        difference = Math.abs(
+      if (!this.can.spam) {
+        let difference = Math.abs(
           this.angleDifference(
             this.last_shoot.angle,
             this.killing_aims[i].angle
           )
         );
-      }
 
+        while (
+          i < this.killing_aims.length - 1 &&
+          difference < Math.PI + 0.05 &&
+          difference > Math.PI - 0.05
+        ) {
+          i++;
+          difference = Math.abs(
+            this.angleDifference(
+              this.last_shoot.angle,
+              this.killing_aims[i].angle
+            )
+          );
+        }
+      }
       if (i < this.killing_aims.length) {
         /*           console.log(
           "Bot1 is aiming at",
@@ -197,10 +247,10 @@ class Bot extends Player {
   }
 
   aim_to_angle(angle) {
-    if (this.angleDifference(this.angle, angle) < -this.angle_increments)
-      this.angle = this.angle + this.angle_increments;
-    else if (this.angleDifference(this.angle, angle) > this.angle_increments)
-      this.angle = this.angle - this.angle_increments;
+    if (this.angleDifference(this.angle, angle) < -this.max_rotation_speed)
+      this.angle = this.angle + this.max_rotation_speed;
+    else if (this.angleDifference(this.angle, angle) > this.max_rotation_speed)
+      this.angle = this.angle - this.max_rotation_speed;
     else this.angle = angle % (Math.PI * 2);
   }
 

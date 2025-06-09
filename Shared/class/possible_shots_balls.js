@@ -15,8 +15,8 @@ class possible_shot_points {
     this.radius = radius;
     this.initial_angle = initial_angle;
     this.position = {
-      x: initial_position.x + 54 * Math.cos(initial_angle),
-      y: initial_position.y + 54 * Math.sin(initial_angle),
+      x: initial_position.x + 30 * Math.cos(initial_angle),
+      y: initial_position.y + 30 * Math.sin(initial_angle),
     };
     this.direction = {
       x: Math.cos(initial_angle),
@@ -32,9 +32,8 @@ class possible_shot_points {
 
   update_repeat(N) {
     for (let i = 0; i < N; i++) {
-      if (this.bounce > 3) {
+      if (this.bounce > this.initial_player.shoot_max_bounce) {
         break;
-        return;
       }
       if (i % 2 == 0) {
         this.draw("red");
@@ -46,7 +45,7 @@ class possible_shot_points {
   update_position() {
     this.calls++;
 
-    if (this.bounce >= 3) {
+    if (this.bounce >= this.initial_player.shoot_max_bounce) {
       return;
     }
 
@@ -106,6 +105,9 @@ class possible_shot_points {
     for (socketid in players) {
       player = players[socketid];
       if (!player.alive) {
+        continue;
+      }
+      if (socketid === this.initial_player.socketid && this.calls < 5) {
         continue;
       }
       if (socketid.includes("bot")) {

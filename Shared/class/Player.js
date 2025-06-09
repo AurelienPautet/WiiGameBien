@@ -55,6 +55,12 @@ class Player {
     this.max_bulletcount = 5;
     this.max_minecount = 3;
     this.mvtspeed = 3;
+    this.shoot_speed = 5;
+    this.shoot_max_bounce = 3;
+    this.bullet_size = {
+      w: 15,
+      h: 15,
+    };
   }
   spawn() {
     this.position = structuredClone(this.spawnpos);
@@ -65,7 +71,9 @@ class Player {
       new Bullet(
         { x: this.endpos.x, y: this.endpos.y },
         this.angle,
-        5,
+        this.shoot_speed,
+        this.bullet_size,
+        this.shoot_max_bounce,
         this,
         room
       );
@@ -146,9 +154,13 @@ class Player {
   }
   endofbarrel() {
     this.endpos.x =
-      this.position.x + this.size.w / 2 - 40 * Math.cos(this.angle);
+      this.position.x +
+      this.size.w / 2 -
+      (30 + this.bullet_size.w * 1) * Math.cos(this.angle);
     this.endpos.y =
-      this.position.y + this.size.h / 2 - 40 * Math.sin(this.angle);
+      this.position.y +
+      this.size.h / 2 -
+      (30 + this.bullet_size.h * 1) * Math.sin(this.angle);
   }
   CalculateAngle() {
     let adjacent = this.aim.x - (this.position.x + this.size.w / 2);

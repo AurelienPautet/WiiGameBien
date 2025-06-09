@@ -6,26 +6,24 @@ try {
 }
 
 class Bullet {
-  constructor(position, angle, speed, emitter, room) {
+  constructor(position, angle, speed, size, max_bounce, emitter, room) {
     this.velocity = {
       x: -Math.cos(angle) * speed,
       y: -Math.sin(angle) * speed,
     };
     this.angle = angle;
-    this.size = {
-      w: 15,
-      h: 15,
-    };
+    this.size = size;
     this.position = {
       x: position.x - this.size.w / 2,
       y: position.y - this.size.h / 2,
     };
     this.draw_size = {
-      w: 20,
-      h: 15,
+      w: this.size.w * 1.5,
+      h: this.size.h,
     };
     this.mytick = 0;
     this.bounce = 0;
+    this.max_bounce = max_bounce;
     this.emitter = emitter;
     this.emitter.bulletcount++;
     this.emitter.round_stats.stats.shots++;
@@ -67,7 +65,7 @@ class Bullet {
     if (this.side == "right") {
       this.velocity.x = -this.velocity.x;
       this.angle = Math.PI - this.angle;
-      if (this.bounce < 3) {
+      if (this.bounce < this.max_bounce) {
         room.emit_to_room("ricochet_explosion", {
           position: {
             x: this.position.x + this.size.w,
@@ -79,7 +77,7 @@ class Bullet {
     } else if (this.side == "left") {
       this.velocity.x = -this.velocity.x;
       this.angle = Math.PI - this.angle;
-      if (this.bounce < 3) {
+      if (this.bounce < this.max_bounce) {
         room.emit_to_room("ricochet_explosion", {
           position: {
             x: this.position.x,
@@ -91,7 +89,7 @@ class Bullet {
     } else if (this.side == "up") {
       this.velocity.y = -this.velocity.y;
       this.angle = -this.angle;
-      if (this.bounce < 3) {
+      if (this.bounce < this.max_bounce) {
         room.emit_to_room("ricochet_explosion", {
           position: {
             x: this.position.x,
@@ -103,7 +101,7 @@ class Bullet {
     } else if (this.side == "down") {
       this.velocity.y = -this.velocity.y;
       this.angle = -this.angle;
-      if (this.bounce < 3) {
+      if (this.bounce < this.max_bounce) {
         room.emit_to_room("ricochet_explosion", {
           position: {
             x: this.position.x,

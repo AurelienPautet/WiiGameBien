@@ -167,8 +167,8 @@ function draw() {
       bullet1,
       bullet.position.x,
       bullet.position.y,
-      bullet.draw_size.w,
-      bullet.draw_size.h,
+      bullet.size.w,
+      bullet.size.h,
       bullet.angle
     );
     drawImageRot(

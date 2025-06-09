@@ -211,7 +211,7 @@ class Room {
   update_bullets() {
     bulleting: for (let i = 0; i < this.bullets.length; i++) {
       this.bullets[i].update(this, this.fps_corector);
-      if (this.bullets[i].bounce >= 3) {
+      if (this.bullets[i].bounce >= this.bullets[i].max_bounce) {
         this.emit_to_room("bullet_explosion", {
           position: {
             x: this.bullets[i].position.x,
