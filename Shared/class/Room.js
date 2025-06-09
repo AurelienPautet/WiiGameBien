@@ -43,6 +43,7 @@ class Room {
     this.mines_explsion_radius = 90;
     this.waitingtime = 5000;
     this.fps_corector = 1;
+    this.bot1_spawns = [];
   }
 
   spawn_new_player(playerName, turretc, bodyc, socketid) {
@@ -53,22 +54,45 @@ class Room {
       turretc,
       bodyc
     );
-    this.players[new_player.socketid] = new_player;
-    this.ids.push(new_player.socketid);
-    this.ids_to_names[new_player.socketid] = new_player.name;
-    this.spawn_player(new_player);
+    this.spawn_new(new_player, socketid, this.spawns);
   }
 
-  spawn_player(player) {
+  spawn_new(player, socket_id, spawns) {
+    this.players[socket_id] = player;
+    this.ids.push(socket_id);
+    this.ids_to_names[socket_id] = player.name;
+    this.spawn_player(player, spawns);
+  }
+
+  spawn_all_bots() {
+    console.log(
+      "Spawning bots in room:",
+      this.bot1_spawns,
+      this.bot1_spawns.length
+    );
+    let number_to_spawn = this.bot1_spawns.length;
+    for (let i = 0; i < number_to_spawn; i++) {
+      let bot = new Bot1(
+        { x: 0, y: 0 },
+        `bot${i}`,
+        `Bot ${i}`,
+        "green",
+        "green"
+      );
+      this.spawn_new(bot, `bot${i}`, this.bot1_spawns);
+    }
+  }
+
+  spawn_player(player, spawns) {
     player.alive = true;
     player.minecount = 0;
     player.bulletcount = 0;
-    let spawnid = Math.floor(Math.random() * this.spawns.length);
-    player.position = structuredClone(this.spawns[spawnid]);
+    let spawnid = Math.floor(Math.random() * spawns.length);
+    player.position = structuredClone(spawns[spawnid]);
     //console.log("caca:", this.spawns, "at spawn id:", this.spawns[spawnid]);
     this.nbliving += 1;
-    player.spawnpos = this.spawns[spawnid];
-    this.spawns.splice(spawnid, 1);
+    player.spawnpos = spawns[spawnid];
+    spawns.splice(spawnid, 1);
     player.spawn();
   }
 

@@ -7,16 +7,24 @@ try {
 
 class Bullet {
   constructor(position, angle, speed, emitter, room) {
-    this.position = position;
     this.velocity = {
-      x: -Math.cos((angle * 3.14) / 180) * speed,
-      y: -Math.sin((angle * 3.14) / 180) * speed,
+      x: -Math.cos(angle) * speed,
+      y: -Math.sin(angle) * speed,
     };
     this.angle = angle;
     this.size = {
       w: 15,
-      h: 10,
+      h: 15,
     };
+    this.position = {
+      x: position.x - this.size.w / 2,
+      y: position.y - this.size.h / 2,
+    };
+    this.draw_size = {
+      w: 20,
+      h: 15,
+    };
+    this.mytick = 0;
     this.bounce = 0;
     this.emitter = emitter;
     this.emitter.bulletcount++;
@@ -32,6 +40,7 @@ class Bullet {
     });
   }
   update(room, fps_corector) {
+    this.mytick++;
     for (let i = 0; i < room.Bcollision.length; i++) {
       this.collision_walls(room.Bcollision[i], room);
     }
@@ -57,7 +66,7 @@ class Bullet {
     }
     if (this.side == "right") {
       this.velocity.x = -this.velocity.x;
-      this.angle = 180 - this.angle;
+      this.angle = Math.PI - this.angle;
       if (this.bounce < 3) {
         room.emit_to_room("ricochet_explosion", {
           position: {
@@ -69,7 +78,7 @@ class Bullet {
       }
     } else if (this.side == "left") {
       this.velocity.x = -this.velocity.x;
-      this.angle = 180 - this.angle;
+      this.angle = Math.PI - this.angle;
       if (this.bounce < 3) {
         room.emit_to_room("ricochet_explosion", {
           position: {

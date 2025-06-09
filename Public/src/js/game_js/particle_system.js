@@ -8,8 +8,8 @@ class Particle {
     this.timelife = timelife;
     this.radius = radius;
     this.velocity = {
-      x: -Math.cos((this.angle * 3.14) / 180) * this.speed,
-      y: -Math.sin((this.angle * 3.14) / 180) * this.speed,
+      x: -Math.cos(this.angle) * this.speed,
+      y: -Math.sin(this.angle) * this.speed,
     };
   }
   update() {
@@ -163,7 +163,7 @@ function ricochet_sparks(position, angle, num) {
     particles.push(
       new Particle(
         structuredClone(position),
-        angle + getRandomNormal(-50, 50),
+        angle + getRandomNormal((-50 * Math.PI) / 180, (50 * Math.PI) / 180),
         getRandomArbitrary(0, 2),
         getRandomArbitrary(1, 3),
         [
@@ -195,7 +195,7 @@ function ricochet_explosion(position, angle, num) {
     particles.push(
       new Particle(
         structuredClone(position),
-        angle + getRandomNormal(-20, 20),
+        angle + getRandomNormal((-20 * Math.PI) / 180, (20 * Math.PI) / 180),
         getRandomArbitrary(2.5, 4),
         getRandomArbitrary(4, 6),
         [
@@ -254,7 +254,7 @@ function shoot_explosion(position, angle, num) {
     particles.push(
       new Particle(
         structuredClone(position),
-        angle + getRandomNormal(-60, 60),
+        angle + getRandomNormal((-60 * Math.PI) / 180, (60 * Math.PI) / 180),
         getRandomArbitrary(0.3, 3),
         getRandomArbitrary(5, 10),
         [

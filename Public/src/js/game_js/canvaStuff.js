@@ -169,8 +169,8 @@ function draw() {
       c.rect(
         bullet.position.x,
         bullet.position.y,
-        bullet.size.w,
-        bullet.size.h
+        bullet.draw_size.w,
+        bullet.draw_size.h
       );
       fc.fill();
       fc.stroke();
@@ -180,8 +180,8 @@ function draw() {
       bullet1,
       bullet.position.x,
       bullet.position.y,
-      bullet.size.w,
-      bullet.size.h,
+      bullet.draw_size.w,
+      bullet.draw_size.h,
       bullet.angle
     );
     drawImageRot(
@@ -205,7 +205,7 @@ function draw() {
         player.position.y,
         player.size.w,
         player.size.h,
-        player.rotation
+        (player.rotation * Math.PI) / 180
       );
 
       /*       drawImageRot(
@@ -234,7 +234,7 @@ function draw() {
         player.position.y,
         player.size.w,
         player.size.h,
-        player.rotation
+        (player.rotation * Math.PI) / 180
       );
     }
     if (debug_visual) {
@@ -271,15 +271,11 @@ function draw() {
       e -= 1;
     }
   }
-
-  if (true) {
-    launch_possible_shots(50, 20, 10);
-  }
 }
 
 function drawImageRot(c, img, x, y, width, height, deg) {
   c.save();
-  var rad = (deg * Math.PI) / 180;
+  var rad = deg;
   c.translate(x + width / 2, y + height / 2);
   c.rotate(rad);
   c.drawImage(img, (width / 2) * -1, (height / 2) * -1, width, height);
@@ -288,7 +284,7 @@ function drawImageRot(c, img, x, y, width, height, deg) {
 
 function drawTextRot(text, x, y, width, height, deg) {
   c.save();
-  var rad = (deg * Math.PI) / 180;
+  var rad = deg;
   c.translate(x + width / 2, y + height / 2);
   c.rotate(rad);
   c.fillText(text, (width / 2) * -1, (height / 2) * -1);
@@ -297,7 +293,7 @@ function drawTextRot(text, x, y, width, height, deg) {
 
 function drawTurretRot(img, x, y, width, height, deg) {
   c.save();
-  var rad = (deg * Math.PI) / 180;
+  var rad = deg;
   c.translate(x + 0.4 * width, y + height * 0.6);
   c.rotate(rad);
   c.drawImage(img, -0.75 * width, (height / 2) * -1, width, height);

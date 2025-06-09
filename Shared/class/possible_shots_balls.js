@@ -4,24 +4,36 @@ class possible_shot_points {
     initial_angle,
     step_size,
     radius,
-    initial_player
+    initial_player,
+    data
   ) {
     this.initial_player = initial_player;
-    this.initial_position = initial_position;
+    this.initial_position = {
+      x: initial_position.x + initial_player.size.w / 2,
+      y: initial_position.y + initial_player.size.h / 2,
+    };
+    this.radius = radius;
+    this.initial_angle = initial_angle;
     this.position = {
-      x: initial_position.x + 35 * Math.cos(initial_angle),
-      y: initial_position.y + 35 * Math.sin(initial_angle),
+      x: initial_position.x + 40 * Math.cos(initial_angle),
+      y: initial_position.y + 40 * Math.sin(initial_angle),
+    };
+    this.direction = {
+      x: Math.cos(initial_angle),
+      y: Math.sin(initial_angle),
     };
     this.angle = initial_angle;
     this.bounce = 0;
+    this.first_bounce_pos = { x: 0, y: 0 };
     this.step_size = step_size;
-    this.radius = radius;
     this.calls = 0;
+    this.data = data;
   }
 
   update_repeat(N) {
     for (let i = 0; i < N; i++) {
       if (this.bounce > 3) {
+        break;
         return;
       }
       if (i % 100 == 0) {
@@ -31,12 +43,15 @@ class possible_shot_points {
   }
 
   update_position() {
-    if (this.bounce > 3) {
+    this.calls++;
+
+    if (this.bounce >= 3) {
       return;
     }
+
     this.position = {
-      x: this.position.x + this.step_size * Math.cos(this.angle),
-      y: this.position.y + this.step_size * Math.sin(this.angle),
+      x: this.position.x + this.step_size * this.direction.x,
+      y: this.position.y + this.step_size * this.direction.y,
     };
 
     for (let i = 0; i < mines.length; i++) {
@@ -59,31 +74,37 @@ class possible_shot_points {
         return;
       }
     }
-
-    for (let i = 0; i < bullets.length; i++) {
-      const bullet = bullets[i];
-      if (
-        rectRect2(
-          this.position.x,
-          this.position.y,
-          this.radius * 2,
-          this.radius * 2,
-          bullet.position.x,
-          bullet.position.y,
-          bullet.size.w,
-          bullet.size.h
-        )
-      ) {
-        this.bounce = 4;
-        this.draw("blue");
-
-        return;
+    if (this.data.bullets) {
+      for (let i = 0; i < bullets.length; i++) {
+        const bullet = bullets[i];
+        if (
+          rectRect2(
+            this.position.x,
+            this.position.y,
+            this.radius * 2,
+            this.radius * 2,
+            bullet.position.x,
+            bullet.position.y,
+            bullet.size.w,
+            bullet.size.h
+          )
+        ) {
+          /*         if (this.bounce == 0 && this.calls < 50 && bullet.mytick > 30) {
+          this.initial_player.killing_aims.push({
+            angle: this.initial_angle % (Math.PI * 2),
+            distance: this.calls * 3,
+          });
+        } */
+          this.draw("blue");
+          /*         this.bounce = 4;
+        return; */
+        }
       }
     }
 
     for (socketid in players) {
       player = players[socketid];
-      if (player.socketid == this.initial_player.socketid) {
+      if (socketid.includes("bot")) {
         if (
           rectRect2(
             this.position.x,
@@ -98,7 +119,6 @@ class possible_shot_points {
         ) {
           this.bounce = 4;
           this.draw("orange");
-
           return;
         }
       }
@@ -115,8 +135,21 @@ class possible_shot_points {
           player.size.h
         )
       ) {
-        this.bounce = 4;
         this.draw("green");
+        /*         console.log(
+          "possible shot found",
+          this.calls,
+          "at",
+          this.first_bounce_pos,
+          "bounce",
+          this.bounce
+        ); */
+        this.bounce = 4;
+
+        this.initial_player.killing_aims.push({
+          angle: this.initial_angle % (Math.PI * 2),
+          distance: this.calls,
+        });
 
         return;
       }
@@ -128,58 +161,89 @@ class possible_shot_points {
         block.position.y,
         block.size.w,
         block.size.h,
-        this.position.x,
-        this.position.y,
+        this.position.x - this.radius,
+        this.position.y - this.radius,
         this.radius * 2,
         this.radius * 2
       );
       if (res === "left") {
         this.angle = Math.PI - this.angle;
+        this.direction = {
+          x: Math.cos(this.angle),
+          y: Math.sin(this.angle),
+        };
         this.bounce++;
       } else if (res === "right") {
         this.angle = Math.PI - this.angle;
         this.bounce++;
+        this.direction = {
+          x: Math.cos(this.angle),
+          y: Math.sin(this.angle),
+        };
       } else if (res === "top") {
         this.angle = -this.angle;
         this.bounce++;
+        this.direction = {
+          x: Math.cos(this.angle),
+          y: Math.sin(this.angle),
+        };
       } else if (res === "bottom") {
         this.angle = -this.angle;
         this.bounce++;
+        this.direction = {
+          x: Math.cos(this.angle),
+          y: Math.sin(this.angle),
+        };
       }
       if (res === "") {
         return;
+      } else {
       }
       this.draw("red");
     });
-    this.calls++;
   }
   draw(color) {
+    /*     c.save();
+    c.globalAlpha = 0.3;
     c.beginPath();
-    c.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI);
+    c.arc(
+      this.initial_player.position.x + this.initial_player.size.w / 2,
+      this.initial_player.position.y + this.initial_player.size.h / 2,
+      this.initial_player.size.w / 2,
+      0,
+      2 * Math.PI
+    );
     c.fillStyle = color;
     c.fill();
     c.closePath();
+    c.restore(); */
+
+    if (debug_visual) {
+      c.beginPath();
+      c.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI);
+      c.fillStyle = color;
+      c.fill();
+      c.closePath();
+    }
   }
 }
 
-function launch_possible_shots(N, step_size, radius) {
-  for (socketid in players) {
-    player = players[socketid];
-    for (let i = 0; i < N; i++) {
-      const angle = (i * Math.PI * 2) / N;
+function launch_possible_shots(N, step_size, radius, bot, data) {
+  for (let i = 0; i < N; i++) {
+    const angle = (i * Math.PI * 2) / N;
 
-      const shot = new possible_shot_points(
-        {
-          x: player.position.x + player.size.w / 2,
-          y: player.position.y + player.size.h / 2,
-        },
-        angle,
-        step_size,
-        radius,
-        player
-      );
-      shot.update_repeat(10000);
-    }
+    const shot = new possible_shot_points(
+      {
+        x: bot.position.x + bot.size.w / 2,
+        y: bot.position.y + bot.size.h / 2,
+      },
+      angle,
+      step_size,
+      radius,
+      bot,
+      data
+    );
+    shot.update_repeat(1000);
   }
 }
 

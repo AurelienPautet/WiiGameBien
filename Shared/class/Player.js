@@ -6,7 +6,6 @@ try {
   Bullet = require("../../Shared/class/Bullet.js");
   Mine = require("../../Shared/class/Mine.js");
   Stats = require("../../Shared/class/Stats.js");
-  const mvtspeed = 3;
 } catch (e) {
   console.error("Error requiring dependencies in Player.js:", e);
 }
@@ -53,24 +52,27 @@ class Player {
       y: 0,
     };
     this.alive = true;
+    this.max_bulletcount = 5;
+    this.max_minecount = 3;
+    this.mvtspeed = 3;
   }
   spawn() {
     this.position = structuredClone(this.spawnpos);
   }
   shoot(room) {
     this.endofbarrel();
-    if (this.bulletcount < 5 && this.alive) {
+    if (this.bulletcount < this.max_bulletcount && this.alive) {
       new Bullet(
         { x: this.endpos.x, y: this.endpos.y },
         this.angle,
-        6,
+        5,
         this,
         room
       );
     }
   }
   plant(room) {
-    if (this.minecount < 3 && this.alive) {
+    if (this.minecount < this.max_minecount && this.alive) {
       new Mine(
         {
           x: this.position.x + this.size.w / 2,
@@ -84,20 +86,20 @@ class Player {
 
   update(room, fps_corector) {
     this.CalculateAngle();
-
+    this.mytick++;
     //change the angle of the image depending on the mvt direction
     if (this.alive) {
       if (this.direction.x > 0) {
-        this.velocity.x = mvtspeed;
+        this.velocity.x = this.mvtspeed;
       } else if (this.direction.x < 0) {
-        this.velocity.x = -mvtspeed;
+        this.velocity.x = -this.mvtspeed;
       } else {
         this.velocity.x = 0;
       }
       if (this.direction.y > 0) {
-        this.velocity.y = mvtspeed;
+        this.velocity.y = this.mvtspeed;
       } else if (this.direction.y < 0) {
-        this.velocity.y = -mvtspeed;
+        this.velocity.y = -this.mvtspeed;
       } else {
         this.velocity.y = 0;
       }
@@ -141,20 +143,19 @@ class Player {
     }
   }
   endofbarrel() {
-    this.endpos.x = this.position.x + 2.5 * (this.size.w / 6);
-    this.endpos.y = this.position.y + 2.5 * (this.size.h / 6);
-    this.hyp = 45;
-    this.endpos.x -= Math.cos(this.angle * (Math.PI / 180)) * this.hyp;
-    this.endpos.y -= Math.sin(this.angle * (Math.PI / 180)) * this.hyp;
+    this.endpos.x =
+      this.position.x + this.size.w / 2 - 40 * Math.cos(this.angle);
+    this.endpos.y =
+      this.position.y + this.size.h / 2 - 40 * Math.sin(this.angle);
   }
   CalculateAngle() {
     let adjacent = this.aim.x - (this.position.x + this.size.w / 2);
     let opposite = this.aim.y - (this.position.y + this.size.h / 2);
     let angle = Math.atan(opposite / adjacent);
     if (adjacent < 0) {
-      this.angle = (angle * 180) / Math.PI;
+      this.angle = angle;
     } else {
-      this.angle = (angle * 180) / Math.PI + 180;
+      this.angle = angle + Math.PI;
     }
   }
   BulletCollision(obj) {

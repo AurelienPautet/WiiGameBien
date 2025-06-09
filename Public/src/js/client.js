@@ -1,7 +1,7 @@
 //
 //const socket = io("https://wiitank.pautet.net");
-//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
-const socket = io("http://localhost:7000/");
+const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+//const socket = io("http://localhost:7000/");
 
 socket.on("welcome", (data) => {});
 
@@ -55,6 +55,15 @@ setInterval(async () => {
       room_name,
       mytick,
     };
+    localroom.players[mysocketid].mytick = solo_tick.mytick;
+    localroom.players[mysocketid].direction = solo_tick.direction;
+    localroom.players[mysocketid].aim = solo_tick.aim;
+    if (solo_tick.plant) {
+      localroom.players[mysocketid].plant(localroom);
+    }
+    if (solo_tick.click) {
+      localroom.players[mysocketid].shoot(localroom);
+    }
   }
   mytick++;
   click = false;
@@ -161,7 +170,7 @@ window.addEventListener("keydown", (event) => {
       plant = true;
       break;
     case "ControlLeft":
-      debug_visual = true;
+      debug_visual = !debug_visual;
       break;
     case "KeyT":
       if (theme < maxtheme) {
@@ -205,7 +214,7 @@ window.addEventListener("keyup", (event) => {
       }
       break;
     case "ControlLeft":
-      debug_visual = false;
+      //debug_visual = false;
       break;
   }
 });

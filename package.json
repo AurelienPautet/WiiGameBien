@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev:tailwind": "npx tailwindcss -i Public/src/css/styles.css -o Public/src/css/tails.css --watch",
-    "dev:server": "node Server/server.js",
+    "dev:server": "nodemon Server/server.js",
     "start": "node Server/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

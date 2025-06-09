@@ -150,12 +150,12 @@ async function loadlevel(level_json, room) {
     for (let c = 0; c <= 23; c++) {
       if (room.blocklist[l * 23 + c] == 1) {
         room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 1));
-      }
-      if (room.blocklist[l * 23 + c] == 2) {
+      } else if (room.blocklist[l * 23 + c] == 2) {
         room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 2));
-      }
-      if (room.blocklist[l * 23 + c] == 3) {
+      } else if (room.blocklist[l * 23 + c] == 3) {
         room.spawns.push({ x: c * 50, y: l * 50 });
+      } else if (room.blocklist[l * 23 + c] == 4) {
+        room.bot1_spawns.push({ x: c * 50, y: l * 50 });
       }
     }
   }
