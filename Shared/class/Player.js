@@ -86,6 +86,8 @@ class Player {
 
   update(room, fps_corector) {
     this.CalculateAngle();
+    //this.alive = true;
+
     this.mytick++;
     //change the angle of the image depending on the mvt direction
     if (this.alive) {

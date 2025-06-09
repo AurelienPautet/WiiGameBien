@@ -36,6 +36,7 @@ class Room {
     this.Bcollision = [];
     this.bullets = [];
     this.mines = [];
+    this.holes = [];
     this.spawns = [];
     this.nbliving = 0;
     this.tick = 0;

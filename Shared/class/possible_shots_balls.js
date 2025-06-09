@@ -15,8 +15,8 @@ class possible_shot_points {
     this.radius = radius;
     this.initial_angle = initial_angle;
     this.position = {
-      x: initial_position.x + 40 * Math.cos(initial_angle),
-      y: initial_position.y + 40 * Math.sin(initial_angle),
+      x: initial_position.x + 54 * Math.cos(initial_angle),
+      y: initial_position.y + 54 * Math.sin(initial_angle),
     };
     this.direction = {
       x: Math.cos(initial_angle),
@@ -36,7 +36,8 @@ class possible_shot_points {
         break;
         return;
       }
-      if (i % 100 == 0) {
+      if (i % 2 == 0) {
+        this.draw("red");
       }
       this.update_position();
     }
@@ -104,6 +105,9 @@ class possible_shot_points {
 
     for (socketid in players) {
       player = players[socketid];
+      if (!player.alive) {
+        continue;
+      }
       if (socketid.includes("bot")) {
         if (
           rectRect2(
@@ -111,10 +115,10 @@ class possible_shot_points {
             this.position.y,
             this.radius * 2,
             this.radius * 2,
-            player.position.x,
-            player.position.y,
-            player.size.w,
-            player.size.h
+            player.position.x - 10,
+            player.position.y - 10,
+            player.size.w + 20,
+            player.size.h + 20
           )
         ) {
           this.bounce = 4;
@@ -154,9 +158,12 @@ class possible_shot_points {
         return;
       }
     }
-
-    Bcollision.forEach((block) => {
-      const res = detectCollisions2(
+    let block = null;
+    let res = "";
+    let numBlocks = Bcollision.length;
+    for (let e = 0; e < numBlocks; e++) {
+      block = Bcollision[e];
+      res = detectCollisions2(
         block.position.x,
         block.position.y,
         block.size.w,
@@ -173,6 +180,7 @@ class possible_shot_points {
           y: Math.sin(this.angle),
         };
         this.bounce++;
+        break;
       } else if (res === "right") {
         this.angle = Math.PI - this.angle;
         this.bounce++;
@@ -180,6 +188,7 @@ class possible_shot_points {
           x: Math.cos(this.angle),
           y: Math.sin(this.angle),
         };
+        break;
       } else if (res === "top") {
         this.angle = -this.angle;
         this.bounce++;
@@ -187,6 +196,7 @@ class possible_shot_points {
           x: Math.cos(this.angle),
           y: Math.sin(this.angle),
         };
+        break;
       } else if (res === "bottom") {
         this.angle = -this.angle;
         this.bounce++;
@@ -194,13 +204,9 @@ class possible_shot_points {
           x: Math.cos(this.angle),
           y: Math.sin(this.angle),
         };
+        break;
       }
-      if (res === "") {
-        return;
-      } else {
-      }
-      this.draw("red");
-    });
+    }
   }
   draw(color) {
     /*     c.save();
@@ -218,9 +224,9 @@ class possible_shot_points {
     c.closePath();
     c.restore(); */
 
-    if (debug_visual) {
+    if (this.data.debug) {
       c.beginPath();
-      c.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI);
+      c.arc(this.position.x, this.position.y, 10, 0, 2 * Math.PI);
       c.fillStyle = color;
       c.fill();
       c.closePath();
@@ -297,5 +303,8 @@ if (typeof module === "object" && module.exports) {
   console.log("Loading level_loader.js in browser environment");
   if (!window.launch_possible_shots) {
     window.launch_possible_shots = launch_possible_shots;
+  }
+  if (!window.rectRect2) {
+    window.rectRect2 = rectRect2;
   }
 }

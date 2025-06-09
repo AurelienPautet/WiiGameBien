@@ -1,5 +1,5 @@
 function launch_solo_room() {
-  create_room("Solo Room", 1, [10], "GAME MASTER");
+  create_room("Solo Room", 1, [11], "GAME MASTER");
 }
 
 function loop() {

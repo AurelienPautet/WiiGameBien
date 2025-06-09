@@ -162,19 +162,6 @@ function draw() {
   }
 
   bullets.forEach((bullet) => {
-    if (debug_visual) {
-      c.beginPath();
-      c.fillStyle = "rgba(255,0,0,0.4)";
-      c.strokeStyle = "red";
-      c.rect(
-        bullet.position.x,
-        bullet.position.y,
-        bullet.draw_size.w,
-        bullet.draw_size.h
-      );
-      fc.fill();
-      fc.stroke();
-    }
     drawImageRot(
       fc,
       bullet1,
@@ -193,6 +180,19 @@ function draw() {
       bullet.size.h,
       bullet.angle
     );
+    if (debug_visual) {
+      c.beginPath();
+      c.fillStyle = "rgba(255,0,0,0.4)";
+      c.strokeStyle = "red";
+      c.rect(
+        bullet.position.x,
+        bullet.position.y,
+        bullet.size.w,
+        bullet.size.h
+      );
+      fc.fill();
+      fc.stroke();
+    }
   });
 
   for (socketid in players) {
@@ -270,6 +270,13 @@ function draw() {
       chockwaves.splice(e, 1);
       e -= 1;
     }
+  }
+  if (debug_visual) {
+    launch_possible_moves({ w: 50, h: 50 }, localroom.players["bot0"]);
+    launch_possible_shots(20, 15, 15, localroom.players["bot0"], {
+      bullets: false,
+      debug: true,
+    });
   }
 }
 
