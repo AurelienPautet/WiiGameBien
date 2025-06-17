@@ -50,14 +50,14 @@ class Bullet {
       this.position.y + 2 * this.velocity.y,
       this.position.x + 2 * this.velocity.x,
       this.size.w,
-      this.size.h,
+      this.size.h,    
       obj.position.y,
       obj.position.x,
       obj.size.w,
       obj.size.h,
       0
     );*/
-    this.side = detectCollision(this, obj, this.velocity);
+    this.side = detectCollision(this, obj, { x: 0, y: 0 });
     if (this.side != "") {
       room.sounds.ricochet = true;
       this.bounce += 1;

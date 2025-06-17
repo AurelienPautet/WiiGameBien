@@ -227,11 +227,14 @@ class possible_shot_points {
     c.restore(); */
 
     if (this.data.debug) {
+      c.globalAlpha = 0.3;
+
       c.beginPath();
       c.arc(this.position.x, this.position.y, 10, 0, 2 * Math.PI);
       c.fillStyle = color;
       c.fill();
       c.closePath();
+      c.globalAlpha = 1;
     }
   }
 }

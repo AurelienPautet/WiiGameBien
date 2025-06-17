@@ -55,6 +55,10 @@ block2 = new Image();
 bullet1 = new Image();
 bg = new Image();
 dead = new Image();
+hole = new Image();
+hole.src = "ressources/image/block/hole.png";
+flag = new Image();
+flag.src = "ressources/image/block/flag.png";
 
 editor_block1 = document.getElementById("editor_block1");
 editor_block2 = document.getElementById("editor_block2");
@@ -67,6 +71,9 @@ loadtheme(theme);
 function loadtheme() {
   editor_block1.src = `ressources/image/block/Cube${theme}-1.png`;
   editor_block2.src = `ressources/image/block/Cube${theme}-2.png`;
+  editor_block4.src = `ressources/image/block/hole.png`;
+  editor_block3.src = `ressources/image/block/flag.png`;
+
   block1.src = `ressources/image/block/Cube${theme}-1.png`;
   block2.src = `ressources/image/block/Cube${theme}-2.png`;
   bullet1.src = `ressources/image/bullet/bullet-${theme}.png`;
@@ -111,6 +118,18 @@ function draw() {
     c.fillStyle = mine.color;
     c.fill();
     c.closePath();
+  });
+
+  holes.forEach((h) => {
+    c.drawImage(hole, h.position.x, h.position.y, h.size.w, h.size.h);
+    if (debug_visual) {
+      c.beginPath();
+      c.fillStyle = "rgba(255,0,0,0.4)";
+      c.strokeStyle = "red";
+      c.rect(h.position.x, h.position.y, h.size.w, h.size.h);
+      c.fill();
+      c.stroke();
+    }
   });
 
   blocks.forEach((block) => {

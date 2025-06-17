@@ -1,5 +1,8 @@
 const editor_canvas = document.getElementById("editor_canvas");
 const editor_c = editor_canvas.getContext("2d");
+const selectedGameMode = document.querySelector(
+  'input[name="game_mode"]:checked'
+);
 
 editor_canvas.width = 920;
 editor_canvas.height = 640;
@@ -8,10 +11,35 @@ selected_block = 1;
 
 current_level_id = -1;
 
-editor_block1 = document.getElementById("editor_block1");
-editor_block2 = document.getElementById("editor_block2");
-editor_block3 = document.getElementById("editor_block3");
-editor_block4 = document.getElementById("editor_block4");
+current_mode = "online";
+
+function toggle_editor_mode() {
+  console.log(
+    "Toggling editor mode with current mode:",
+    current_mode,
+    "and selected mode:",
+    document.querySelector('input[name="game_mode"]:checked').value
+  );
+  if (current_mode === "online") {
+    document.getElementById("editor_block11").classList.remove("hidden");
+    document.getElementById("editor_block12").classList.remove("hidden");
+    document.getElementById("editor_block13").classList.remove("hidden");
+    document.getElementById("editor_block14").classList.remove("hidden");
+  } else {
+    document.getElementById("editor_block11").classList.add("hidden");
+    document.getElementById("editor_block12").classList.add("hidden");
+    document.getElementById("editor_block13").classList.add("hidden");
+    document.getElementById("editor_block14").classList.add("hidden");
+    for (let i = 0; i < level_layout.length; i++) {
+      if (level_layout[i] >= 10) {
+        level_layout[i] = -1;
+      }
+    }
+  }
+  current_mode = document.querySelector(
+    'input[name="game_mode"]:checked'
+  ).value;
+}
 
 function select_block(block_number) {
   document
@@ -94,12 +122,27 @@ function draw_block(block_number, x, y) {
       editor_c.drawImage(block2, x, y, 40, 40);
       break;
     case 3:
-      editor_c.fillStyle = "#0000FF";
-      editor_c.fillRect(x, y, 40, 40);
+      editor_c.drawImage(flag, x, y, 40, 40);
+
       break;
     case 4:
-      editor_c.fillStyle = "#FFFFFF";
-      editor_c.fillRect(x, y, 40, 40);
+      editor_c.drawImage(hole, x, y, 40, 40);
+      break;
+    case 11:
+      editor_c.drawImage(body_blue, x, y, 40, 40);
+      editor_c.drawImage(turret_blue, x - 6, y + 3, 40, 25);
+      break;
+    case 12:
+      editor_c.drawImage(body_green, x, y, 40, 40);
+      editor_c.drawImage(turret_green, x - 6, y + 3, 40, 25);
+      break;
+    case 13:
+      editor_c.drawImage(body_orange, x, y, 40, 40);
+      editor_c.drawImage(turret_orange, x - 6, y + 3, 40, 25);
+      break;
+    case 14:
+      editor_c.drawImage(body_red, x, y, 40, 40);
+      editor_c.drawImage(turret_red, x - 6, y + 3, 40, 25);
       break;
   }
 }

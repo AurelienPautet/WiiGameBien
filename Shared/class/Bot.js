@@ -7,6 +7,10 @@ class Bot extends Player {
       mytick: 15,
       angle: 0,
     };
+
+    this.turretc = turretc;
+    this.bodyc = bodyc;
+
     this.last_random_move = 0;
     this.desired_angle = 2.4;
     this.idle_desired_angle = 2.4;
@@ -31,7 +35,22 @@ class Bot extends Player {
     };
     this.mine_go_to = false;
 
-    this.min_interval_shoot = 5;
+    this.min_interval_shoot = 140;
+    this.max_rotation_speed = Math.PI / 180;
+    this.max_bulletcount = 3;
+    this.shoot_speed = 5;
+    this.precision = 0.7; //default 0.2
+    this.number_of_rays = 50;
+    this.size_of_rays = 10;
+    this.steps_of_rays = 10;
+    this.can = {
+      move: true,
+      shoot: true,
+      plant: true,
+      spam: true,
+    };
+
+    /*     this.min_interval_shoot = 5;
     this.max_rotation_speed = Math.PI / 120;
     this.max_bulletcount = 200;
     this.shoot_speed = 4;
@@ -49,7 +68,7 @@ class Bot extends Player {
       shoot: true,
       plant: true,
       spam: false,
-    };
+    }; */
     // Bot parameters
     /*    
     TURRRET HIGH SHOOTS
@@ -69,12 +88,12 @@ this.min_interval_shoot = 8;
       spam: false,
     }; */
 
-    /*     PRECISE SNIPER
-        this.min_interval_shoot = 30;
+    //PRECISE SNIPER
+    /*     this.min_interval_shoot = 40;
     this.max_rotation_speed = Math.PI / 120;
     this.max_bulletcount = 1;
-    this.shoot_speed = 12;
-    this.precision = 0.01; //default 0.2
+    this.shoot_speed = 7;
+    this.precision = 0.5; //default 0.2
     this.number_of_rays = 50;
     this.size_of_rays = 10;
     this.steps_of_rays = 10;
@@ -90,7 +109,7 @@ this.min_interval_shoot = 8;
     super.update(room, fps_corector);
     if (this.alive) {
       if (this.can.move) {
-        this.move();
+        this.move(room);
       }
       if (this.can.shoot) {
         this.aim_and_shoot();
@@ -98,8 +117,45 @@ this.min_interval_shoot = 8;
     }
   }
 
-  random_should_go_to() {
-    if (Math.random() < (this.mine_go_to ? 0 : 0.6)) {
+  get_closest_human_player(room) {
+    let closest = null;
+    let minDistance = Infinity;
+
+    for (let socketid of room.human_players) {
+      let player = room.players[socketid];
+      if (player && player.alive) {
+        let distance = this.get_distance(player.position, this.position);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closest = player;
+        }
+      }
+    }
+    return closest;
+  }
+
+  get_distance(pos1, pos2) {
+    return Math.sqrt((pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2);
+  }
+
+  random_should_go_to(room) {
+    let closest = this.get_closest_human_player(room);
+    let player_is = {
+      right: false,
+      left: false,
+      up: false,
+      down: false,
+    };
+    if (closest && closest.alive) {
+      player_is = {
+        right: closest.position.x > this.position.x,
+        left: closest.position.x < this.position.x,
+        up: closest.position.y < this.position.y,
+        down: closest.position.y > this.position.y,
+      };
+    }
+
+    if (Math.random() < (this.mine_go_to ? 0 : 0.5)) {
       this.idle_should_go_to = {
         right: false,
         left: false,
@@ -108,10 +164,14 @@ this.min_interval_shoot = 8;
       };
     } else {
       this.idle_should_go_to = {
-        right: Math.random() < (this.wall_go_to.right ? 0.9 : 0.1),
-        left: Math.random() < (this.wall_go_to.left ? 0.9 : 0.1),
-        up: Math.random() < (this.wall_go_to.up ? 0.9 : 0.1),
-        down: Math.random() < (this.wall_go_to.down ? 0.9 : 0.1),
+        right:
+          Math.random() <
+          (this.wall_go_to.right || player_is.right ? 0.6 : 0.1),
+        left:
+          Math.random() < (this.wall_go_to.left || player_is.left ? 0.6 : 0.1),
+        up: Math.random() < (this.wall_go_to.up || player_is.up ? 0.6 : 0.1),
+        down:
+          Math.random() < (this.wall_go_to.down || player_is.down ? 0.6 : 0.1),
       };
     }
     this.wall_go_to = {
@@ -139,7 +199,7 @@ this.min_interval_shoot = 8;
 
     if (this.is_all_false_should_go_to()) {
       if (this.mytick - this.last_random_move > 30) {
-        this.random_should_go_to();
+        this.random_should_go_to(room);
         this.last_random_move = this.mytick;
       }
       this.should_go_to = structuredClone(this.idle_should_go_to);

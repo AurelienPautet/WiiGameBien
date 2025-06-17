@@ -29,6 +29,7 @@ class Room {
       explose: false,
     };
     this.levelid = 0;
+    this.human_players = [];
     this.players = {};
     this.ids = [];
     this.ids_to_names = {};
@@ -45,6 +46,9 @@ class Room {
     this.waitingtime = 5000;
     this.fps_corector = 1;
     this.bot1_spawns = [];
+    this.bot2_spawns = [];
+    this.bot3_spawns = [];
+    this.bot4_spawns = [];
   }
 
   spawn_new_player(playerName, turretc, bodyc, socketid) {
@@ -56,6 +60,7 @@ class Room {
       bodyc
     );
     this.spawn_new(new_player, socketid, this.spawns);
+    this.human_players.push(socketid);
   }
 
   spawn_new(player, socket_id, spawns) {
@@ -71,16 +76,54 @@ class Room {
       this.bot1_spawns,
       this.bot1_spawns.length
     );
-    let number_to_spawn = this.bot1_spawns.length;
-    for (let i = 0; i < number_to_spawn; i++) {
+    let bot_index = 0;
+    let number_to_spawn_1 = this.bot1_spawns.length;
+    for (let i = 0; i < number_to_spawn_1; i++) {
       let bot = new Bot1(
         { x: 0, y: 0 },
-        `bot${i}`,
-        `Bot ${i}`,
+        `bot${bot_index}`,
+        `Bot1_ ${i}`,
+        "blue",
+        "blue"
+      );
+      this.spawn_new(bot, `bot${i}`, this.bot1_spawns);
+      bot_index++;
+    }
+    let number_to_spawn_2 = this.bot2_spawns.length;
+    for (let i = 0; i < number_to_spawn_2; i++) {
+      let bot = new Bot2(
+        { x: 0, y: 0 },
+        `bot${bot_index}`,
+        `Bot2_ ${i}`,
         "green",
         "green"
       );
-      this.spawn_new(bot, `bot${i}`, this.bot1_spawns);
+      this.spawn_new(bot, `bot${bot_index}`, this.bot2_spawns);
+      bot_index++;
+    }
+    let number_to_spawn_3 = this.bot3_spawns.length;
+    for (let i = 0; i < number_to_spawn_3; i++) {
+      let bot = new Bot3(
+        { x: 0, y: 0 },
+        `bot${bot_index}`,
+        `Bot3_ ${i}`,
+        "orange",
+        "orange"
+      );
+      this.spawn_new(bot, `bot${bot_index}`, this.bot3_spawns);
+      bot_index++;
+    }
+    let number_to_spawn_4 = this.bot4_spawns.length;
+    for (let i = 0; i < number_to_spawn_4; i++) {
+      let bot = new Bot4(
+        { x: 0, y: 0 },
+        `bot${bot_index}`,
+        `Bot4_ ${i}`,
+        "red",
+        "red"
+      );
+      this.spawn_new(bot, `bot${bot_index}`, this.bot4_spawns);
+      bot_index++;
     }
   }
 
@@ -109,6 +152,7 @@ class Room {
       bullets: this.bullets,
       mines: this.mines,
       name: this.name,
+      holes: this.holes,
       tick: this.tick,
     });
     this.emit_to_room("tick_sounds", this.sounds);
@@ -189,7 +233,7 @@ class Room {
     });
     for (let socketid in this.players) {
       let player = this.players[socketid];
-      this.spawn_player(player);
+      this.spawn_player(player, this.spawns);
     }
     this.nbliving = Object.keys(this.players).length;
     this.waitingrespawn = false;

@@ -4,6 +4,10 @@ let level_name_input = document.getElementById("level_name_input");
 //const starstranslate = { 0: "star-empty", 1: "star-filled" };
 let selected_map = [];
 
+setTimeout(() => {
+  show_ui_element("mapset_selector");
+}, 1000);
+
 function add_map(map_name, map_id, creator_name, int_players, star, img_src) {
   let newMap = document.createElement("div");
   let stars = [];

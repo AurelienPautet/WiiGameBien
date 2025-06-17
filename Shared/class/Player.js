@@ -55,7 +55,7 @@ class Player {
     this.max_bulletcount = 5;
     this.max_minecount = 3;
     this.mvtspeed = 3;
-    this.shoot_speed = 5;
+    this.shoot_speed = 6;
     this.shoot_max_bounce = 3;
     this.bullet_size = {
       w: 15,
@@ -122,6 +122,10 @@ class Player {
         this.BodyCollision(room.players[socket_id]);
       }
     }
+    for (let i = 0; i < room.holes.length; i++) {
+      this.BodyCollision(room.holes[i]);
+    }
+
     if (this.velocity.x > 0) {
       this.rotation = 0;
     } else if (this.velocity.x < 0) {

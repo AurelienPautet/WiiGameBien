@@ -145,6 +145,11 @@ async function loadlevel(level_json, room) {
   room.blocklist = level_json;
   room.blocks = [];
   room.spawns = [];
+  room.holes = [];
+  room.bot1_spawns = [];
+  room.bot2_spawns = [];
+  room.bot3_spawns = [];
+  room.bot4_spawns = [];
 
   for (let l = 0; l <= 16; l++) {
     for (let c = 0; c <= 23; c++) {
@@ -155,7 +160,15 @@ async function loadlevel(level_json, room) {
       } else if (room.blocklist[l * 23 + c] == 3) {
         room.spawns.push({ x: c * 50, y: l * 50 });
       } else if (room.blocklist[l * 23 + c] == 4) {
+        room.holes.push(new Hole({ x: c * 50, y: l * 50 }));
+      } else if (room.blocklist[l * 23 + c] == 11) {
         room.bot1_spawns.push({ x: c * 50, y: l * 50 });
+      } else if (room.blocklist[l * 23 + c] == 12) {
+        room.bot2_spawns.push({ x: c * 50, y: l * 50 });
+      } else if (room.blocklist[l * 23 + c] == 13) {
+        room.bot3_spawns.push({ x: c * 50, y: l * 50 });
+      } else if (room.blocklist[l * 23 + c] == 14) {
+        room.bot4_spawns.push({ x: c * 50, y: l * 50 });
       }
     }
   }
@@ -172,6 +185,7 @@ if (typeof module === "object" && module.exports) {
 
   Block = require("../class/Block.js");
   CollisonsBox = require("../class/CollisonsBox.js");
+  Hole = require("../class/Hole.js");
 } else {
   // Browser environment
   console.log("Loading level_loader.js in browser environment");

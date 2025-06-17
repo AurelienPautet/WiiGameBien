@@ -1,17 +1,18 @@
 function launch_solo_room() {
-  create_room("Solo Room", 1, [10], "GAME MASTER");
+  create_room("Solo Room", 1, [18], "GAME MASTER");
 }
 
 function loop() {
   setTimeout(loop, 1000 / 60);
-  make_player_invicible();
-  make_player_invicible("bot0");
+  //make_player_invicible();
+  //make_player_invicible("bot0");
 
   blocks = localroom.blocks;
   mines = localroom.mines;
   Bcollision = localroom.Bcollision;
   bullets = localroom.bullets;
   players = localroom.players;
+  holes = localroom.holes;
   localroom.update();
 }
 

@@ -1,7 +1,7 @@
 //
 //const socket = io("https://wiitank.pautet.net");
-const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
-//const socket = io("http://localhost:7000/");
+//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+const socket = io("http://localhost:7000/");
 
 socket.on("welcome", (data) => {});
 
@@ -82,6 +82,7 @@ playerid = 0;
 players = [];
 blocks = [];
 Bcollision = [];
+holes = [];
 level_id = 0;
 bullets = [];
 mines = [];
@@ -110,6 +111,7 @@ socket.on("tick", (data) => {
   room_name = data.name;
   mytick = data.tick;
   players = data.players;
+  holes = data.holes;
   if (data.players[mysocketid]) {
     alive = data.players[mysocketid].alive;
     if (!alive) {
