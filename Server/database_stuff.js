@@ -3,16 +3,18 @@ const bcrypt = require("bcryptjs");
 const client = require(__dirname + "/db_client.js");
 const User = require(__dirname + "/User_class.js");
 
-function get_levels(input_name, imput_nb_players, socket) {
+function get_levels(input_name, imput_nb_players, type, socket) {
+  //console.log(input_name, imput_nb_players);
+  //console.log(type);
   let query_tosend, values;
   if (imput_nb_players == 0) {
     query_tosend =
-      "SELECT levels.id, name, content, creator_id, max_players, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' GROUP BY levels.id ORDER BY rating";
-    values = [input_name];
+      "SELECT levels.id, name, content, creator_id, max_players,type,status, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' AND levels.type = $2 AND levels.status = 'up' GROUP BY levels.id ORDER BY rating";
+    values = [input_name, type];
   } else {
     query_tosend =
-      "SELECT levels.id, name, content, creator_id, max_players, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' AND max_players = $2 GROUP BY levels.id ORDER BY rating";
-    values = [input_name, imput_nb_players];
+      "SELECT levels.id, name, content, creator_id, max_players,type,status, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' AND max_players = $2 AND levels.type = $3 AND levels.status = 'up' GROUP BY levels.id ORDER BY rating";
+    values = [input_name, imput_nb_players, type];
   }
   fetch_levels(query_tosend, values, socket, "recieve_levels");
 }
@@ -23,18 +25,18 @@ function get_my_levels(input_name, imput_nb_players, socket) {
   let query_tosend, values;
   if (!users[socket.id]) {
     //console.log("User not logged in, using default player_id -1");
-    player_id = -1; // Default player_id if not logged in
+    player_id = -1;
   } else {
-    player_id = users[socket.id].id; // Ensure player_id is defined, default to -1 if not logged in
+    player_id = users[socket.id].id;
   }
   //const player_id = 1;
   if (imput_nb_players == 0) {
     query_tosend =
-      "SELECT levels.id, name, content, creator_id, max_players, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' AND creator_id = $2 GROUP BY levels.id ORDER BY rating";
+      "SELECT levels.id, name, content, creator_id, max_players, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' AND creator_id = $2 AND levels.status = 'up' GROUP BY levels.id ORDER BY rating";
     values = [input_name, player_id];
   } else {
     query_tosend =
-      "SELECT levels.id, name, content, creator_id, max_players, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' AND max_players = $2 AND creator_id = $3 GROUP BY levels.id ORDER BY rating";
+      "SELECT levels.id, name, content, creator_id, max_players, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' AND max_players = $2 AND creator_id = $3 AND levels.status = 'up' GROUP BY levels.id ORDER BY rating";
     values = [input_name, imput_nb_players, player_id];
   }
   fetch_levels(query_tosend, values, socket, "recieve_my_levels");
@@ -42,7 +44,7 @@ function get_my_levels(input_name, imput_nb_players, socket) {
 
 function get_level_from_id(level_id, socket, response_event) {
   let query_tosend =
-    "SELECT levels.id, name, content, creator_id, max_players, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE levels.id = $1 GROUP BY levels.id";
+    "SELECT levels.id, name, content, creator_id, max_players,type ,COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE levels.id = $1 GROUP BY levels.id";
 
   return fetch_levels(query_tosend, [level_id], socket, response_event);
 }
@@ -53,6 +55,7 @@ function save_level(
   hexData,
   level_name,
   max_players,
+  type,
   socket
 ) {
   const player_id = users[socket.id].id;
@@ -74,8 +77,8 @@ function save_level(
     );
 
     client.query(
-      "UPDATE levels SET name = $1, content = $2, max_players = $3 WHERE id = $4 AND creator_id = $5",
-      [level_name, levelData, max_players, level_id, player_id],
+      "UPDATE levels SET name = $1, content = $2, max_players = $3,type = $4,status = 'up' WHERE id = $5 AND creator_id = $6",
+      [level_name, levelData, max_players, type, level_id, player_id],
       (err) => {
         if (err) {
           console.error("Error executing query", err.stack);
@@ -100,8 +103,8 @@ function save_level(
     );
   } else {
     client.query(
-      "INSERT INTO levels (name, content, creator_id, max_players) VALUES ($1, $2, $3, $4) RETURNING id",
-      [level_name, levelData, player_id, max_players],
+      "INSERT INTO levels (name, content, creator_id, max_players,type,status) VALUES ($1, $2, $3, $4,$5,'up') RETURNING id",
+      [level_name, levelData, player_id, max_players, type],
       (err, res) => {
         if (err) {
           console.error("Error executing query", err.stack);
@@ -155,7 +158,12 @@ function fetch_levels(query_tosend, values, socket, response_event) {
   //console.log("fetch_levels", query_tosend, values, socket, response_event);
   client.query(query_tosend, values, async (err, res) => {
     if (err) {
-      console.error("Error executing query fetch_levels", err.stack);
+      console.error(
+        "Error executing query fetch_levels from query ",
+        query_tosend,
+        " with the error : ",
+        err.stack
+      );
       return "Error";
     } else {
       levels = [];
@@ -171,6 +179,8 @@ function fetch_levels(query_tosend, values, socket, response_event) {
           level_creator_name: cname,
           level_json: row.content,
           level_img: img,
+          level_type: row.type,
+          level_status: row.status,
         });
       }
       //console.log("Levels fetched:", levels);
@@ -190,7 +200,7 @@ function get_img_from_level_id(level_id) {
           console.error("Error executing query", err.stack);
           resolve(null);
         } else if (res.rows.length == 0) {
-          resolve(null); // No image found for this level
+          resolve(null);
         } else {
           resolve(res.rows[0].img.toString("hex"));
         }
@@ -209,6 +219,7 @@ function get_json_from_id(level_id) {
           console.error("Error executing query", err.stack);
           resolve("Error");
         } else {
+          console.log(res);
           resolve(res.rows[0].content.data);
         }
       }

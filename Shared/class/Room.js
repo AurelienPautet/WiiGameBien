@@ -12,7 +12,8 @@ try {
 }
 
 class Room {
-  constructor(name, rounds, levels, creator, io = null) {
+  constructor(name, rounds, levels, creator, io = null, password = "") {
+    this.password = password;
     this.io = io;
     this.name = name;
     this.waitingrespawn = false;

@@ -17,5 +17,6 @@ class Bot3 extends Bot {
       plant: true,
       spam: true,
     };
+    this.bullet_type = 2;
   }
 }

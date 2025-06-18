@@ -237,7 +237,9 @@ this.min_interval_shoot = 8;
       }
     );
 
-    this.killing_aims.sort((a, b) => a.distance - b.distance);
+    this.killing_aims.sort(
+      (a, b) => a.distance - b.distance + 0.1 * (a.angle - b.angle)
+    );
 
     if (this.killing_aims && this.killing_aims.length > 0) {
       let i = 0;

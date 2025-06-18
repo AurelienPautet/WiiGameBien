@@ -85,6 +85,13 @@ socket.on("recieve_level_from_id", (levels) => {
     level_layout = levels[0].level_json.data;
     level_name = levels[0].level_name;
     document.getElementById("editor_level_name_input").value = level_name;
+    level_type = levels[0].level_type;
+    console.log(level_type);
+    if (level_type === "online") {
+      document.getElementById("mode_online").click();
+    } else if (level_type === "solo") {
+      document.getElementById("mode_solo").click();
+    }
   }
 });
 
@@ -274,7 +281,8 @@ function save_canvas_as_thumbnail() {
     levelData,
     hexData,
     level_name,
-    max_players
+    max_players,
+    current_mode
   );
 }
 

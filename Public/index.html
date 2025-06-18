@@ -130,7 +130,7 @@
                 class="bg-teal-500 h-14 px-5 hover:bg-teal-600 text-white text-lg m-2 font-extrabold rounded-md"
                 type="button"
                 value="CREATE ROOM"
-                onclick="show_ui_element('room_configuration')"
+                onclick="show_ui_element('mapset_selector')"
               />
               <input
                 class="bg-teal-500 h-14 px-5 hover:bg-teal-600 text-white text-lg m-2 font-extrabold rounded-md"
@@ -432,6 +432,7 @@
                 <option value="5">5</option>
                 <option value="6">6</option>
                 <option value="7">7</option>
+                <option value="8">8</option>
               </select>
             </div>
           </div>
@@ -851,8 +852,8 @@
                 name="room_type"
                 value="public"
                 class="form-radio appearance-none h-5 w-5 border border-slate-400 rounded-full checked:bg-teal-500 checked:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-                checked
                 onclick="document.getElementById('create_room_private_password').classList.add('hidden')"
+                checked
               />
               <label for="public" class="text-white mr-4">Public</label>
               <input
@@ -865,15 +866,27 @@
               />
               <label for="private" class="text-white">Private</label>
             </div>
-            <div id="create_room_private_password " class="hidden">
-              acacacac
+            <div id="create_room_private_password" class="hidden">
+              <input
+                id="room_password_input_create"
+                name="room_password"
+                type="password"
+                class="w-2/3 px-4 py-2.5 text-lg font-bold border-2 border-gray-300 rounded-md focus:outline focus:outline-2 focus:outline-offset-2 bg-slate-500 text-white placeholder:text-slate-300 focus:outline-teal-500"
+                placeholder="room password"
+                required
+              />
             </div>
-            <input
-              class="mt-auto bg-teal-500 h-14 px-5 hover:bg-teal-600 text-white text-lg m-2 font-extrabold rounded-md"
-              type="button"
-              value="CREATE ROOM"
-              onclick="create_room_server()"
-            />
+            <div class="mt-auto w-full text-white text-lg flex flex-col">
+              <h3 id="number_maps_create">0 maps selected</h3>
+              <h3 id="max_player_create">Please select maps</h3>
+
+              <input
+                class="bg-teal-500 h-14 px-5 hover:bg-teal-600 text-white text-lg m-2 font-extrabold rounded-md"
+                type="button"
+                value="CREATE ROOM"
+                onclick="create_room_server()"
+              />
+            </div>
           </div>
           <div
             class="w-full h-full mx-auto bg-slate-700 shadow flex flex-col overflow-hidden rounded-r-md"
@@ -916,6 +929,7 @@
                   <option value="5">5</option>
                   <option value="6">6</option>
                   <option value="7">7</option>
+                  <option value="8">8</option>
                 </select>
               </div>
             </div>
@@ -961,6 +975,7 @@
                 class="px-4 py-2.5 text-lg font-bold border-2 border-gray-300 rounded-md focus:outline focus:outline-2 focus:outline-offset-2 bg-slate-500 text-white focus:outline-teal-500"
                 required
               >
+                <option value="0">Any</option>
                 <option value="1">1</option>
                 <option value="2">2</option>
                 <option value="3">3</option>
@@ -968,6 +983,7 @@
                 <option value="5">5</option>
                 <option value="6">6</option>
                 <option value="7">7</option>
+                <option value="8">8</option>
               </select>
             </div>
           </div>

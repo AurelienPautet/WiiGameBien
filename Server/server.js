@@ -100,8 +100,8 @@ io.on("connect", (socket) => {
     rate_lvl(rate, level_id, socket);
   });
 
-  socket.on("search_levels", (input_name, input_nb_players) => {
-    levels = get_levels(input_name, input_nb_players, socket);
+  socket.on("search_levels", (input_name, input_nb_players, type) => {
+    levels = get_levels(input_name, input_nb_players, type, socket);
   });
 
   socket.on("search_my_levels", (input_name, input_nb_players) => {
@@ -139,10 +139,18 @@ io.on("connect", (socket) => {
 
   socket.on(
     "save_level",
-    (level_id, levelData, hexData, level_name, max_players) => {
+    (level_id, levelData, hexData, level_name, max_players, type) => {
       //console.log(
 
-      save_level(level_id, levelData, hexData, level_name, max_players, socket);
+      save_level(
+        level_id,
+        levelData,
+        hexData,
+        level_name,
+        max_players,
+        type,
+        socket
+      );
     }
   );
 
@@ -311,10 +319,10 @@ async function create_room(name, rounds, list_id, creator, io) {
 //Create the default room and load the first level
 rooms = [];
 
-create_room("6 players", 10, [2, 3, 4], "GAME MASTER", io);
+create_room("2 players", 10, [2, 3, 4], "GAME MASTER", io);
 
 setTimeout(() => {
-  create_room("2 players", 10, [1], "GAME MASTERs", io);
+  create_room("6 players", 10, [1], "GAME MASTER", io);
 }, 10000);
 
 //make an id for the server

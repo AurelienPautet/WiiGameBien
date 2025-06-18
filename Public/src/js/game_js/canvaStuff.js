@@ -47,6 +47,9 @@ body_violetF.src = "ressources/image/tank_player/body_violetF.png";
 turret_violetF = new Image();
 turret_violetF.src = "ressources/image/tank_player/turret_violetF.png";
 
+turret_decalc_bot = new Image();
+turret_decalc_bot.src = "ressources/image/tank_player/turret_decalc_bot.png";
+
 let theme = 6;
 let maxtheme = 6;
 
@@ -199,6 +202,22 @@ function draw() {
       bullet.size.h,
       bullet.angle
     );
+    if (bullet.type === 2) {
+      fast_bullets(
+        {
+          x:
+            bullet.position.x +
+            bullet.size.w / 2 +
+            (Math.cos(bullet.angle) * +bullet.size.w) / 2,
+          y:
+            bullet.position.y +
+            bullet.size.h / 2 +
+            (Math.sin(bullet.angle) * +bullet.size.h) / 2,
+        },
+        bullet.angle,
+        10
+      );
+    }
     if (debug_visual) {
       c.beginPath();
       c.fillStyle = "rgba(255,0,0,0.4)";
@@ -245,6 +264,16 @@ function draw() {
         player.turretsize.h,
         player.angle
       );
+      if (socketid.includes("bot")) {
+        drawTurretRot(
+          turret_decalc_bot,
+          player.position.x,
+          player.position.y,
+          player.turretsize.w,
+          player.turretsize.h,
+          player.angle
+        );
+      }
     } else {
       drawImageRot(
         fc,
@@ -292,7 +321,7 @@ function draw() {
   }
   if (debug_visual) {
     launch_possible_moves({ w: 50, h: 50 }, localroom.players["bot0"]);
-    launch_possible_shots(20, 15, 15, localroom.players["bot0"], {
+    launch_possible_shots(30, 5, 5, localroom.players["bot0"], {
       bullets: false,
       debug: true,
     });

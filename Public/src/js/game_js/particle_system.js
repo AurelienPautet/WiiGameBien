@@ -158,6 +158,39 @@ socket.on("mine_explosion", (data) => {
   explosion(data.position, 100);
 });
 
+function fast_bullets(position, angle, num) {
+  angle = angle - Math.PI;
+  for (let e = 0; e < num; e++) {
+    particles.push(
+      new Particle(
+        structuredClone(position),
+        angle + getRandomNormal((-150 * Math.PI) / 180, (150 * Math.PI) / 180),
+        getRandomArbitrary(0, -5),
+        getRandomArbitrary(2, 4),
+        [
+          {
+            color: {
+              red: 255,
+              green: 0,
+              blue: 0,
+            },
+            percent: 0,
+          },
+          {
+            color: {
+              red: 255,
+              green: 255,
+              blue: 255,
+            },
+            percent: 1,
+          },
+        ],
+        7
+      )
+    );
+  }
+}
+
 function ricochet_sparks(position, angle, num) {
   for (let e = 0; e < num; e++) {
     particles.push(

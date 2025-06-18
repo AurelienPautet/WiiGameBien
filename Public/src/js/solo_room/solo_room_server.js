@@ -1,10 +1,10 @@
 function launch_solo_room() {
-  create_room("Solo Room", 1, [18], "GAME MASTER");
+  create_room("Solo Room", 1, [6], "GAME MASTER");
 }
 
 function loop() {
   setTimeout(loop, 1000 / 60);
-  //make_player_invicible();
+  make_player_invicible();
   //make_player_invicible("bot0");
 
   blocks = localroom.blocks;
@@ -35,8 +35,8 @@ socket.on("recieve_json_from_id", (level_json) => {
   playing_solo = true;
   localroom.spawn_new_player(
     document.getElementById("player_name_input").value,
-    turret_colors[current.turret],
-    body_colors[current.body],
+    turret_colors[current["turret"]],
+    body_colors[current["body"]],
     mysocketid
   );
   localroom.spawn_all_bots();

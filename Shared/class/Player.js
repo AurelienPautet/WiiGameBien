@@ -61,6 +61,7 @@ class Player {
       w: 15,
       h: 15,
     };
+    this.bullet_type = 1;
   }
   spawn() {
     this.position = structuredClone(this.spawnpos);
@@ -74,6 +75,8 @@ class Player {
         this.shoot_speed,
         this.bullet_size,
         this.shoot_max_bounce,
+        this.bullet_type,
+
         this,
         room
       );

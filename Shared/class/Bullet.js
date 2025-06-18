@@ -6,7 +6,8 @@ try {
 }
 
 class Bullet {
-  constructor(position, angle, speed, size, max_bounce, emitter, room) {
+  constructor(position, angle, speed, size, max_bounce, type, emitter, room) {
+    this.type = type;
     this.velocity = {
       x: -Math.cos(angle) * speed,
       y: -Math.sin(angle) * speed,

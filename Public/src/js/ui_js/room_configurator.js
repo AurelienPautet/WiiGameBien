@@ -7,7 +7,6 @@ function create_room_server() {
   //console.log(room_name_input.value);
 
   if (room_name_input.value == "") {
-    //create a toast to inform the user that the room name is empty
     createToast(
       "info",
       "/ressources/image/info.svg",
@@ -17,10 +16,15 @@ function create_room_server() {
     return;
   }
   if (is_selected_not_empty() == false) {
+    /*  createToast(
+      "info",
+      "/ressources/image/info.svg",
+      "Error",
+      "Please select at least 1 level"
+    ); */
     return;
   }
 
-  //send the room name and other data to the server
   socket.emit(
     "new-room",
     room_name_input.value,
@@ -31,7 +35,6 @@ function create_room_server() {
 }
 
 socket.on("room_created", () => {
-  // when the room is created, redirect the user to the game
   socket.emit(
     "play",
     playerName,
