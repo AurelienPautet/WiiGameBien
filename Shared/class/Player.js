@@ -18,7 +18,6 @@ class Player {
     this.position = position;
     this.socketid = socketid;
     this.mytick = 0;
-    this.mvtspeed = 3;
     this.round_stats = new Stats();
     this.spawnpos = {
       x: 0,

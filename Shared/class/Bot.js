@@ -50,6 +50,24 @@ class Bot extends Player {
       spam: true,
     };
 
+    this.move_proba = {
+      right: 0,
+      left: 0,
+      up: 0,
+      down: 0,
+    };
+    this.mvtspeed = 3;
+
+    this.player_is = {
+      right: false,
+      left: false,
+      up: false,
+      down: false,
+    };
+
+    this.wall_coef = 0.3;
+    this.player_coef = 0.1;
+    this.old_dir_coef = 0.5;
     /*     this.min_interval_shoot = 5;
     this.max_rotation_speed = Math.PI / 120;
     this.max_bulletcount = 200;
@@ -139,15 +157,23 @@ this.min_interval_shoot = 8;
   }
 
   random_should_go_to(room) {
+    this.move_proba = {
+      right: 0,
+      left: 0,
+      up: 0,
+      down: 0,
+    };
+
     let closest = this.get_closest_human_player(room);
-    let player_is = {
+    this.player_is = {
       right: false,
       left: false,
       up: false,
       down: false,
     };
+
     if (closest && closest.alive) {
-      player_is = {
+      this.player_is = {
         right: closest.position.x > this.position.x,
         left: closest.position.x < this.position.x,
         up: closest.position.y < this.position.y,
@@ -155,7 +181,7 @@ this.min_interval_shoot = 8;
       };
     }
 
-    if (Math.random() < (this.mine_go_to ? 0 : 0.3)) {
+    if (Math.random() < (this.mine_go_to ? 0 : 0)) {
       this.idle_should_go_to = {
         right: false,
         left: false,
@@ -163,15 +189,29 @@ this.min_interval_shoot = 8;
         down: false,
       };
     } else {
-      this.idle_should_go_to = {
+      this.move_proba = {
         right:
-          Math.random() <
-          (this.wall_go_to.right || player_is.right ? 0.6 : 0.1),
+          this.wall_go_to.right * this.wall_coef +
+          this.player_is.right * this.player_coef +
+          this.idle_should_go_to.right * this.old_dir_coef,
         left:
-          Math.random() < (this.wall_go_to.left || player_is.left ? 0.6 : 0.1),
-        up: Math.random() < (this.wall_go_to.up || player_is.up ? 0.6 : 0.1),
+          this.wall_go_to.left * this.wall_coef +
+          this.player_is.left * this.player_coef +
+          this.idle_should_go_to.left * this.old_dir_coef,
+        up:
+          this.wall_go_to.up * this.wall_coef +
+          this.player_is.up * this.player_coef +
+          this.idle_should_go_to.up * this.old_dir_coef,
         down:
-          Math.random() < (this.wall_go_to.down || player_is.down ? 0.6 : 0.1),
+          this.wall_go_to.down * this.wall_coef +
+          this.player_is.down * this.player_coef +
+          this.idle_should_go_to.down * this.old_dir_coef,
+      };
+      this.idle_should_go_to = {
+        right: Math.random() < this.move_proba.right,
+        left: Math.random() < this.move_proba.left,
+        up: Math.random() < this.move_proba.up,
+        down: Math.random() < this.move_proba.down,
       };
     }
     this.wall_go_to = {

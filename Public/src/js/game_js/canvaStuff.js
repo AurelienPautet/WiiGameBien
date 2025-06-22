@@ -250,8 +250,6 @@ function draw() {
       );
 
       if (player.mytick % 10 === 0) {
-        console.log("tracks", body_tracks);
-
         drawImageRot(
           fc,
           body_tracks,
