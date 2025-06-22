@@ -50,6 +50,9 @@ turret_violetF.src = "ressources/image/tank_player/turret_violetF.png";
 turret_decalc_bot = new Image();
 turret_decalc_bot.src = "ressources/image/tank_player/turret_decalc_bot.png";
 
+body_tracks = new Image();
+body_tracks.src = "ressources/image/tank_player/body_tracks.png";
+
 let theme = 6;
 let maxtheme = 6;
 
@@ -246,6 +249,19 @@ function draw() {
         (player.rotation * Math.PI) / 180
       );
 
+      if (player.mytick % 10 === 0) {
+        console.log("tracks", body_tracks);
+
+        drawImageRot(
+          fc,
+          body_tracks,
+          player.position.x,
+          player.position.y,
+          player.size.w,
+          player.size.h,
+          (player.rotation * Math.PI) / 180
+        );
+      }
       /*       drawImageRot(
         fc,
         eval("body_" + playqqer.bodyc),
@@ -321,7 +337,7 @@ function draw() {
   }
   if (debug_visual) {
     launch_possible_moves({ w: 50, h: 50 }, localroom.players["bot0"]);
-    launch_possible_shots(30, 5, 5, localroom.players["bot0"], {
+    launch_possible_shots(50, 5, 5, localroom.players["bot0"], {
       bullets: false,
       debug: true,
     });

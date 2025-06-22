@@ -8,9 +8,13 @@ class Bot4 extends Bot {
     this.max_bulletcount = 3;
     this.shoot_speed = 10;
     this.precision = 0.01; //default 0.2
-    this.number_of_rays = 100;
+    this.number_of_rays = 50;
     this.size_of_rays = 5;
     this.steps_of_rays = 5;
+    this.bullet_size = {
+      w: 20,
+      h: 20,
+    };
     this.can = {
       move: false,
       shoot: true,

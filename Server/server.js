@@ -218,7 +218,7 @@ tickTockInterval = setTimeout(function toocking() {
   fps_corector = TimeElapsed / 16.67;
 
   rooms.forEach((room) => {
-    if (room.update()) {
+    if (room.update(fps_corector)) {
       for (socketid in room.players) {
         player = room.players[socketid];
         if (users[socketid]) {

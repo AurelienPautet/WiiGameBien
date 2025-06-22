@@ -11,8 +11,8 @@ class Mine {
     room.mines.push(this);
   }
 
-  update() {
-    this.timealive++;
+  update(fps_corector) {
+    this.timealive += fps_corector;
   }
 }
 

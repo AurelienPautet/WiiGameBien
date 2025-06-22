@@ -2,7 +2,6 @@ room_name_input = document.getElementById("room_name_input_create");
 room_rounds_select = document.getElementById("room_rounds_select");
 
 function create_room_server() {
-  //send the room name to the server to create the room
   //console.log("Creating room");
   //console.log(room_name_input.value);
 

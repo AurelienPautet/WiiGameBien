@@ -32,7 +32,7 @@ class possible_shot_points {
 
   update_repeat(N) {
     for (let i = 0; i < N; i++) {
-      if (this.bounce > this.initial_player.shoot_max_bounce) {
+      if (this.bounce >= this.initial_player.shoot_max_bounce) {
         break;
       }
       if (i % 2 == 0) {
@@ -43,6 +43,8 @@ class possible_shot_points {
   }
 
   update_position() {
+    let socketid;
+
     this.calls++;
 
     if (this.bounce >= this.initial_player.shoot_max_bounce) {
@@ -54,8 +56,10 @@ class possible_shot_points {
       y: this.position.y + this.step_size * this.direction.y,
     };
 
-    for (let i = 0; i < mines.length; i++) {
-      const mine = mines[i];
+    let numMines = mines.length;
+    let mine = null;
+    for (let i = 0; i < numMines; i++) {
+      mine = mines[i];
       if (
         rectRect2(
           this.position.x,
@@ -68,7 +72,7 @@ class possible_shot_points {
           mine.radius * 2
         )
       ) {
-        this.bounce = 4;
+        this.bounce = 100;
         this.draw("yellow");
 
         return;
@@ -96,18 +100,19 @@ class possible_shot_points {
           });
         } */
           this.draw("blue");
+          this.bounce = 100;
+
           /*         this.bounce = 4;
         return; */
         }
       }
     }
-
     for (socketid in players) {
-      player = players[socketid];
+      let player = players[socketid];
       if (!player.alive) {
         continue;
       }
-      if (socketid === this.initial_player.socketid && this.calls < 5) {
+      if (socketid === this.initial_player.socketid && this.calls < 7) {
         continue;
       }
       if (socketid.includes("bot")) {
@@ -123,7 +128,7 @@ class possible_shot_points {
             player.size.h + 20
           )
         ) {
-          this.bounce = 4;
+          this.bounce = 100;
           this.draw("orange");
           return;
         }
@@ -150,7 +155,7 @@ class possible_shot_points {
           "bounce",
           this.bounce
         ); */
-        this.bounce = 4;
+        this.bounce = 100;
 
         this.initial_player.killing_aims.push({
           angle: this.initial_angle % (Math.PI * 2),
@@ -227,7 +232,7 @@ class possible_shot_points {
     c.restore(); */
 
     if (this.data.debug) {
-      c.globalAlpha = 0.3;
+      c.globalAlpha = 0.2;
 
       c.beginPath();
       c.arc(this.position.x, this.position.y, 10, 0, 2 * Math.PI);

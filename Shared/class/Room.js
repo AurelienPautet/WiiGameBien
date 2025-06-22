@@ -141,8 +141,9 @@ class Room {
     player.spawn();
   }
 
-  update() {
+  update(fps_corector) {
     this.tick++;
+    this.fps_corector = fps_corector;
     //console.log("Updating room:", this.name, "tick:", this.tick);
     this.update_bullets();
     this.update_mines();
@@ -346,7 +347,7 @@ class Room {
   update_mines() {
     //update the mines
     mining: for (let i = 0; i < this.mines.length; i++) {
-      this.mines[i].update();
+      this.mines[i].update(this.fps_corector);
       if (this.mines[i].timealive > this.timetoeplode) {
         for (let m = 0; m < this.blocks.length; m++) {
           if (this.blocks[m].type == 2) {

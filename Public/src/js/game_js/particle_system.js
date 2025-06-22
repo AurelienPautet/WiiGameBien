@@ -85,6 +85,14 @@ class Chockwave {
   }
 }
 
+class tracks_trace {
+  constructor(player) {
+    this.player = player;
+  }
+
+  draw() {}
+}
+
 particles = [];
 chockwaves = [];
 

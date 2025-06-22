@@ -22,7 +22,28 @@ socket.on("room_list", (lname, lcreator, lplayers, lmaxplayers) => {
   for (let i = 0; i < lname.length; i++) {
     addRoom(lname[i], lcreator[i], lplayers[i], lmaxplayers[i]);
   }
+  add_new_room_button();
 });
+
+function add_new_room_button() {
+  //console.log("Adding new room button");
+  button = document.createElement("div");
+  button.className =
+    "text-white bg-slate-500 hover:bg-slate-600 rounded-md p-4 flex w-full cursor-pointer";
+  button.onclick = button.onclick = function () {
+    show_ui_element("level_selector");
+  };
+  button.innerHTML = `
+    <div class="flex items-center justify-center w-32 h-20 bg-green-800 rounded">
+      <span class="text-4xl">+</span>
+    </div>
+    <div class="ml-4 flex flex-col justify-center">
+      <h3 class="text-xl font-bold">Create a New Room</h3>
+      <p class="mt-2 ">Public or Private Room</p>
+    </div>
+  `;
+  room_list.prepend(button);
+}
 
 function join_room(roomname) {
   document.getElementById(roomname).classList.add("border-teal-500");

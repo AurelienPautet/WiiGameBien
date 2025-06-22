@@ -155,7 +155,7 @@ this.min_interval_shoot = 8;
       };
     }
 
-    if (Math.random() < (this.mine_go_to ? 0 : 0.5)) {
+    if (Math.random() < (this.mine_go_to ? 0 : 0.3)) {
       this.idle_should_go_to = {
         right: false,
         left: false,
@@ -198,7 +198,7 @@ this.min_interval_shoot = 8;
     this.direction.y = 0;
 
     if (this.is_all_false_should_go_to()) {
-      if (this.mytick - this.last_random_move > 30) {
+      if (this.mytick - this.last_random_move > 20) {
         this.random_should_go_to(room);
         this.last_random_move = this.mytick;
       }

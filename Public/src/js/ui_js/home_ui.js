@@ -1,5 +1,5 @@
 tank_select = document.getElementById("tank_select");
-mapset_selector = document.getElementById("mapset_selector");
+level_selector = document.getElementById("level_selector");
 landing_page = document.getElementById("landing_page");
 room_configuration = document.getElementById("room_configuration");
 room_selector = document.getElementById("room_selector");
@@ -16,7 +16,7 @@ profile_or_auth = auth;
 // all the ui elements
 const elements = {
   tank_select,
-  mapset_selector,
+  level_selector,
   landing_page,
   room_configuration,
   room_selector,
@@ -34,7 +34,7 @@ const elements = {
 const before_check = {
   home: alwaystrue,
   tank_select: alwaystrue,
-  mapset_selector: alwaystrue,
+  level_selector: alwaystrue,
   landing_page: alwaystrue,
   room_configuration: get_player_name,
   room_selector: get_player_name,
@@ -53,7 +53,7 @@ const before_check = {
 const after_hide = {
   home: alwaystrue,
   tank_select: alwaystrue,
-  mapset_selector: alwaystrue,
+  level_selector: alwaystrue,
   landing_page: alwaystrue,
   room_configuration: alwaystrue,
   room_selector: alwaystrue,
@@ -213,9 +213,9 @@ function return_home() {
     localStorage.setItem("body", current["body"]);
     localStorage.setItem("turret", current["turret"]);
   }
-  if (current_page == "mapset_selector" && waited) {
+  if (current_page == "level_selector" && waited) {
     if (is_selected_not_empty()) {
-      hide_ui_element("mapset_selector");
+      hide_ui_element("level_selector");
       show_ui_element("room_configuration");
     }
   }

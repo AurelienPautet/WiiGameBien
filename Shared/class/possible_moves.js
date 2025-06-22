@@ -146,25 +146,25 @@ function launch_possible_moves(size, bot) {
       x: bot.position.x + bot.size.w,
       y: bot.position.y + 4,
     },
-    { w: size.w * 1.9, h: size.h - 4 * 2 },
+    { w: size.w * 1.3, h: size.h - 4 * 2 },
     bot,
     "wall left"
   ).update_state();
   new possible_moves(
     {
-      x: bot.position.x - size.w * 1.9,
+      x: bot.position.x - size.w * 1.3,
       y: bot.position.y + 4,
     },
-    { w: size.w * 1.9, h: size.h - 4 * 2 },
+    { w: size.w * 1.3, h: size.h - 4 * 2 },
     bot,
     "wall right"
   ).update_state();
   new possible_moves(
     {
       x: bot.position.x + 4,
-      y: bot.position.y - size.h * 1.9,
+      y: bot.position.y - size.h * 1.3,
     },
-    { w: size.w - 4 * 2, h: size.h * 1.9 },
+    { w: size.w - 4 * 2, h: size.h * 1.3 },
     bot,
     "wall down"
   ).update_state();
@@ -173,7 +173,7 @@ function launch_possible_moves(size, bot) {
       x: bot.position.x + 4,
       y: bot.position.y + bot.size.h,
     },
-    { w: size.w - 4 * 2, h: size.h * 1.9 },
+    { w: size.w - 4 * 2, h: size.h * 1.3 },
     bot,
     "wall up"
   ).update_state();
