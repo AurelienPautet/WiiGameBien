@@ -4,7 +4,7 @@ class Bot3 extends Bot {
     this.shoot_max_bounce = 1;
 
     this.min_interval_shoot = 90;
-    this.max_rotation_speed = Math.PI / 50;
+    this.max_rotation_speed = Math.PI / 100;
     this.max_bulletcount = 3;
 
     this.shoot_speed = 10;

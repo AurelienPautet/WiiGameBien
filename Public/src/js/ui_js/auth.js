@@ -87,6 +87,9 @@ socket.on("signup_fail", (msg) => {
     document
       .getElementById("signup_username_input")
       .classList.add("border-red-500");
+    document
+      .getElementById("google_username_input")
+      .classList.add("border-red-500");
     createToast(
       "info",
       "/ressources/image/info.svg",
@@ -106,7 +109,7 @@ socket.on("signup_fail", (msg) => {
     );
   }
 });
-socket.on("signup_success", (username) => {
+socket.on("signup_success", (username, email) => {
   //console.log("signup success", username);
   logged = true;
 
@@ -178,8 +181,11 @@ socket.on("login_fail", (msg) => {
       "Invalid password"
     );
   }
+  if (msg == "show_username_input") {
+    show_ui_element("google_username");
+  }
 });
-socket.on("login_success", (username) => {
+socket.on("login_success", (username, email) => {
   logged = true;
   myusername = username;
   myemail = email;
@@ -207,7 +213,64 @@ function change_logged_status() {
   }
 }
 
+let google_response = null;
+
+function handleCredentialResponse(response) {
+  google_response = response;
+  console.log("Encoded JWT ID token: " + google_response.credential);
+  console.log("Google login response:", google_response);
+  google_login();
+}
+
+function initializeGoogleAuth() {
+  console.log("Initializing Google Auth");
+  google.accounts.id.initialize({
+    client_id:
+      "403445313450-kvueoci8r29rcpqk2p8jle1escfn6cc9.apps.googleusercontent.com",
+    callback: handleCredentialResponse,
+    auto_select: true,
+  });
+
+  google.accounts.id.renderButton(
+    document.getElementById("GoogleLoginButtonDiv"),
+    {
+      theme: "outline",
+      size: "large",
+      text: "signin",
+      local: "en",
+    }
+  );
+  google.accounts.id.renderButton(
+    document.getElementById("GoogleSignupButtonDiv"),
+    {
+      theme: "outline",
+      size: "large",
+      text: "signup_with",
+      local: "en",
+    }
+  );
+}
+
+window.onload = initializeGoogleAuth;
+
+function google_login() {
+  const idToken = google_response.credential;
+  const username = document.getElementById("google_username_input").value;
+  socket.emit("google_login", idToken, username);
+}
+
+window.handleCredentialResponse = handleCredentialResponse;
+
 function logout() {
+  try {
+    var auth2 = gapi.auth2.getAuthInstance();
+    auth2.signOut().then(function () {
+      console.log("User signed out.");
+    });
+  } catch (error) {
+    console.error("Error signing out from Google:", error);
+  }
+
   socket.emit("logout");
   logged = false;
   change_logged_status();

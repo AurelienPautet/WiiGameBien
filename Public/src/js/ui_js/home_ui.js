@@ -11,6 +11,7 @@ profile = document.getElementById("profile");
 my_level_selector = document.getElementById("my_level_selector");
 rankings = document.getElementById("rankings");
 level_editor = document.getElementById("level_editor");
+google_username = document.getElementById("google_username");
 profile_or_auth = auth;
 
 // all the ui elements
@@ -28,6 +29,7 @@ const elements = {
   my_level_selector,
   rankings,
   level_editor,
+  google_username,
 };
 
 // the functions to run before showing the ui element
@@ -47,6 +49,7 @@ const before_check = {
   my_level_selector: is_logged_in,
   rankings: get_ranking_initial,
   level_editor: alwaystrue,
+  google_username: is_google_response_not_null,
 };
 
 // the functions to run after hiding the ui element
@@ -66,6 +69,7 @@ const after_hide = {
   my_level_selector: alwaystrue,
   rankings: alwaystrue,
   level_editor: alwaystrue,
+  google_username: alwaystrue,
 };
 
 // to prevent double clicking
@@ -97,6 +101,10 @@ function blur_canvas() {
 
 function alwaystrue() {
   return true;
+}
+
+function is_google_response_not_null() {
+  return google_response != null;
 }
 
 function get_ranking_initial() {

@@ -3,6 +3,8 @@ const bcrypt = require("bcryptjs");
 const client = require(__dirname + "/db_client.js");
 const User = require(__dirname + "/User_class.js");
 
+const { signupbis, verifyToken } = require(__dirname + "/auth_server.js");
+
 function get_levels(input_name, imput_nb_players, type, socket) {
   //console.log(input_name, imput_nb_players);
   //console.log(type);
@@ -264,7 +266,7 @@ async function signup(username, email, password, socket) {
   const hashedPassword = await bcrypt.hash(password, salt);
   return new Promise((resolve, reject) => {
     client.query(
-      "INSERT INTO players (username,email,password_hash) VALUES ($1,$2,$3);",
+      "INSERT INTO players (username,email,password_hash,type) VALUES ($1,$2,$3,'db');",
       [username, email, hashedPassword],
       (err, res) => {
         if (err) {
@@ -272,13 +274,81 @@ async function signup(username, email, password, socket) {
           console.error("Error executing query", err.stack);
         } else {
           resolve(true);
-          socket.emit("signup_success", email);
+          socket.emit("signup_success", username, email);
           users[socket.id] = new User(email);
           log_attemps(email, socket.handshake.address, "sign_up_success");
         }
       }
     );
   });
+}
+
+async function is_username_available(username) {
+  try {
+    const res = await client.query(
+      "SELECT * FROM players WHERE username = $1",
+      [username]
+    );
+    return res.rows.length === 0;
+  } catch (err) {
+    console.error("Error executing query", err.stack);
+    return false;
+  }
+}
+
+async function google_login(idToken, username, socket) {
+  const userInfo = await verifyToken(idToken);
+  const email = userInfo.email;
+  const userId = userInfo.userId;
+
+  client.query(
+    "SELECT * FROM players WHERE google_id = $1",
+    [userId],
+    async (err, res) => {
+      if (err) {
+        console.error("Error executing query", err.stack);
+        return;
+      }
+      if (res.rows.length > 0) {
+        const user = res.rows[0];
+        users[socket.id] = new User(user.email);
+        socket.emit("login_success", user.username, user.email);
+        log_attemps(
+          user.email,
+          socket.handshake.address,
+          "login_success_google"
+        );
+      } else {
+        if (username == "") {
+          socket.emit("login_fail", "show_username_input");
+          return;
+        }
+        const available = await is_username_available(username);
+        if (available === false) {
+          socket.emit("signup_fail", "username");
+          return;
+        } else {
+          client.query(
+            "INSERT INTO players (username, email, google_id, type) VALUES ($1, $2, $3, 'google')",
+            [username, email, userId],
+            (err2) => {
+              if (err2) {
+                console.error("Error executing query", err2.stack);
+                return;
+              }
+              users[socket.id] = new User(email);
+              socket.emit("signup_success", username, email);
+              log_attemps(
+                email,
+                socket.handshake.address,
+                "signup_success_google"
+              );
+            }
+          );
+        }
+      }
+    }
+  );
 }
 
 async function login(email, password, socket) {
@@ -308,7 +378,7 @@ async function login(email, password, socket) {
           } else {
             resolve(true);
             users[socket.id] = new User(email);
-            socket.emit("login_success", user.username);
+            socket.emit("login_success", user.username, email);
             log_attemps(email, socket.handshake.address, "login_success");
           }
         }
@@ -546,4 +616,5 @@ module.exports = {
   get_user_stats,
   get_ranking,
   get_user_rank,
+  google_login,
 };

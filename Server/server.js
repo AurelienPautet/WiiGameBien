@@ -44,6 +44,7 @@ const {
   get_user_stats,
   get_ranking,
   get_user_rank,
+  google_login,
 } = require(__dirname + "/database_stuff.js");
 
 io.on("connect", (socket) => {
@@ -90,6 +91,11 @@ io.on("connect", (socket) => {
   socket.on("login", (email, password) => {
     //console.log("login", email, password);
     login(email, password, socket);
+  });
+
+  socket.on("google_login", (id_token, username) => {
+    //console.log("google_login", id_token, username);
+    google_login(id_token, username, socket);
   });
 
   socket.on("logout", () => {
@@ -319,11 +325,11 @@ async function create_room(name, rounds, list_id, creator, io) {
 //Create the default room and load the first level
 rooms = [];
 
-create_room("2 players", 10, [2, 3, 4], "GAME MASTER", io);
+/* create_room("2 players", 10, [2, 3, 4], "GAME MASTER", io);
 
 setTimeout(() => {
   create_room("6 players", 10, [1], "GAME MASTER", io);
-}, 10000);
+}, 10000); */
 
 //make an id for the server
 function makeid(length) {

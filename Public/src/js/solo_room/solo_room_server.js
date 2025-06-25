@@ -1,5 +1,6 @@
 function launch_solo_room() {
-  create_room("Solo Room", 1, [6], "GAME MASTER");
+  /*   create_room("Solo Room", 1, [6], "GAME MASTER");
+   */
 }
 
 let old_time = performance.now();

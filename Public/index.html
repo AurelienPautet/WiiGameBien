@@ -14,6 +14,7 @@
       name="viewport"
       content="width=device-width, initial-scale=0.67, user-scalable=no"
     />
+
     <link rel="stylesheet" href="src/css/tails.css" />
     <link rel="stylesheet" href="src/css/customclass.css" />
   </head>
@@ -695,6 +696,32 @@
         </div>
       </div>
       <div
+        id="google_username"
+        class="absolute w-full h-full flex items-center justify-center flex-col hidden"
+      >
+        <div class="absolute w-full h-full" onclick="return_home()"></div>
+        <div class="h-48 w-1/3 bg-slate-700 p-2 z-50">
+          <h1 class="m-2 text-white text-2xl">Enter your username :</h1>
+          <input
+            class="m-2 w-3/4 px-4 py-2.5 text-lg font-bold border-2 border-gray-300 rounded-md focus:outline focus:outline-2 focus:outline-offset-2 bg-slate-500 text-white placeholder:text-slate-300 focus:outline-teal-500"
+            placeholder="username"
+            control-id="ControlID-3"
+            type="text"
+            id="google_username_input"
+            maxlength="30"
+            name="name"
+            required
+          />
+          <input
+            class="bg-teal-500 w-1/3 hover:bg-teal-600 rounded-md text-white text-lg hover:text-xl font-extrabold m-2"
+            type="button"
+            value="Submit"
+            onclick="google_login()"
+          />
+        </div>
+      </div>
+
+      <div
         id="auth"
         class="absolute w-full h-full flex items-center justify-center flex-col hidden"
       >
@@ -756,6 +783,8 @@
               value="LOGIN"
               onclick="login()"
             />
+            <div id="GoogleLoginButtonDiv"></div>
+            <div class="g_id_signin" data-type="standard"></div>
           </div>
           <div
             id="content_signup"
@@ -808,6 +837,7 @@
               value="SIGNUP"
               onclick="signup()"
             />
+            <div id="GoogleSignupButtonDiv"></div>
           </div>
         </div>
       </div>
@@ -1079,10 +1109,13 @@
     </div>
   </body>
 
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
   <script src="./src/js/client.js" defer></script>
   <script src="./src/js/ui_js/toasts.js" defer></script>
-  <script src="./src/js/ui_js/home_ui.js" defer></script>
   <script src="./src/js/ui_js/auth.js" defer></script>
+
+  <script src="./src/js/ui_js/home_ui.js" defer></script>
   <script src="./src/js/ui_js/profile.js" defer></script>
   <script src="./src/js/ui_js/rankings.js" defer></script>
   <script src="./src/js/ui_js/my_level_selector.js" defer></script>

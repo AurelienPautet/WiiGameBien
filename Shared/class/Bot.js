@@ -35,6 +35,9 @@ class Bot extends Player {
     };
     this.mine_go_to = false;
 
+    this.possible_shot_step = 10;
+    this.mytick = Math.floor(Math.random() * this.possible_shot_step);
+
     this.min_interval_shoot = 140;
     this.max_rotation_speed = Math.PI / 180;
     this.max_bulletcount = 3;
@@ -65,9 +68,10 @@ class Bot extends Player {
       down: false,
     };
 
-    this.wall_coef = 0.3;
+    this.wall_coef = 0.2;
     this.player_coef = 0.1;
     this.old_dir_coef = 0.5;
+    this.opposit_dir_coef = 0.1;
     /*     this.min_interval_shoot = 5;
     this.max_rotation_speed = Math.PI / 120;
     this.max_bulletcount = 200;
@@ -193,19 +197,23 @@ this.min_interval_shoot = 8;
         right:
           this.wall_go_to.right * this.wall_coef +
           this.player_is.right * this.player_coef +
-          this.idle_should_go_to.right * this.old_dir_coef,
+          this.idle_should_go_to.right * this.old_dir_coef -
+          this.opposit_dir_coef * this.should_go_to.left,
         left:
           this.wall_go_to.left * this.wall_coef +
           this.player_is.left * this.player_coef +
-          this.idle_should_go_to.left * this.old_dir_coef,
+          this.idle_should_go_to.left * this.old_dir_coef -
+          this.opposit_dir_coef * this.should_go_to.right,
         up:
           this.wall_go_to.up * this.wall_coef +
           this.player_is.up * this.player_coef +
-          this.idle_should_go_to.up * this.old_dir_coef,
+          this.idle_should_go_to.up * this.old_dir_coef -
+          this.opposit_dir_coef * this.should_go_to.down,
         down:
           this.wall_go_to.down * this.wall_coef +
           this.player_is.down * this.player_coef +
-          this.idle_should_go_to.down * this.old_dir_coef,
+          this.idle_should_go_to.down * this.old_dir_coef -
+          this.opposit_dir_coef * this.should_go_to.up,
       };
       this.idle_should_go_to = {
         right: Math.random() < this.move_proba.right,
@@ -266,20 +274,23 @@ this.min_interval_shoot = 8;
   }
 
   aim_and_shoot() {
-    launch_possible_shots(
-      this.number_of_rays,
-      this.steps_of_rays,
-      this.bullet_size.w / 2,
-      this,
-      {
-        bullets: false,
-        debug: false,
-      }
-    );
+    if (this.mytick % 5 === 0) {
+      this.killing_aims = [];
 
-    this.killing_aims.sort(
-      (a, b) => a.distance - b.distance + 0.1 * (a.angle - b.angle)
-    );
+      launch_possible_shots(
+        this.number_of_rays,
+        this.steps_of_rays,
+        this.bullet_size.w / 2,
+        this,
+        {
+          bullets: false,
+          debug: false,
+        }
+      );
+      this.killing_aims.sort(
+        (a, b) => a.distance - b.distance + 0.1 * (a.angle - b.angle)
+      );
+    }
 
     if (this.killing_aims && this.killing_aims.length > 0) {
       let i = 0;
@@ -337,7 +348,6 @@ this.min_interval_shoot = 8;
         this.idle_desired_angle = (Math.random() - 0.5) * Math.PI * 2;
       }
     }
-    this.killing_aims = [];
   }
 
   angleDifference(current, target) {

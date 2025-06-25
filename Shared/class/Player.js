@@ -156,6 +156,18 @@ class Player {
     if (this.alive) {
       this.position.x += this.velocity.x * fps_corector;
       this.position.y += this.velocity.y * fps_corector;
+      if (this.position.x < 0 + 50) {
+        this.position.x = 0 + 50;
+      }
+      if (this.position.y < 0 + 50) {
+        this.position.y = 0 + 50;
+      }
+      if (this.position.x + this.size.w > 50 * 22) {
+        this.position.x = 50 * 22 - this.size.w;
+      }
+      if (this.position.y + this.size.h > 50 * 16) {
+        this.position.y = 50 * 16 - this.size.h;
+      }
     }
   }
   endofbarrel() {
