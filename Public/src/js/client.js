@@ -1,6 +1,6 @@
 //
 //const socket = io("https://wiitank.pautet.net");
-const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
+//const socket = io("https://wiitank-2aacc4abc5cb.herokuapp.com/");
 //const socket = io("http://localhost:7000/");
 
 socket.on("welcome", (data) => {});
@@ -14,7 +14,8 @@ socket.on("socketid", (socketid) => {
   mysocketid = socketid;
 });
 
-socket.on("id", (pid, socketid) => {
+socket.on("id", (room_idd, pid, socketid) => {
+  room_id = room_idd;
   mysocketid = socketid;
   playerid = pid;
   showgame();
@@ -33,15 +34,16 @@ socket.on("wrongserver", () => {
 });
 
 setInterval(async () => {
-  if (playing && room_name != 0) {
+  if (playing && room_id != -1) {
     socket.emit("tock", {
+      serverid,
       mysocketid,
       playerid,
       direction,
       plant,
       click,
       aim,
-      room_name,
+      room_id,
       mytick,
     });
   } else if (playing_solo) {
@@ -52,7 +54,7 @@ setInterval(async () => {
       plant,
       click,
       aim,
-      room_name,
+      room_id,
       mytick,
     };
     localroom.players[mysocketid].mytick = solo_tick.mytick;
@@ -74,9 +76,12 @@ mytick = 0;
 serverid = "";
 mysocketid = "";
 room_name = 0;
+room_id = -1;
+current_page = "home";
 trying = false;
 playing = false;
 playing_solo = false;
+pause = false;
 solo_tick = {};
 playerid = 0;
 players = [];
@@ -105,6 +110,7 @@ click = false;
 alive = true;
 logged = false;
 socket.on("tick", (data) => {
+  //console.log("tick", data.tick);
   //console.log("tick", data.players);
   bullets = data.bullets;
   mines = data.mines;
@@ -145,8 +151,26 @@ onmousemove = function (e) {
 };
 
 window.addEventListener("click", (event) => {
+  if ((!playing && !playing_solo) || pause) {
+    return;
+  }
   click = true;
 });
+
+function pause_game() {
+  if (playing || playing_solo) {
+    if (pause) {
+      pause = false;
+      old_time = performance.now();
+      hide_ui_element("pause_screen");
+    } else {
+      pause = true;
+      show_ui_element("pause_screen");
+    }
+  } else {
+    return_home();
+  }
+}
 
 window.addEventListener("keydown", (event) => {
   switch (event.code) {
@@ -183,7 +207,7 @@ window.addEventListener("keydown", (event) => {
       loadtheme(theme);
       break;
     case "Escape":
-      return_home();
+      pause_game();
       break;
   }
 });

@@ -22,6 +22,7 @@ class Bullet {
       w: this.size.w * 1.5,
       h: this.size.h,
     };
+    this.last_collision_object = null;
     this.mytick = 0;
     this.bounce = 0;
     this.max_bounce = max_bounce;
@@ -58,9 +59,14 @@ class Bullet {
       obj.size.h,
       0
     );*/
-    this.side = detectCollision(this, obj, { x: 0, y: 0 });
+    if (this.last_collision_object == obj) {
+      return;
+    }
+
+    this.side = detectCollision(this, obj, { x: 2, y: 2 });
     if (this.side != "") {
       room.sounds.ricochet = true;
+      this.last_collision_object = obj;
       this.bounce += 1;
     }
     if (this.side == "right") {

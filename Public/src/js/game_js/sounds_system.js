@@ -42,6 +42,13 @@ function playpause(typelist, e) {
 }
 
 socket.on("tick_sounds", (sounds) => {
+  //console.log("tick sounds", sounds);
+  if (sounds) {
+    plays_sounds(sounds);
+  }
+});
+
+function plays_sounds(sounds) {
   if (sounds.plant) {
     playsound(plants, sound_plant);
 
@@ -69,4 +76,4 @@ socket.on("tick_sounds", (sounds) => {
     //sound_tir.cloneNode().play();
     //playaudio("sounds/tir.wav");
   }
-});
+}

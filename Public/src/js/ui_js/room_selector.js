@@ -1,9 +1,40 @@
 let room_list = document.getElementById("room_list");
+let room_selector_name_input = document.getElementById(
+  "room_selector_name_input"
+);
+let drop_nb_players_room_selector = document.getElementById(
+  "drop_nb_players_room_selector"
+);
 
-function addRoom(room_name, creator_name, int_players, int_players_max) {
+list_of_rooms = [];
+
+function addRoom(
+  room_id,
+  room_name,
+  creator_name,
+  int_players,
+  int_players_max
+) {
+  if (room_name.includes(room_selector_name_input.value) === false) {
+    console.log(
+      `Room ${room_name} does not match the filter ${room_selector_name_input.value}`
+    );
+    return;
+  }
+
+  if (
+    drop_nb_players_room_selector.value >= 0 &&
+    int_players_max !== parseInt(drop_nb_players_room_selector.value)
+  ) {
+    console.log(
+      `Room ${room_name} does not match the player count filter ${drop_nb_players_room_selector.value}`
+    );
+    return;
+  }
+
   let newRoom = document.createElement("div");
   newRoom.innerHTML = `
-            <div id="${room_name}" class="text-white bg-slate-500 rounded-md p-4 flex w-full  hover:bg-slate-600"onclick="join_room('${room_name}')">
+            <div id="Room_${room_id}" class="text-white bg-slate-500 rounded-md p-4 flex w-full  hover:bg-slate-600"onclick="join_room('${room_id}')">
               <div class="flex justify-between w-full">
                 <div class="ml-4 flex-col flex-grow-0">
                   <h3 class="text-xl font-bold">${room_name} by ${creator_name}</h3>
@@ -16,14 +47,27 @@ function addRoom(room_name, creator_name, int_players, int_players_max) {
   room_list.prepend(newRoom);
 }
 
-socket.on("room_list", (lname, lcreator, lplayers, lmaxplayers) => {
-  room_list.innerHTML = "";
-
+socket.on("room_list", (lids, lname, lcreator, lplayers, lmaxplayers) => {
+  list_of_rooms = [];
   for (let i = 0; i < lname.length; i++) {
-    addRoom(lname[i], lcreator[i], lplayers[i], lmaxplayers[i]);
+    list_of_rooms.push({
+      id: lids[i],
+      name: lname[i],
+      creator: lcreator[i],
+      players: lplayers[i],
+      maxplayers: lmaxplayers[i],
+    });
   }
-  add_new_room_button();
+  filter_rooms();
 });
+
+function filter_rooms() {
+  room_list.innerHTML = "";
+  list_of_rooms.forEach((room) => {
+    addRoom(room.id, room.name, room.creator, room.players, room.maxplayers);
+  });
+  add_new_room_button();
+}
 
 function add_new_room_button() {
   //console.log("Adding new room button");
@@ -45,8 +89,8 @@ function add_new_room_button() {
   room_list.prepend(button);
 }
 
-function join_room(roomname) {
-  document.getElementById(roomname).classList.add("border-teal-500");
+function join_room(room_id) {
+  document.getElementById(`Room_${room_id}`).classList.add("border-teal-500");
   //console.log(current["body"], current["turret"]);
 
   socket.emit(
@@ -54,7 +98,7 @@ function join_room(roomname) {
     playerName,
     turret_colors[current["turret"]],
     body_colors[current["body"]],
-    roomname
+    room_id
   );
   trying = true;
 }

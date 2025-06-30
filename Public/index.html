@@ -134,11 +134,44 @@
             class="bg-teal-500 h-14 px-5 hover:bg-teal-600 text-white text-lg m-2 font-extrabold rounded-md"
             type="button"
             value="Play Solo"
-            onclick="launch_solo_room()"
+            onclick="show_ui_element('solo_level_selector')"
           />
         </div>
       </div>
       <div id="notif" class="z-50"></div>
+      <div
+        id="pause_screen"
+        class="hidden absolute w-full h-full border-8 border-teal-600"
+      >
+        <div class="opacity-0 text-4xl">.</div>
+        <div class="relative text-4xl font-bold text-teal-600 flex-col">
+          You are in pause
+        </div>
+        <div class="w-full h-full flex flex-col justify-center items-center">
+          <div class="flex">
+            <div class="group h-24 w-24 m-5" onclick="pause_game()">
+              <img
+                src="/ressources/icons/play.svg"
+                class="block group-hover:hidden"
+              />
+              <img
+                src="/ressources/icons/play_white.svg"
+                class="hidden group-hover:block"
+              />
+            </div>
+            <div class="group h-24 w-24 m-5" onclick="return_home()">
+              <img
+                src="/ressources/icons/home.svg"
+                class="block group-hover:hidden"
+              />
+              <img
+                src="/ressources/icons/home_white.svg"
+                class="hidden group-hover:block"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
       <div
         id="spectator_screen"
         class="hidden absolute w-full h-full border-8 border-yellow-400 pointer-events-none"
@@ -688,10 +721,11 @@
               <h1 class="group-hover:text-xl">Logout</h1>
             </div>
           </div>
-          <div class="bg-slate-700 w-full h-full rounded-b-md p-4">
+          <div
+            class="bg-slate-700 w-full h-3/4 rounded-b-md p-4 overflow-y-auto"
+          >
             <h1 class="font-bold text-white">Stats :</h1>
             <div id="player_stats" class="text-white flex flex-col"></div>
-            <!-- Add more stats content here as needed, following the same styling -->
           </div>
         </div>
       </div>
@@ -728,9 +762,9 @@
         <div class="absolute w-full h-full" onclick="return_home()"></div>
         <div class="h-24 w-3"></div>
         <div
-          class="w-1/4 h-1/2 bg-slate-700 flex align-top-center flex-col z-30 rounded-md"
+          class="w-1/4 h-3/5 bg-slate-700 flex align-top-center flex-col z-30 rounded-md"
         >
-          <div id="onglets" class="h-1/6 flex">
+          <div id="onglets" class="h-14 flex">
             <input
               id="login_onglet"
               class="bg-slate-700 w-1/2 hover:bg-slate-600 text-white text-lg font-extrabold rounded-t-md"
@@ -975,10 +1009,11 @@
                 <span>🔍</span>
                 <input
                   type="text"
-                  id="room_name_input"
+                  id="room_selector_name_input"
                   name="room_name"
                   class="w-full px-4 py-2 text-lg font-bold border-none focus:outline-none focus:ring-0 bg-slate-500 text-white placeholder:text-slate-300"
                   placeholder="Enter room name"
+                  onchange="filter_rooms()"
                   required
                 />
               </div>
@@ -988,12 +1023,13 @@
                 >Players :</label
               >
               <select
-                id="drop_nb_players_room"
+                id="drop_nb_players_room_selector"
                 name="players"
                 class="px-4 py-2.5 text-lg font-bold border-2 border-gray-300 rounded-md focus:outline focus:outline-2 focus:outline-offset-2 bg-slate-500 text-white focus:outline-teal-500"
+                onchange="filter_rooms()"
                 required
               >
-                <option value="0">Any</option>
+                <option value="-1">Any</option>
                 <option value="1">1</option>
                 <option value="2">2</option>
                 <option value="3">3</option>
@@ -1099,7 +1135,170 @@
         </div>
       </div>
       <div
-        class="w-6 border-green-500 h-6 m-3 hover:w-8 hover:h-8 hover:m-1 hidden blur text-yellow-500 bg-gray-200 p-4 w-full border-2 hover:bg-gray-300 ml-4 flex-col flex-grow-0 gap-4 mt-2 text-xl font-bold bg-white px-2 py-1 border-blue-400"
+        id="solo_level_selector"
+        class="hidden absolute w-3/4 h-3/4 bg-slate-600 left-1/4 top-1/8 center_ui rounded-md"
+      >
+        <div id="onglets" class="h-14 flex">
+          <input
+            id="login_onglet"
+            class="bg-slate-700 w-1/2 hover:bg-slate-600 text-white text-lg font-extrabold rounded-t-md"
+            type="button"
+            value="OFFICIAL CAMPAIGN"
+            onclick="switch_onglet(content_campaign)"
+          />
+          <input
+            id="signup_onglet"
+            class="bg-slate-500 w-1/2 hover:bg-slate-600 text-white text-lg font-extrabold rounded-t-md"
+            type="button"
+            value="COMMUNITY LEVELS"
+            onclick="switch_onglet(content_community)"
+          />
+        </div>
+        <div
+          id="content_campaign"
+          class="w-full h-full mx-auto bg-slate-700 flex flex-col overflow-hidden rounded-md"
+        >
+          <!-- Header -->
+          <div
+            class="bg-slate-700 p-4 flex flex-col justify-between items-center"
+          >
+            <h1 class="text-2xl font-bold text-white">
+              OFFICIAL CAMPAIGN LEVELS
+            </h1>
+          </div>
+
+          <!-- Map List -->
+          <div
+            class="p-4 space-y-4 overflow-y-scroll flex-grow-0"
+            id="campaign_level_list"
+          >
+            <div
+              id="${map_id}"
+              class="bg-slate-500 border-slate-500 hover:bg-slate-600 text-white rounded-md p-4 flex w-full border-4"
+              onclick="select_map('${map_id}','${int_players}')"
+            >
+              <img src="${img_src}" alt="" class="w-32 h-24" />
+              <div class="flex justify-between w-full">
+                <div class="ml-4 flex-col flex-grow-0">
+                  <h3 class="text-xl font-bold">
+                    level ${level_id} : ${level_name}
+                  </h3>
+                  <div class="flex gap-4 mt-2">
+                    <div class="bg-slate-700 px-2 py-1 flex items-center">
+                      1 *
+                      <div class="ml-4 relative w-8 h-6">
+                        <img
+                          src="ressources/image/tank_player/body_blue.png"
+                          class="w-6 h-6 absolute"
+                        />
+                        <img
+                          src="ressources/image/tank_player/turret_blue.png"
+                          class="w-8 h-5 absolute -left-3"
+                        />
+                      </div>
+                    </div>
+                    <span class="bg-slate-700 px-2 py-1">3 * 🟩</span>
+                    <span class="bg-slate-700 px-2 py-1">5 * 🟥</span>
+                  </div>
+                </div>
+                <div class="flex">
+                  <span class="${ starstranslate[stars[0]] }">★</span>
+                  <span class="${ starstranslate[stars[1]] }">★</span>
+                  <span class="${ starstranslate[stars[2]] }">★</span>
+                  <span class="${ starstranslate[stars[3]] }">★</span>
+                  <span class="${ starstranslate[stars[4]] }">★</span>
+                </div>
+              </div>
+            </div>
+            <div
+              id="${map_id}"
+              class="relative bg-slate-500 border-slate-500 hover:bg-slate-600 text-white rounded-md p-4 flex w-full border-4"
+              onclick="select_map('${map_id}','${int_players}')"
+            >
+              <div
+                id="level_lock_${map_id}"
+                class="z-20 absolute inset-0 w-full h-full bg-black/20 rounded-md flex flex-col items-center justify-center"
+              >
+                <span
+                  class="text-white text-2xl font-bold flex justify-center items-center"
+                >
+                  <img
+                    src="ressources/icons/lock.svg"
+                    class="h-7 w-7 pb-1 mr-1"
+                  />
+                  Level ${level_id} Locked
+                </span>
+                <p class="text-white">Complete all previous levels to unlock</p>
+              </div>
+              <div id="level_content_${map_id}" class="flex w-full blur-sm">
+                <img src="${img_src}" alt="" class="w-32 h-24" />
+                <div class="flex justify-between w-full">
+                  <div class="ml-4 flex-col flex-grow-0">
+                    <h3 class="text-xl font-bold">
+                      level ${level_id} : ${level_name}
+                    </h3>
+                    <div class="flex gap-4 mt-2">
+                      <div class="bg-slate-700 px-2 py-1">
+                        1 *
+                        <div>
+                          <img
+                            src="ressources/image/tank_player/body_blue.png"
+                            class="w-6 h-6 select-none absolute top-0 left-0 transform translate-x-1 translate-y-1"
+                          />
+                          <img
+                            src="ressources/image/tank_player/turret_blue.png"
+                            class="w-6 h-6 select-none absolute top-0 left-0 transform translate-x-1 translate-y-1"
+                          />
+                        </div>
+                      </div>
+                      <span class="bg-slate-700 px-2 py-1">3 * 🟩</span>
+                      <span class="bg-slate-700 px-2 py-1">5 * 🟥</span>
+                    </div>
+                  </div>
+                  <div class="flex">
+                    <span class="${ starstranslate[stars[0]] }">★</span>
+                    <span class="${ starstranslate[stars[1]] }">★</span>
+                    <span class="${ starstranslate[stars[2]] }">★</span>
+                    <span class="${ starstranslate[stars[3]] }">★</span>
+                    <span class="${ starstranslate[stars[4]] }">★</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          id="content_community"
+          class="hidden w-full h-full mx-auto bg-slate-700 flex flex-col overflow-hidden rounded-md"
+        >
+          <!-- Header -->
+          <div class="bg-slate-700 p-4 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+              <span class="font-bold text-xl text-white">Level name:</span>
+              <div class="flex items-center bg-slate-500 px-3 py-1 rounded-md">
+                <span>🔍</span>
+                <input
+                  type="text"
+                  id="level_selector_name_input"
+                  name="level_name"
+                  class="w-full px-4 py-2 text-lg font-bold border-none focus:outline-none focus:ring-0 bg-slate-500 text-white placeholder:text-slate-300"
+                  placeholder="Enter level name"
+                  onchange="filter_rooms()"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Map List -->
+          <div
+            class="p-4 space-y-4 overflow-y-scroll flex-grow-0"
+            id="community_level_list"
+          ></div>
+        </div>
+      </div>
+      <div
+        class="text-left text-slate-200 w-6 border-green-500 h-6 m-3 hover:w-8 hover:h-8 hover:m-1 hidden blur text-yellow-500 bg-gray-200 p-4 w-full border-2 hover:bg-gray-300 ml-4 flex-col flex-grow-0 gap-4 mt-2 text-xl font-bold bg-white px-2 py-1 border-blue-400"
       ></div>
 
       <div
@@ -1129,6 +1328,8 @@
   <!-- <script src="./webjlStuff.js" defer></script> -->
   <script src="./src/js/ui_js/tankselectslider.js" defer></script>
   <script src="./src/js/ui_js/level_selector.js" defer></script>
+  <script src="./src/js/ui_js/campaign_level_selector.js" defer></script>
+
   <script src="./src/js/ui_js/room_selector.js" defer></script>
   <script src="./src/js/ui_js/room_configurator.js" defer></script>
   <script src="./src/js/ui_js/rescale.js" defer></script>

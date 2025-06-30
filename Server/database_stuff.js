@@ -1,9 +1,11 @@
 const bcrypt = require("bcryptjs");
-// Removed duplicate import of User
 const client = require(__dirname + "/db_client.js");
 const User = require(__dirname + "/User_class.js");
 
 const { signupbis, verifyToken } = require(__dirname + "/auth_server.js");
+
+// TO OPTIMIZE
+// write the big fucking queries instead of doing multiple smaller ones
 
 function get_levels(input_name, imput_nb_players, type, socket) {
   //console.log(input_name, imput_nb_players);
@@ -172,7 +174,8 @@ function fetch_levels(query_tosend, values, socket, response_event) {
       for (const row of res.rows) {
         const cname = await get_creator_name(row);
         const img = await get_img_from_level_id(row.id);
-
+        const stats = await get_statsfrom_level_id(row.id);
+        //console.log("stats", stats);
         levels.push({
           level_id: row.id,
           level_name: row.name,
@@ -183,12 +186,39 @@ function fetch_levels(query_tosend, values, socket, response_event) {
           level_img: img,
           level_type: row.type,
           level_status: row.status,
+          level_rounds_played: stats ? stats.rounds_played : 0,
+          level_kills: stats ? stats.kills : 0,
+          level_deaths: stats ? stats.deaths : 0,
+          level_wins: stats ? stats.wins : 0,
+          level_shots: stats ? stats.shots : 0,
+          level_hits: stats ? stats.hits : 0,
+          level_plants: stats ? stats.plants : 0,
+          level_blocks_destroyed: stats ? stats.blocks_destroyed : 0,
         });
       }
       //console.log("Levels fetched:", levels);
       socket.emit(response_event, levels);
       return levels;
     }
+  });
+}
+
+function get_statsfrom_level_id(level_id) {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "SELECT COUNT(id) as rounds_played, SUM(kills) as kills, SUM(deaths) as deaths, SUM(wins) as wins, SUM(shots) as shots, SUM(hits) as hits, SUM(plants) as plants, SUM(blocks_destroyed) as blocks_destroyed FROM rounds WHERE level_id = $1",
+      [level_id],
+      (err, res) => {
+        if (err) {
+          console.error("Error executing query", err.stack);
+          resolve(null);
+        } else if (res.rows.length == 0) {
+          resolve(null);
+        } else {
+          resolve(res.rows[0]);
+        }
+      }
+    );
   });
 }
 
@@ -221,7 +251,7 @@ function get_json_from_id(level_id) {
           console.error("Error executing query", err.stack);
           resolve("Error");
         } else {
-          console.log(res);
+          //console.log(res);
           resolve(res.rows[0].content.data);
         }
       }
@@ -469,7 +499,11 @@ async function rate_lvl(rate, level_id, socket) {
 async function add_round(player_socket_id, level_id, stats_to_add) {
   //console.log("adding rounds", player_socket_id, level_id, stats_to_add);
   try {
-    player_id = users[player_socket_id].id;
+    if (player_socket_id == null) {
+      player_id = null;
+    } else {
+      player_id = users[player_socket_id].id;
+    }
     client.query(
       "INSERT INTO rounds (player_id, level_id, kills, deaths, wins, shots, hits, plants, blocks_destroyed) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
       [

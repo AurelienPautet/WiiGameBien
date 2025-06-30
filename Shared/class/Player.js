@@ -62,8 +62,13 @@ class Player {
     };
     this.bullet_type = 1;
   }
-  spawn() {
-    this.position = structuredClone(this.spawnpos);
+  spawn(spawn_pos) {
+    console.log("Spawning player at", spawn_pos);
+    this.alive = true;
+    this.minecount = 0;
+    this.bulletcount = 0;
+    this.position = structuredClone(spawn_pos);
+    this.spawnpos = spawn_pos;
   }
   shoot(room) {
     this.endofbarrel();
@@ -95,6 +100,10 @@ class Player {
   }
 
   update(room, fps_corector) {
+    if (this.position == undefined) {
+      //console.error("Player position is undefined, cannot update.");
+      return;
+    }
     this.CalculateAngle();
     //this.alive = true;
 
@@ -181,16 +190,25 @@ class Player {
       (30 + this.bullet_size.h * 1) * Math.sin(this.angle);
   }
   CalculateAngle() {
-    let adjacent = this.aim.x - (this.position.x + this.size.w / 2);
-    let opposite = this.aim.y - (this.position.y + this.size.h / 2);
-    let angle = Math.atan(opposite / adjacent);
-    if (adjacent < 0) {
-      this.angle = angle;
-    } else {
-      this.angle = angle + Math.PI;
+    try {
+      let adjacent = this.aim.x - (this.position.x + this.size.w / 2);
+      let opposite = this.aim.y - (this.position.y + this.size.h / 2);
+      let angle = Math.atan(opposite / adjacent);
+      if (adjacent < 0) {
+        this.angle = angle;
+      } else {
+        this.angle = angle + Math.PI;
+      }
+    } catch (e) {
+      console.error("Error calculating angle:", e);
+      this.angle = 0; // Fallback to a default value
     }
   }
   BulletCollision(obj) {
+    if (this.position == undefined) {
+      //console.error("Player position is undefined, cannot check bullet collision.");
+      return false;
+    }
     return (this.side = rectRect(
       this.position.y,
       this.position.x,

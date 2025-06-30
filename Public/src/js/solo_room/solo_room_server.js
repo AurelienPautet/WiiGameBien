@@ -7,6 +7,9 @@ let old_time = performance.now();
 let fps_corector = 1;
 function loop() {
   setTimeout(loop, 1000 / 60);
+  if (pause) {
+    return;
+  }
   make_player_invicible();
   //make_player_invicible("bot0");
 
@@ -16,6 +19,8 @@ function loop() {
   bullets = localroom.bullets;
   players = localroom.players;
   holes = localroom.holes;
+  sounds = localroom.sounds;
+  plays_sounds(sounds);
   let new_time = performance.now();
   fps_corector = (new_time - old_time) / 16.666666666666668;
   old_time = new_time;

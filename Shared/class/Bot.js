@@ -36,8 +36,6 @@ class Bot extends Player {
     this.mine_go_to = false;
 
     this.possible_shot_step = 10;
-    this.mytick = Math.floor(Math.random() * this.possible_shot_step);
-
     this.min_interval_shoot = 140;
     this.max_rotation_speed = Math.PI / 180;
     this.max_bulletcount = 3;
@@ -72,6 +70,9 @@ class Bot extends Player {
     this.player_coef = 0.1;
     this.old_dir_coef = 0.5;
     this.opposit_dir_coef = 0.1;
+
+    this.mytick = Math.floor(Math.random() * this.min_interval_shoot);
+
     /*     this.min_interval_shoot = 5;
     this.max_rotation_speed = Math.PI / 120;
     this.max_bulletcount = 200;
@@ -241,17 +242,26 @@ this.min_interval_shoot = 8;
   }
 
   move() {
-    launch_possible_moves({ w: 50, h: 50 }, this);
-    this.direction.x = 0;
-    this.direction.y = 0;
+    if (this.mytick % 5 === 0) {
+      this.should_go_to = {
+        right: false,
+        left: false,
+        up: false,
+        down: false,
+      };
+      launch_possible_moves({ w: 50, h: 50 }, this);
+      this.direction.x = 0;
+      this.direction.y = 0;
 
-    if (this.is_all_false_should_go_to()) {
-      if (this.mytick - this.last_random_move > 20) {
-        this.random_should_go_to(room);
-        this.last_random_move = this.mytick;
+      if (this.is_all_false_should_go_to()) {
+        if (this.mytick - this.last_random_move > 20) {
+          this.random_should_go_to(room);
+          this.last_random_move = this.mytick;
+        }
+        this.should_go_to = structuredClone(this.idle_should_go_to);
       }
-      this.should_go_to = structuredClone(this.idle_should_go_to);
     }
+
     if (this.should_go_to.right) {
       this.direction.x = this.mvtspeed;
     }
@@ -264,13 +274,6 @@ this.min_interval_shoot = 8;
     if (this.should_go_to.down) {
       this.direction.y = this.mvtspeed;
     }
-
-    this.should_go_to = {
-      right: false,
-      left: false,
-      up: false,
-      down: false,
-    };
   }
 
   aim_and_shoot() {

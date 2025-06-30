@@ -15,8 +15,8 @@ class possible_shot_points {
     this.radius = radius;
     this.initial_angle = initial_angle;
     this.position = {
-      x: initial_position.x + 30 * Math.cos(initial_angle),
-      y: initial_position.y + 30 * Math.sin(initial_angle),
+      x: initial_position.x + 40 * Math.cos(initial_angle),
+      y: initial_position.y + 40 * Math.sin(initial_angle),
     };
     this.direction = {
       x: Math.cos(initial_angle),
@@ -122,10 +122,10 @@ class possible_shot_points {
             this.position.y,
             this.radius * 2,
             this.radius * 2,
-            player.position.x - 10,
-            player.position.y - 10,
-            player.size.w + 20,
-            player.size.h + 20
+            player.position.x,
+            player.position.y,
+            player.size.w,
+            player.size.h
           )
         ) {
           this.bounce = 100;
@@ -259,7 +259,7 @@ function launch_possible_shots(N, step_size, radius, bot, data) {
       bot,
       data
     );
-    shot.update_repeat(1000);
+    shot.update_repeat(10000);
   }
 }
 

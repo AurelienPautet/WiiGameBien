@@ -33,12 +33,12 @@ function create_room_server() {
   );
 }
 
-socket.on("room_created", () => {
+socket.on("room_created", (room_idd) => {
   socket.emit(
     "play",
     playerName,
     turret_colors[current["turret"]],
     body_colors[current["body"]],
-    room_name_input.value
+    room_idd
   );
 });

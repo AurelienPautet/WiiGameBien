@@ -12,7 +12,20 @@ try {
 }
 
 class Room {
+  static next_id = 0;
+  static bot_colors = {
+    bot1: ["blue", "blue"],
+    bot2: ["green", "green"],
+    bot3: ["orange", "orange"],
+    bot4: ["red", "red"],
+  };
+
+  static getNextId() {
+    return Room.next_id++;
+  }
+
   constructor(name, rounds, levels, creator, io = null, password = "") {
+    this.id = Room.getNextId();
     this.password = password;
     this.io = io;
     this.name = name;
@@ -53,6 +66,13 @@ class Room {
   }
 
   spawn_new_player(playerName, turretc, bodyc, socketid) {
+    console.log(
+      "Spawning new player:",
+      playerName,
+      "with socket ID:",
+      socketid
+    );
+
     let new_player = new Player(
       { x: 0, y: 0 },
       socketid,
@@ -71,6 +91,16 @@ class Room {
     this.spawn_player(player, spawns);
   }
 
+  spawn_player(player, spawns) {
+    let spawnid = Math.floor(Math.random() * spawns.length);
+    //console.log("caca:", this.spawns, "at spawn id:", this.spawns[spawnid]);
+
+    this.nbliving += 1;
+    player.spawn(spawns[spawnid]);
+
+    spawns.splice(spawnid, 1);
+  }
+
   spawn_all_bots() {
     console.log(
       "Spawning bots in room:",
@@ -84,8 +114,8 @@ class Room {
         { x: 0, y: 0 },
         `bot${bot_index}`,
         `Bot1_ ${i}`,
-        "blue",
-        "blue"
+        Room.bot_colors.bot1[0],
+        Room.bot_colors.bot1[1]
       );
       this.spawn_new(bot, `bot${i}`, this.bot1_spawns);
       bot_index++;
@@ -96,8 +126,8 @@ class Room {
         { x: 0, y: 0 },
         `bot${bot_index}`,
         `Bot2_ ${i}`,
-        "green",
-        "green"
+        Room.bot_colors.bot2[0],
+        Room.bot_colors.bot2[1]
       );
       this.spawn_new(bot, `bot${bot_index}`, this.bot2_spawns);
       bot_index++;
@@ -108,8 +138,8 @@ class Room {
         { x: 0, y: 0 },
         `bot${bot_index}`,
         `Bot3_ ${i}`,
-        "orange",
-        "orange"
+        Room.bot_colors.bot3[0],
+        Room.bot_colors.bot3[1]
       );
       this.spawn_new(bot, `bot${bot_index}`, this.bot3_spawns);
       bot_index++;
@@ -128,20 +158,14 @@ class Room {
     }
   }
 
-  spawn_player(player, spawns) {
-    player.alive = true;
-    player.minecount = 0;
-    player.bulletcount = 0;
-    let spawnid = Math.floor(Math.random() * spawns.length);
-    player.position = structuredClone(spawns[spawnid]);
-    //console.log("caca:", this.spawns, "at spawn id:", this.spawns[spawnid]);
-    this.nbliving += 1;
-    player.spawnpos = spawns[spawnid];
-    spawns.splice(spawnid, 1);
-    player.spawn();
-  }
-
   update(fps_corector) {
+    this.sounds = {
+      plant: false,
+      kill: false,
+      shoot: false,
+      ricochet: false,
+      explose: false,
+    };
     this.tick++;
     this.fps_corector = fps_corector;
     //console.log("Updating room:", this.name, "tick:", this.tick);
@@ -158,20 +182,14 @@ class Room {
       tick: this.tick,
     });
     this.emit_to_room("tick_sounds", this.sounds);
-    this.sounds = {
-      plant: false,
-      kill: false,
-      shoot: false,
-      ricochet: false,
-      explose: false,
-    };
+
     return this.check_for_winns_and_load_next_level();
   }
 
   emit_to_room(string, data) {
     //console.log("caca", this.io);
     if (this.io != null) {
-      this.io.to(this.name).emit(string, data);
+      this.io.to(this.id).emit(string, data);
     } else {
       //console.error("No io instance available to emit to this:", this.name);
     }

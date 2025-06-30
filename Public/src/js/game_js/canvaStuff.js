@@ -56,6 +56,8 @@ body_tracks.src = "ressources/image/tank_player/body_tracks.png";
 let theme = 6;
 let maxtheme = 6;
 
+let draw_ticks = 0;
+
 block1 = new Image();
 block2 = new Image();
 bullet1 = new Image();
@@ -91,6 +93,7 @@ fc.globalAlpha = 0.05;
 c.globalAlpha = 1;
 
 function draw() {
+  draw_ticks++;
   window.requestAnimationFrame(draw);
   fc.drawImage(bg, 0, 0, fading_canvas.width, fading_canvas.height);
   c.clearRect(0, 0, canvas.width, canvas.height);
@@ -249,7 +252,7 @@ function draw() {
         (player.rotation * Math.PI) / 180
       );
 
-      if (player.mytick % 10 === 0) {
+      if (draw_ticks % 15 === 0) {
         drawImageRot(
           fc,
           body_tracks,
