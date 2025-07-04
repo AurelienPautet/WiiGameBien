@@ -648,6 +648,38 @@ video {
   top: 100%;
 }
 
+.right-full{
+  right: 100%;
+}
+
+.-top-56{
+  top: -14rem;
+}
+
+.top-3\/4{
+  top: 75%;
+}
+
+.-top-32{
+  top: -8rem;
+}
+
+.-top-36{
+  top: -9rem;
+}
+
+.-top-40{
+  top: -10rem;
+}
+
+.-left-72{
+  left: -18rem;
+}
+
+.-left-96{
+  left: -24rem;
+}
+
 .z-10{
   z-index: 10;
 }
@@ -957,6 +989,14 @@ video {
   width: 100%;
 }
 
+.w-72{
+  width: 18rem;
+}
+
+.w-96{
+  width: 24rem;
+}
+
 .flex-grow-0{
   flex-grow: 0;
 }
@@ -1046,6 +1086,10 @@ video {
 
 .gap-4{
   gap: 1rem;
+}
+
+.gap-1{
+  gap: 0.25rem;
 }
 
 .space-y-2 > :not([hidden]) ~ :not([hidden]){
@@ -1863,6 +1907,10 @@ canvas {
 .hover\:text-slate-100:hover{
   --tw-text-opacity: 1;
   color: rgb(241 245 249 / var(--tw-text-opacity));
+}
+
+.hover\:underline:hover{
+  text-decoration-line: underline;
 }
 
 .focus\:outline-none:focus{
