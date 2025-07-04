@@ -230,7 +230,7 @@ class possible_shot_points {
     c.fill();
     c.closePath();
     c.restore(); */
-
+    return;
     if (this.data.debug) {
       c.globalAlpha = 0.2;
 

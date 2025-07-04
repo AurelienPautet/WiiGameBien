@@ -54,7 +54,7 @@ const before_check = {
   level_editor: alwaystrue,
   google_username: is_google_response_not_null,
   solo_level_selector: alwaystrue,
-  pause_screen: alwaystrue,
+  pause_screen: blur_canvas,
 };
 
 // the functions to run after hiding the ui element
@@ -76,7 +76,7 @@ const after_hide = {
   level_editor: alwaystrue,
   google_username: alwaystrue,
   solo_level_selector: alwaystrue,
-  pause_screen: alwaystrue,
+  pause_screen: deblur_canvas,
 };
 
 // to prevent double clicking
@@ -89,7 +89,7 @@ var playerName = "";
 try {
   playerName = localStorage.getItem("playerName");
   document.getElementById("player_name_input").value = playerName;
-  //console.log(playerName);
+  console.log(playerName);
   if (playerName == null) {
     playerName = "";
   }
@@ -99,10 +99,12 @@ try {
 
 function deblur_canvas() {
   the_canvas.classList.remove("blur");
+  fading_canvas.classList.remove("blur");
   return true;
 }
 function blur_canvas() {
   the_canvas.classList.add("blur");
+  fading_canvas.classList.add("blur");
   return true;
 }
 

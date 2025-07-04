@@ -1,3 +1,6 @@
+// curently not used beacause very vey bad mdrrrrr
+// Shallah j'aurais pas la flemme un jour
+
 player_reonciliation = false;
 
 function reconciliation_loop() {

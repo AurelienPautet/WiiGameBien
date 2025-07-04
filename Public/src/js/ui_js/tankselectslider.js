@@ -54,10 +54,10 @@ function load_old_tank() {
   try {
     current["body"] = parseInt(localStorage.getItem("body"), 10);
     current["turret"] = parseInt(localStorage.getItem("turret"), 10);
-    //console.log(current["body"], current["turret"]);
+    console.log("Loaded tank:", current["body"], current["turret"]);
 
     if (isNaN(current["body"]) || isNaN(current["turret"])) {
-      //console.log("nan");
+      //console.log("pkkkkkkkkkkkkkkkkkkkkkkkkkk");
       random_tank();
     } else {
       update_tank_visualiser();
@@ -74,6 +74,8 @@ function load_old_tank() {
     return_home();
   }, 2);
 }
+
+load_old_tank();
 
 function random_tank() {
   current["body"] = Math.floor(Math.random() * body_colors.length);
@@ -129,7 +131,11 @@ function shrink(elementid) {
 let pressed = { body: false, turret: false };
 let x = 0;
 
-/* 
+/*
+
+C'est de la grosse merde !!!!!!!!!!!
+
+
 let turret_select = document.getElementById("turret_select");
 turret_select.addEventListener("mousedown", () => {
   dragdown("turret");

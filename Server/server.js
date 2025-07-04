@@ -24,28 +24,30 @@ const io = socketio(expressServer, {
 });
 
 const { loadlevel } = require(__dirname + "/../Shared/scripts/level_loader.js");
+const { makeid } = require(__dirname + "/../Shared/scripts/commons.js");
 
 const Room = require(__dirname + "/../Shared/class/Room.js");
 
+const { get_level_rating_from_player, rate_lvl } = require(__dirname +
+  "/database/db_levels_ratings.js");
 const {
   get_levels,
   get_my_levels,
   get_level_from_id,
   save_level,
   get_max_players,
+  get_creator_name,
+  fetch_levels,
+  get_statsfrom_level_id,
+  get_img_from_level_id,
   get_json_from_id,
-  signup,
-  login,
-  logout,
-  get_user_info,
-  rate_lvl,
-  get_level_rating_from_player,
-  add_round,
-  get_user_stats,
-  get_ranking,
-  get_user_rank,
-  google_login,
-} = require(__dirname + "/database_stuff.js");
+} = require(__dirname + "/database/db_level.js");
+const { get_user_stats, add_round } = require(__dirname +
+  "/database/db_stats.js");
+const { get_ranking, get_user_rank } = require(__dirname +
+  "/database/db_rankings.js");
+const { signup, login, google_login, logout } = require(__dirname +
+  "/database/db_auth.js");
 
 io.on("connect", (socket) => {
   room_list(socket);
@@ -345,19 +347,6 @@ create_room("2 players", 10, [2], "GAME MASTER", io);
 setTimeout(() => {
   create_room("6 players", 10, [1], "GAME MASTER", io);
 }, 10000); */
-
-function makeid(length) {
-  let result = "";
-  const characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  const charactersLength = characters.length;
-  let counter = 0;
-  while (counter < length) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    counter += 1;
-  }
-  return result;
-}
 
 serverid = makeid(15);
 //console.log(serverid);

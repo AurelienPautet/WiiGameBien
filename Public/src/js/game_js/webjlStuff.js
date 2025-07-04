@@ -1,4 +1,4 @@
-//CURRENTLY NOT WORKING
+//CURRENTLY NOT WORKING (piece of crap)
 //But i would like to add shaders to the game and making it pretier
 //using webgl
 

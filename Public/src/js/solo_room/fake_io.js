@@ -16,6 +16,6 @@ class FakeIO {
       explosion(data.position, 100);
     }
 
-    return event + " emitted to room with data: " + JSON.stringify(data);
+    //return event + " emitted to room with data: " + JSON.stringify(data);
   }
 }
