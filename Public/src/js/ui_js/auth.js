@@ -202,7 +202,7 @@ socket.on("login_success", (username, email) => {
     username + " logged in"
   );
   return_home();
-  show_ui_element("profile_or_auth");
+  //show_ui_element("profile_or_auth");
 });
 
 function change_logged_status() {
@@ -270,6 +270,7 @@ function logout() {
   } catch (error) {
     console.error("Error signing out from Google:", error);
   }
+  localStorage.removeItem("session_id");
 
   socket.emit("logout");
   logged = false;
@@ -278,3 +279,16 @@ function logout() {
   createToast("info", "/ressources/icons/logout.svg", "Success", "Logged out");
   //console.log("logout success");
 }
+
+socket.on("session_created", (session_id) => {
+  localStorage.setItem("session_id", session_id);
+});
+
+socket.on("session_not_valid", () => {
+  localStorage.removeItem("session_id");
+});
+
+try {
+  session_id = localStorage.getItem("session_id");
+  socket.emit("local_session_id", session_id);
+} catch (e) {}

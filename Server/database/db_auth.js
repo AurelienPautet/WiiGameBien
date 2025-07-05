@@ -2,6 +2,8 @@ const bcrypt = require("bcryptjs");
 const path = require("path");
 const client = require(path.join(__dirname, "..", "db_client.js"));
 const User = require(path.join(__dirname, "..", "User_class.js"));
+
+const { makeid } = require(__dirname + "/../../Shared/scripts/commons.js");
 const { signupbis, verifyToken } = require(path.join(
   __dirname,
   "..",
@@ -56,6 +58,7 @@ async function signup(username, email, password, socket) {
           socket.emit("signup_success", username, email);
           users[socket.id] = new User(email);
           log_attemps(email, socket.handshake.address, "sign_up_success");
+          new_user_session(socket, email);
         }
       }
     );
@@ -97,6 +100,7 @@ async function google_login(idToken, username, socket) {
           socket.handshake.address,
           "login_success_google"
         );
+        new_user_session(socket, user.email);
       } else {
         if (username == "") {
           socket.emit("login_fail", "show_username_input");
@@ -122,6 +126,7 @@ async function google_login(idToken, username, socket) {
                 socket.handshake.address,
                 "signup_success_google"
               );
+              new_user_session(socket, email);
             }
           );
         }
@@ -159,6 +164,7 @@ async function login(email, password, socket) {
             users[socket.id] = new User(email);
             socket.emit("login_success", user.username, email);
             log_attemps(email, socket.handshake.address, "login_success");
+            new_user_session(socket, email);
           }
         }
       }
@@ -166,7 +172,62 @@ async function login(email, password, socket) {
   });
 }
 
+function new_user_session(socket, email) {
+  let session_id = makeid(120);
+  client.query(
+    "SELECT id FROM players WHERE email = $1",
+    [email],
+    (err, res) => {
+      if (err) {
+        console.log("Error executing query", err.stack);
+        return;
+      }
+      if (res.rows.length == 0) {
+        console.log("User not found for session creation");
+        return;
+      }
+      const player_id = res.rows[0].id;
+      client.query(
+        "INSERT INTO player_sessions (player_id, session_token) VALUES ($1, $2)",
+        [player_id, session_id],
+        (err2) => {
+          if (err2) {
+            console.log("Error executing query", err2.stack);
+            return;
+          }
+          socket.emit("session_created", session_id);
+        }
+      );
+    }
+  );
+}
+
+function verify_session(socket, session_id) {
+  client.query(
+    "SELECT * FROM player_sessions join players on players.id = player_sessions.player_id where session_token = $1 AND expiration_timestamp > NOW()",
+    [session_id],
+    (err, res) => {
+      if (err) {
+        console.log("Error executing query", err.stack);
+      } else if (res.rows.length == 0) {
+        console.log("Session not found or expired");
+        socket.emit("session_not_valid");
+        logout(socket);
+      } else {
+        const user = res.rows[0];
+        users[socket.id] = new User(user.email);
+        socket.emit("login_success", user.username, user.email);
+        log_attemps(user.email, socket.handshake.address, "auto_login_success");
+      }
+    }
+  );
+}
+
 async function logout(socket) {
+  if (!users[socket.id]) {
+    console.log("No user found for logout");
+    return;
+  }
   email = users[socket.id].email;
   delete users[socket.id];
   log_attemps(email, socket.handshake.address, "logout_success");
@@ -177,4 +238,5 @@ module.exports = {
   login,
   google_login,
   logout,
+  verify_session,
 };

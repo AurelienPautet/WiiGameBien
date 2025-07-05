@@ -57,6 +57,7 @@ CREATE TABLE campaign_levels (
 	id INT NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	campaign_id INT NOT NULL,
 	level_id INT NOT NULL,
+	order_index INT NOT NULL,
 	FOREIGN KEY (campaign_id) REFERENCES campaigns(id),
 	FOREIGN KEY (level_id) REFERENCES levels(id)
 );
@@ -66,7 +67,7 @@ CREATE TABLE ratings(
 	stars INT NOT NULL,
 	level_id INT NOT NULL,
 	player_id INT NOT NULL,
-  UNIQUE (level_id, player_id),
+    UNIQUE (level_id, player_id),
 	FOREIGN KEY (level_id) REFERENCES levels(id),
 	FOREIGN KEY (player_id) REFERENCES players(id)
 );

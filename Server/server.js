@@ -46,8 +46,13 @@ const { get_user_stats, add_round } = require(__dirname +
   "/database/db_stats.js");
 const { get_ranking, get_user_rank } = require(__dirname +
   "/database/db_rankings.js");
-const { signup, login, google_login, logout } = require(__dirname +
-  "/database/db_auth.js");
+const {
+  signup,
+  login,
+  google_login,
+  logout,
+  verify_session,
+} = require(__dirname + "/database/db_auth.js");
 
 io.on("connect", (socket) => {
   room_list(socket);
@@ -84,6 +89,10 @@ io.on("connect", (socket) => {
         console.error("Error getting JSON from ID:", error);
         socket.emit("error_getting_json", "Failed to retrieve level data.");
       });
+  });
+
+  socket.on("local_session_id", (session_id) => {
+    verify_session(socket, session_id);
   });
 
   socket.on("signup", (username, email, password) => {

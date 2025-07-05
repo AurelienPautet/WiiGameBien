@@ -101,6 +101,7 @@ let mouse_gridY = 0;
 let editor_mouseX = 0;
 let editor_mouseY = 0;
 mouse_grid_index = 0;
+let on_canvas = false;
 
 function editor_draw() {
   window.requestAnimationFrame(editor_draw);
@@ -113,9 +114,11 @@ function editor_draw() {
       draw_block(level_layout[i], x, y);
     }
   }
-  editor_c.globalAlpha = 0.5;
-  draw_block(selected_block, mouse_gridX * 40, mouse_gridY * 40);
-  editor_c.globalAlpha = 1.0;
+  if (on_canvas) {
+    editor_c.globalAlpha = 0.5;
+    draw_block(selected_block, mouse_gridX * 40, mouse_gridY * 40);
+    editor_c.globalAlpha = 1.0;
+  }
 }
 
 editor_draw();
@@ -161,6 +164,13 @@ editor_canvas.addEventListener("mousemove", function (e) {
   mouse_gridY = Math.floor(editor_mouseY / 60);
   mouse_gridX = Math.floor(editor_mouseX / 60);
   mouse_grid_index = mouse_gridY * 23 + mouse_gridX;
+});
+
+editor_canvas.addEventListener("mouseenter", function (e) {
+  on_canvas = true;
+});
+editor_canvas.addEventListener("mouseleave", function (e) {
+  on_canvas = false;
 });
 let isMouseDown = false;
 let mouseButton = null;
@@ -225,6 +235,7 @@ function save_level() {
 
 function save_canvas_as_thumbnail() {
   const lowQuality = editor_canvas.toDataURL("image/jpeg", 0.1);
+
   const base64Data = lowQuality.split(",")[1];
   const hexData = base64ToHex(base64Data);
   level_name = document.getElementById("editor_level_name_input").value;
