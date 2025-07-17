@@ -249,6 +249,20 @@ function return_home() {
 function showgame() {
   return_home();
   landing_page.classList.add("hidden");
+  return_home();
+}
+
+function quit_game() {
+  if (playing || playing_solo) {
+    socket.emit("quit");
+    playing = false;
+    playing_solo = false;
+    landing_page.classList.remove("hidden");
+    return_home();
+    the_canvas.classList.remove("blur");
+    fading_canvas.classList.remove("blur");
+    pause_game();
+  }
 }
 
 window.show_ui_element = show_ui_element;

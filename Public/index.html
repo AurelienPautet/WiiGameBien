@@ -186,6 +186,54 @@
           You are in pause
         </div>
         <div class="w-full h-full flex flex-col justify-center items-center">
+          <div
+            class="h-1/6 w-full flex items-center text-2xl font-bold justify-center text-white"
+          >
+            <img
+              src="image/minia/test.png"
+              class="blurred_level_thumbnail w-32 h-20 m-3"
+            />
+            <h1 class="blurred_level_name">LVL 1 2 PLAYER</h1>
+            <h1 class="m-2">by</h1>
+            <h1 class="blurred_level_creator_name mr-4">Gamemaster</h1>
+            <div id="starts_holder" class="flex items-center justify-center">
+              <span
+                class="star_0 star-empty"
+                onmouseover="star_hover(0)"
+                onmouseleave="show_stored_stars()"
+                onclick="star_clicked(0)"
+                >★</span
+              >
+              <span
+                class="star_1 star-empty"
+                onmouseover="star_hover(1)"
+                onmouseleave="show_stored_stars()"
+                onclick="star_clicked(1)"
+                >★</span
+              >
+              <span
+                class="star_2 star-empty"
+                onmouseover="star_hover(2)"
+                onmouseleave="show_stored_stars()"
+                onclick="star_clicked(2)"
+                >★</span
+              >
+              <span
+                class="star_3 star-empty"
+                onmouseover="star_hover(3)"
+                onmouseleave="show_stored_stars()"
+                onclick="star_clicked(3)"
+                >★</span
+              >
+              <span
+                class="star_4 star-empty"
+                onmouseover="star_hover(4)"
+                onmouseleave="show_stored_stars()"
+                onclick="star_clicked(4)"
+                >★</span
+              >
+            </div>
+          </div>
           <div class="flex">
             <div class="group h-24 w-24 m-5" onclick="pause_game()">
               <img
@@ -197,7 +245,7 @@
                 class="hidden group-hover:block"
               />
             </div>
-            <div class="group h-24 w-24 m-5" onclick="return_home()">
+            <div class="group h-24 w-24 m-5" onclick="quit_game()">
               <img
                 src="/ressources/icons/home.svg"
                 class="block group-hover:hidden"
@@ -238,49 +286,43 @@
           class="h-1/6 w-full flex items-center text-2xl font-bold justify-center text-white"
         >
           <img
-            id="blurred_level_thumbnail"
             src="image/minia/test.png"
-            class="w-32 h-20 m-3"
+            class="blurred_level_thumbnail w-32 h-20 m-3"
           />
-          <h1 id="blurred_level_name">LVL 1 2 PLAYER</h1>
+          <h1 class="blurred_level_name">LVL 1 2 PLAYER</h1>
           <h1 class="m-2">by</h1>
-          <h1 id="blurred_level_creator_name" class="mr-4">Gamemaster</h1>
+          <h1 class="blurred_level_creator_name mr-4">Gamemaster</h1>
           <div id="starts_holder" class="flex items-center justify-center">
             <span
-              id="star_0"
-              class="star-empty"
+              class="star_0 star-empty"
               onmouseover="star_hover(0)"
-              onmouseleave="star_leave(0)"
+              onmouseleave="show_stored_stars()"
               onclick="star_clicked(0)"
               >★</span
             >
             <span
-              id="star_1"
-              class="star-empty"
+              class="star_1 star-empty"
               onmouseover="star_hover(1)"
               onmouseleave="show_stored_stars()"
               onclick="star_clicked(1)"
               >★</span
             >
             <span
-              id="star_2"
-              class="star-empty"
+              class="star_2 star-empty"
               onmouseover="star_hover(2)"
               onmouseleave="show_stored_stars()"
               onclick="star_clicked(2)"
               >★</span
             >
             <span
-              id="star_3"
-              class="star-empty"
+              class="star_3 star-empty"
               onmouseover="star_hover(3)"
               onmouseleave="show_stored_stars()"
               onclick="star_clicked(3)"
               >★</span
             >
             <span
-              id="star_4"
-              class="star-empty"
+              class="star_4 star-empty"
               onmouseover="star_hover(4)"
               onmouseleave="show_stored_stars()"
               onclick="star_clicked(4)"
@@ -1360,6 +1402,8 @@
   <script src="./src/js/game_js/particle_system.js" defer></script>
   <script src="./src/js/game_js/client_prediction.js" defer></script>
   <script src="./src/js/game_js/blured_ui.js" defer></script>
+  <script src="./src/js/game_js/blured_ui_data_updater.js" defer></script>
+  <script src="./src/js/game_js/pause_blured_ui.js" defer></script>
   <script src="./src/js/game_js/canvaStuff.js" defer></script>
 
   <script src="./src/js/ui_js/level_editor.js" defer></script>

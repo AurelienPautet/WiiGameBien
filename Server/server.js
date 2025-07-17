@@ -65,18 +65,7 @@ io.on("connect", (socket) => {
   socket.emit("socketid", socket.id);
 
   socket.on("disconnect", function () {
-    console.log(socket.id, "Got disconnect!");
-    if (users[socket.id]) {
-      logout(socket);
-    }
-    try {
-      for (const r of Object.values(rooms)) {
-        r.delete_player(socket.id);
-      }
-    } catch (error) {
-      console.error("Error handling player disconnection:", error);
-    }
-    room_list(0);
+    disconnect_socket(socket, io);
   });
 
   socket.on("get_json_from_id", (level_id) => {
@@ -171,6 +160,11 @@ io.on("connect", (socket) => {
       );
     }
   );
+
+  socket.on("quit", () => {
+    disconnect_socket(socket, io);
+    socket.join("lobby" + serverid);
+  });
 
   socket.on("play", (playerName, turretc, bodyc, room_id) => {
     room = rooms[room_id];
@@ -356,6 +350,22 @@ create_room("2 players", 10, [2], "GAME MASTER", io);
 setTimeout(() => {
   create_room("6 players", 10, [1], "GAME MASTER", io);
 }, 10000); */
+
+function disconnect_socket(socket, io) {
+  console.log(socket.id, "Got disconnect!");
+  if (users[socket.id]) {
+    logout(socket);
+  }
+  try {
+    for (const r of Object.values(rooms)) {
+      socket.leave(r.id);
+      r.delete_player(socket.id);
+    }
+  } catch (error) {
+    console.error("Error handling player disconnection:", error);
+  }
+  room_list(0);
+}
 
 serverid = makeid(15);
 //console.log(serverid);

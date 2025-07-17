@@ -140,7 +140,10 @@ socket.on("level_change", (data) => {
 socket.on("level_change_info", (levels) => {
   level_playing_creator_name = levels[0].level_creator_name;
   level_playing_name = levels[0].level_name;
-  level_img = levels[0].level_img;
+  level_img = load_image_from_hex_ArrayBuffer(levels[0].level_img);
+  update_blured_ui_data();
+  stars = [0, 0, 0, 0, 0];
+  show_stored_stars();
 });
 
 onmousemove = function (e) {
@@ -165,6 +168,7 @@ function pause_game() {
       hide_ui_element("pause_screen");
     } else {
       pause = true;
+      update_pause_blured_ui();
       show_ui_element("pause_screen");
     }
   } else {

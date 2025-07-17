@@ -230,9 +230,8 @@ class possible_shot_points {
     c.fill();
     c.closePath();
     c.restore(); */
-    return;
     if (this.data.debug) {
-      c.globalAlpha = 0.2;
+      c.globalAlpha = 0.03;
 
       c.beginPath();
       c.arc(this.position.x, this.position.y, 10, 0, 2 * Math.PI);

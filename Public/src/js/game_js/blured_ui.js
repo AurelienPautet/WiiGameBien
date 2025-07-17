@@ -9,16 +9,6 @@ socket.on("winner", (data) => {
   //console.log(scores);
   score_tab = document.getElementById("score_tab");
   score_tab.innerHTML = "";
-  document.getElementById("blurred_level_name").innerHTML = level_playing_name;
-  document.getElementById("blurred_level_creator_name").innerHTML =
-    level_playing_creator_name;
-
-  try {
-    document.getElementById("blurred_level_thumbnail").src =
-      load_image_from_hex_ArrayBuffer(level_img);
-  } catch (e) {
-    console.error("Error loading level thumbnail:", e);
-  }
 
   //console.log(scores);
   scores = Object.fromEntries(
@@ -118,75 +108,3 @@ function add_in_cascade(parent, child_divs_list, overall_delay) {
     total_delay += beetwen_delay;
   }
 }
-
-socket.on("your_level_rating", (stars) => {
-  stars = stars;
-});
-
-stars = [0, 0, 0, 0, 0];
-
-function star_hover(i) {
-  for (let j = 0; j < i + 1; j++) {
-    star = document.getElementById("star_" + j);
-    star.classList = "";
-    star.classList.add("star-filled");
-  }
-  for (let j = i + 1; j < 5; j++) {
-    star = document.getElementById("star_" + j);
-    star.classList = "";
-    star.classList.add("star-empty");
-  }
-}
-
-function show_stored_stars() {
-  for (let j = 0; j < 5; j++) {
-    star = document.getElementById("star_" + j);
-    star.classList = "";
-    if (stars[j] == 1) {
-      star.classList.add("star-filled");
-    } else {
-      star.classList.add("star-empty");
-    }
-  }
-}
-
-function star_clicked(i) {
-  if (logged == false) {
-    createToast(
-      "error",
-      "/ressources/image/error.svg",
-      "Error",
-      "You need to be logged in to rate a level"
-    );
-    return;
-  }
-  for (let j = 0; j < 5; j++) {
-    if (j <= i) {
-      stars[j] = 1;
-    } else {
-      stars[j] = 0;
-    }
-  }
-  show_stored_stars();
-  socket.emit("rate_lvl", i + 1, level_id);
-}
-
-socket.on("rate_fail", (reason) => {
-  //console.log("rate fail", reason);
-  createToast(
-    "error",
-    "/ressources/image/error.svg",
-    "Error",
-    "You can't rate this level because " + reason
-  );
-});
-
-socket.on("rate_success", (rate, level_id) => {
-  //console.log("rate success", rate, level_id);
-  createToast(
-    "info",
-    "/ressources/image/info.svg",
-    "Success",
-    "You rated the level with " + rate + " stars"
-  );
-});
