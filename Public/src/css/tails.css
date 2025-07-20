@@ -580,6 +580,14 @@ video {
   left: -11rem;
 }
 
+.-left-96{
+  left: -24rem;
+}
+
+.-top-40{
+  top: -10rem;
+}
+
 .-top-44{
   top: -11rem;
 }
@@ -646,38 +654,6 @@ video {
 
 .top-full{
   top: 100%;
-}
-
-.right-full{
-  right: 100%;
-}
-
-.-top-56{
-  top: -14rem;
-}
-
-.top-3\/4{
-  top: 75%;
-}
-
-.-top-32{
-  top: -8rem;
-}
-
-.-top-36{
-  top: -9rem;
-}
-
-.-top-40{
-  top: -10rem;
-}
-
-.-left-72{
-  left: -18rem;
-}
-
-.-left-96{
-  left: -24rem;
 }
 
 .z-10{
@@ -985,16 +961,12 @@ video {
   width: 2rem;
 }
 
-.w-full{
-  width: 100%;
-}
-
-.w-72{
-  width: 18rem;
-}
-
 .w-96{
   width: 24rem;
+}
+
+.w-full{
+  width: 100%;
 }
 
 .flex-grow-0{
@@ -1080,16 +1052,16 @@ video {
   justify-content: space-evenly;
 }
 
+.gap-1{
+  gap: 0.25rem;
+}
+
 .gap-2{
   gap: 0.5rem;
 }
 
 .gap-4{
   gap: 1rem;
-}
-
-.gap-1{
-  gap: 0.25rem;
 }
 
 .space-y-2 > :not([hidden]) ~ :not([hidden]){

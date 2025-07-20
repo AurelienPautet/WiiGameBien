@@ -190,7 +190,7 @@ function draw() {
   }
 
   bullets.forEach((bullet) => {
-    drawImageRot(
+    /*     drawImageRot(
       fc,
       bullet1,
       bullet.position.x,
@@ -198,7 +198,7 @@ function draw() {
       bullet.size.w,
       bullet.size.h,
       bullet.angle
-    );
+    ); */
     drawImageRot(
       c,
       bullet1,
