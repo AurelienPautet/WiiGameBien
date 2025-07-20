@@ -345,7 +345,7 @@ async function create_room(name, rounds, list_id, creator, io) {
 }
 rooms = {};
 
-create_room("2 players", 10, [2], "GAME MASTER", io);
+//create_room("2 players", 10, [2], "GAME MASTER", io);
 /*
 setTimeout(() => {
   create_room("6 players", 10, [1], "GAME MASTER", io);
