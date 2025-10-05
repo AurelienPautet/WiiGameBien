@@ -8,6 +8,32 @@ let max_player_create = document.getElementById("max_player_create");
 let selected_map = [];
 let selected_maxplayers = [];
 
+content_campaign = document.getElementById("content_campaign");
+content_community = document.getElementById("content_community");
+current_level_onglet = content_campaign;
+campaign_onglet = document.getElementById("campaign_onglet");
+community_onglet = document.getElementById("community_onglet");
+
+function switch_level_onglet(onglet) {
+  //console.log(onglet, current_onglet);
+  if (current_level_onglet != onglet) {
+    if (onglet == content_campaign) {
+      campaign_onglet.classList.add("bg-slate-700");
+      campaign_onglet.classList.remove("bg-slate-500");
+      community_onglet.classList.remove("bg-slate-700");
+      community_onglet.classList.add("bg-slate-500");
+    } else if (onglet == content_community) {
+      content_community.classList.add("bg-slate-700");
+      content_community.classList.remove("bg-slate-500");
+      campaign_onglet.classList.remove("bg-slate-700");
+      campaign_onglet.classList.add("bg-slate-500");
+    }
+    current_level_onglet.classList.add("hidden");
+    onglet.classList.remove("hidden");
+    current_level_onglet = onglet;
+  }
+}
+
 function add_map(map_name, map_id, creator_name, int_players, star, img_src) {
   let newMap = document.createElement("div");
   let stars = [];

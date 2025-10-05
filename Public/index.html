@@ -850,14 +850,14 @@
               class="bg-slate-700 w-1/2 hover:bg-slate-600 text-white text-lg font-extrabold rounded-t-md"
               type="button"
               value="LOGIN"
-              onclick="switch_onglet(content_login)"
+              onclick="switch_auth_onglet(content_login)"
             />
             <input
               id="signup_onglet"
               class="bg-slate-500 w-1/2 hover:bg-slate-600 text-white text-lg font-extrabold rounded-t-md"
               type="button"
               value="SIGNUP"
-              onclick="switch_onglet(content_signup)"
+              onclick="switch_auth_onglet(content_signup)"
             />
           </div>
           <div id="content_login" class="h-full flex flex-col items-center">
@@ -1220,18 +1220,18 @@
       >
         <div id="onglets" class="h-14 flex">
           <input
-            id="login_onglet"
+            id="campaign_onglet"
             class="bg-slate-700 w-1/2 hover:bg-slate-600 text-white text-lg font-extrabold rounded-t-md"
             type="button"
             value="OFFICIAL CAMPAIGN"
-            onclick="switch_onglet(content_campaign)"
+            onclick="switch_level_onglet(content_campaign)"
           />
           <input
-            id="signup_onglet"
+            id="community_onglet"
             class="bg-slate-500 w-1/2 hover:bg-slate-600 text-white text-lg font-extrabold rounded-t-md"
             type="button"
             value="COMMUNITY LEVELS"
-            onclick="switch_onglet(content_community)"
+            onclick="switch_level_onglet(content_community)"
           />
         </div>
         <div

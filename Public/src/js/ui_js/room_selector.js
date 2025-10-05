@@ -49,6 +49,7 @@ function addRoom(
 
 socket.on("room_list", (lids, lname, lcreator, lplayers, lmaxplayers) => {
   list_of_rooms = [];
+  console.log(lids, lname, lcreator, lplayers, lmaxplayers);
   for (let i = 0; i < lname.length; i++) {
     list_of_rooms.push({
       id: lids[i],

@@ -20,7 +20,7 @@ let logged = false;
 let myusername = "";
 let myemail = "";
 
-function switch_onglet(onglet) {
+function switch_auth_onglet(onglet) {
   //console.log(onglet, current_onglet);
   if (current_onglet != onglet) {
     if (onglet == content_login) {
