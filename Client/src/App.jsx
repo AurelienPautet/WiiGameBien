@@ -1,5 +1,101 @@
+import { useEffect, useState } from "react";
+import {
+  SocketProvider,
+  AuthProvider,
+  ModalProvider,
+  useModal,
+  MODALS,
+} from "./contexts";
+import { LandingPage, CANVAS_WIDTH, CANVAS_HEIGHT } from "./components/landing";
+import {
+  AuthModal,
+  ProfileModal,
+  RankingsModal,
+  RoomSelectorModal,
+  LevelSelectorModal,
+  MyLevelsModal,
+  TankSelectModal,
+} from "./components/modals";
+
+// Modal renderer component
+const ModalRenderer = () => {
+  const { activeModal } = useModal();
+
+  return (
+    <>
+      {activeModal === MODALS.AUTH && <AuthModal />}
+      {activeModal === MODALS.PROFILE && <ProfileModal />}
+      {activeModal === MODALS.RANKINGS && <RankingsModal />}
+      {activeModal === MODALS.ROOM_SELECTOR && <RoomSelectorModal />}
+      {activeModal === MODALS.LEVEL_SELECTOR && <LevelSelectorModal />}
+      {activeModal === MODALS.MY_LEVELS && <MyLevelsModal />}
+      {activeModal === MODALS.TANK_SELECT && <TankSelectModal />}
+    </>
+  );
+};
+
+// Hook to calculate scale factor to fit content to window
+const useWindowScale = () => {
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const calculateScale = () => {
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+
+      const widthRatio = windowWidth / CANVAS_WIDTH;
+      const heightRatio = windowHeight / CANVAS_HEIGHT;
+
+      // Use the smaller ratio to ensure content fits, with 5% margin
+      const newScale = Math.min(widthRatio, heightRatio) * 0.95;
+      setScale(newScale);
+    };
+
+    calculateScale();
+    window.addEventListener("resize", calculateScale);
+
+    return () => window.removeEventListener("resize", calculateScale);
+  }, []);
+
+  return scale;
+};
+
+// Main app layout with fixed dimensions and dynamic scaling
+const AppContent = () => {
+  const scale = useWindowScale();
+
+  return (
+    <div className="w-screen h-screen overflow-hidden bg-base-300 flex items-center justify-center">
+      {/* Scaled container */}
+      <div
+        className="relative overflow-hidden"
+        style={{
+          width: CANVAS_WIDTH,
+          height: CANVAS_HEIGHT,
+          transform: `scale(${scale})`,
+          transformOrigin: "center center",
+        }}
+      >
+        {/* Landing page */}
+        <LandingPage />
+
+        {/* Modals render on top when active */}
+        <ModalRenderer />
+      </div>
+    </div>
+  );
+};
+
 function App() {
-  return <></>;
+  return (
+    <SocketProvider>
+      <AuthProvider>
+        <ModalProvider>
+          <AppContent />
+        </ModalProvider>
+      </AuthProvider>
+    </SocketProvider>
+  );
 }
 
 export default App;

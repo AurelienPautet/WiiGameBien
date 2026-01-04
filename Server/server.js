@@ -7,7 +7,7 @@ app.use(express.static(path.join(__dirname, "../Public")));
 app.use(express.static(path.join(__dirname, "../Shared")));
 
 //console.log(path.join(__dirname, "../Public"));
-const PORT = process.env.PORT || 7000;
+const PORT = process.env.PORT || 8000;
 //console.log("PORT : ", PORT);
 const expressServer = app.listen(PORT);
 
@@ -18,6 +18,9 @@ const io = socketio(expressServer, {
       "http://localhost:7000",
       "https://wiitank-2aacc4abc5cb.herokuapp.com",
       "https://wiitank.pautet.net",
+      "http://localhost:8000",
+      "http://localhost:5173",
+      "http://localhost:5174",
     ],
     methods: ["GET", "POST"],
   },
