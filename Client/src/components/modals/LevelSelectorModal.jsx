@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Search, Gamepad2, Star } from "lucide-react";
-import { useModal, useSocket } from "../../contexts";
+import { useModal, useSocket, useGame } from "../../contexts";
 
 export const LevelSelectorModal = () => {
   const { closeModal } = useModal();
   const { socket } = useSocket();
+  const { startSoloGame } = useGame();
   const [levels, setLevels] = useState([]);
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [filter, setFilter] = useState({ name: "", maxPlayers: 0 });
@@ -31,8 +32,7 @@ export const LevelSelectorModal = () => {
 
   const handlePlayLevel = () => {
     if (!selectedLevel) return;
-    // TODO: Start solo game with selected level
-    socket?.emit("play_solo", { levelId: selectedLevel });
+    startSoloGame(selectedLevel);
     closeModal();
   };
 

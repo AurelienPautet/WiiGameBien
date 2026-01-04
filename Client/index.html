@@ -1,13 +1,35 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>client</title>
+    <title>OUI TANK</title>
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- Shared game classes (served via symlink in public/Shared) -->
+    <script src="/Shared/class/CollisonsBox.js"></script>
+    <script src="/Shared/class/Stats.js"></script>
+    <script src="/Shared/class/Block.js"></script>
+    <script src="/Shared/class/Hole.js"></script>
+    <script src="/Shared/scripts/check_collision.js"></script>
+    <script src="/Shared/scripts/check_intersect.js"></script>
+    <script src="/Shared/class/Bullet.js"></script>
+    <script src="/Shared/class/Mine.js"></script>
+    <script src="/Shared/class/Player.js"></script>
+    <script src="/Shared/class/possible_moves.js"></script>
+    <script src="/Shared/class/possible_shots_balls.js"></script>
+    <script src="/Shared/class/Bot.js"></script>
+    <script src="/Shared/class/Bot1.js"></script>
+    <script src="/Shared/class/Bot2.js"></script>
+    <script src="/Shared/class/Bot3.js"></script>
+    <script src="/Shared/class/Bot4.js"></script>
+    <script src="/Shared/class/Room.js"></script>
+    <script src="/Shared/scripts/level_loader.js"></script>
+
+    <!-- React app -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

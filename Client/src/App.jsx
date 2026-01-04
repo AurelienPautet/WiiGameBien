@@ -3,7 +3,9 @@ import {
   SocketProvider,
   AuthProvider,
   ModalProvider,
+  GameProvider,
   useModal,
+  useGame,
   MODALS,
 } from "./contexts";
 import { LandingPage, CANVAS_WIDTH, CANVAS_HEIGHT } from "./components/landing";
@@ -16,6 +18,7 @@ import {
   MyLevelsModal,
   TankSelectModal,
 } from "./components/modals";
+import { GameCanvas } from "./components/game";
 
 // Modal renderer component
 const ModalRenderer = () => {
@@ -63,6 +66,7 @@ const useWindowScale = () => {
 // Main app layout with fixed dimensions and dynamic scaling
 const AppContent = () => {
   const scale = useWindowScale();
+  const { isPlaying } = useGame();
 
   return (
     <div className="w-screen h-screen overflow-hidden bg-base-300 flex items-center justify-center">
@@ -76,11 +80,18 @@ const AppContent = () => {
           transformOrigin: "center center",
         }}
       >
-        {/* Landing page */}
-        <LandingPage />
+        {/* Show game canvas when playing, otherwise show landing page */}
+        {isPlaying ? (
+          <GameCanvas />
+        ) : (
+          <>
+            {/* Landing page */}
+            <LandingPage />
 
-        {/* Modals render on top when active */}
-        <ModalRenderer />
+            {/* Modals render on top when active */}
+            <ModalRenderer />
+          </>
+        )}
       </div>
     </div>
   );
@@ -91,7 +102,9 @@ function App() {
     <SocketProvider>
       <AuthProvider>
         <ModalProvider>
-          <AppContent />
+          <GameProvider>
+            <AppContent />
+          </GameProvider>
         </ModalProvider>
       </AuthProvider>
     </SocketProvider>
