@@ -14,7 +14,13 @@ export const MyLevelsModal = () => {
   };
 
   const handleDelete = (levelId) => {
-    socket?.emit("delete_map", levelId);
+    if (
+      window.confirm(
+        "Are you sure you want to delete this level? This cannot be undone."
+      )
+    ) {
+      socket?.emit("delete_map", levelId);
+    }
   };
 
   const handleCreate = () => {

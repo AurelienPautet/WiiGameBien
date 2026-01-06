@@ -348,9 +348,11 @@ export const LevelEditor = () => {
     }
   };
 
-  // Clear level
+  // Clear level with confirmation
   const handleClear = () => {
-    setLayout(createEmptyLayout());
+    if (window.confirm("Are you sure you want to clear the entire level?")) {
+      setLayout(createEmptyLayout());
+    }
   };
 
   // Save level
@@ -408,9 +410,10 @@ export const LevelEditor = () => {
     );
   };
 
-  // Close editor
+  // Close editor - go back to My Levels modal
   const handleClose = () => {
     navigate("/");
+    openModal(MODALS.MY_LEVELS);
   };
 
   // Block selector items
