@@ -82,7 +82,7 @@ const AppContent = () => {
       >
         {/* Show game canvas when playing, otherwise show landing page */}
         {isPlaying ? (
-          <GameCanvas />
+          <GameCanvas scale={scale} />
         ) : (
           <>
             {/* Landing page */}

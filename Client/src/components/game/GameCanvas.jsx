@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { useGame, useSocket, useModal } from "../../contexts";
 import { GameEngine } from "../../engine/GameEngine";
 
-export const GameCanvas = () => {
+export const GameCanvas = ({ scale = 1 }) => {
   const canvasRef = useRef(null);
   const fadingCanvasRef = useRef(null);
   const engineRef = useRef(null);
@@ -20,6 +20,13 @@ export const GameCanvas = () => {
   } = useGame();
   const { socket } = useSocket();
   const { openModal } = useModal();
+
+  // Update engine scale when window is resized
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.setScale(scale);
+    }
+  }, [scale]);
 
   // Refs for stable access in effect
   const playerNameRef = useRef(playerName);
