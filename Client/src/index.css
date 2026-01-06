@@ -43,3 +43,9 @@
   --depth: 0;
   --noise: 0;
 }
+
+/* Blur background when modal is open */
+.modal-backdrop {
+  background-color: transparent !important;
+  backdrop-filter: blur(4px);
+}
