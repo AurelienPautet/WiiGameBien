@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import {
   SocketProvider,
   AuthProvider,
@@ -19,6 +20,7 @@ import {
   TankSelectModal,
 } from "./components/modals";
 import { GameCanvas } from "./components/game";
+import { LevelEditor } from "./pages";
 
 // Modal renderer component
 const ModalRenderer = () => {
@@ -63,8 +65,8 @@ const useWindowScale = () => {
   return scale;
 };
 
-// Main app layout with fixed dimensions and dynamic scaling
-const AppContent = () => {
+// Main game/landing content with fixed dimensions and dynamic scaling
+const MainContent = () => {
   const scale = useWindowScale();
   const { isPlaying } = useGame();
 
@@ -97,17 +99,50 @@ const AppContent = () => {
   );
 };
 
+// Level Editor Page with its own scaling
+const EditorContent = () => {
+  const scale = useWindowScale();
+
+  return (
+    <div className="w-screen h-screen overflow-hidden bg-base-300 flex items-center justify-center">
+      <div
+        className="relative overflow-hidden"
+        style={{
+          width: CANVAS_WIDTH,
+          height: CANVAS_HEIGHT,
+          transform: `scale(${scale})`,
+          transformOrigin: "center center",
+        }}
+      >
+        <LevelEditor />
+      </div>
+    </div>
+  );
+};
+
+// App Router
+const AppRouter = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<MainContent />} />
+      <Route path="/editor" element={<EditorContent />} />
+    </Routes>
+  );
+};
+
 function App() {
   return (
-    <SocketProvider>
-      <AuthProvider>
-        <ModalProvider>
-          <GameProvider>
-            <AppContent />
-          </GameProvider>
-        </ModalProvider>
-      </AuthProvider>
-    </SocketProvider>
+    <BrowserRouter>
+      <SocketProvider>
+        <AuthProvider>
+          <ModalProvider>
+            <GameProvider>
+              <AppRouter />
+            </GameProvider>
+          </ModalProvider>
+        </AuthProvider>
+      </SocketProvider>
+    </BrowserRouter>
   );
 }
 

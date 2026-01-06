@@ -1,17 +1,16 @@
+import { useNavigate } from "react-router-dom";
 import { useModal, useSocket, useAuth } from "../../contexts";
 import { LevelSelector } from "../ui";
 
 export const MyLevelsModal = () => {
+  const navigate = useNavigate();
   const { closeModal } = useModal();
   const { socket } = useSocket();
   const { user } = useAuth();
 
   const handleEdit = (levelId) => {
-    // TODO: Open level editor with level data
-    console.log("Edit level:", levelId);
-    // For now, emit to server and close modal
-    socket?.emit("load_level_editor", levelId);
     closeModal();
+    navigate(`/editor?id=${levelId}`);
   };
 
   const handleDelete = (levelId) => {
@@ -19,9 +18,8 @@ export const MyLevelsModal = () => {
   };
 
   const handleCreate = () => {
-    // TODO: Open level editor with new level
-    console.log("Create new level");
     closeModal();
+    navigate("/editor");
   };
 
   if (!user) {
