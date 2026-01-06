@@ -15,6 +15,7 @@ import {
   ProfileModal,
   RankingsModal,
   RoomSelectorModal,
+  CreateRoomModal,
   LevelSelectorModal,
   MyLevelsModal,
   TankSelectModal,
@@ -32,6 +33,7 @@ const ModalRenderer = () => {
       {activeModal === MODALS.PROFILE && <ProfileModal />}
       {activeModal === MODALS.RANKINGS && <RankingsModal />}
       {activeModal === MODALS.ROOM_SELECTOR && <RoomSelectorModal />}
+      {activeModal === MODALS.CREATE_ROOM && <CreateRoomModal />}
       {activeModal === MODALS.LEVEL_SELECTOR && <LevelSelectorModal />}
       {activeModal === MODALS.MY_LEVELS && <MyLevelsModal />}
       {activeModal === MODALS.TANK_SELECT && <TankSelectModal />}

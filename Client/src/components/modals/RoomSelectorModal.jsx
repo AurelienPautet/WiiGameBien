@@ -1,98 +1,163 @@
 import { useState, useEffect } from "react";
-import { Lock, Plus } from "lucide-react";
-import { useModal, useSocket } from "../../contexts";
+import { Search, Users, Lock, Plus, RefreshCw, Gamepad2 } from "lucide-react";
+import { useModal, useSocket, useGame, MODALS } from "../../contexts";
 
 export const RoomSelectorModal = () => {
-  const { closeModal } = useModal();
+  const { closeModal, openModal } = useModal();
   const { socket } = useSocket();
+  const { startOnlineGame } = useGame();
   const [rooms, setRooms] = useState([]);
-  const [roomName, setRoomName] = useState("");
-  const [password, setPassword] = useState("");
+  const [searchName, setSearchName] = useState("");
+  const [maxPlayers, setMaxPlayers] = useState(0);
+  const [loading, setLoading] = useState(true);
 
+  // Fetch rooms and set up listener
   useEffect(() => {
     if (!socket) return;
 
+    // Handler for room_list event (server sends 5 arrays: ids, names, creators, players, maxPlayers)
+    const handleRoomList = (lids, lname, lcreator, lplayers, lmaxplayers) => {
+      const roomList = [];
+      if (lname && lname.length > 0) {
+        for (let i = 0; i < lname.length; i++) {
+          roomList.push({
+            id: lids[i],
+            name: lname[i],
+            creator: lcreator[i],
+            players: lplayers[i],
+            maxPlayers: lmaxplayers[i],
+          });
+        }
+      }
+      setRooms(roomList);
+      setLoading(false);
+    };
+
+    socket.on("room_list", handleRoomList);
+
+    // Server now supports get_rooms event to fetch on demand
     socket.emit("get_rooms");
 
-    socket.on("rooms_list", (data) => {
-      setRooms(data.rooms || []);
-    });
-
     return () => {
-      socket.off("rooms_list");
+      socket.off("room_list", handleRoomList);
     };
   }, [socket]);
 
+  const handleRefresh = () => {
+    setLoading(true);
+    socket?.emit("get_rooms");
+  };
+
+  // Filter rooms based on search
+  const filteredRooms = rooms.filter((room) => {
+    const nameMatch = room.name
+      .toLowerCase()
+      .includes(searchName.toLowerCase());
+    const playerMatch = maxPlayers === 0 || room.maxPlayers === maxPlayers;
+    return nameMatch && playerMatch;
+  });
+
   const handleJoinRoom = (roomId) => {
-    socket?.emit("join_room", { roomId, password });
+    startOnlineGame(roomId);
     closeModal();
   };
 
   const handleCreateRoom = () => {
-    if (!roomName) return;
-    socket?.emit("create_room", { name: roomName, password });
-    closeModal();
+    openModal(MODALS.CREATE_ROOM);
   };
 
   return (
     <dialog className="modal modal-open">
-      <div className="modal-box bg-base-100 w-11/12 max-w-3xl">
-        <h2 className="text-2xl font-bold mb-4">Join a Room</h2>
-
-        {/* Room List */}
-        <div className="bg-base-200 rounded-md p-4 max-h-64 overflow-y-auto mb-4">
-          {rooms.length === 0 ? (
-            <p className="text-center text-slate-400">No rooms available</p>
-          ) : (
-            <div className="space-y-2">
-              {rooms.map((room) => (
-                <div
-                  key={room.id}
-                  className="flex items-center justify-between bg-base-100 rounded-lg p-3 hover:bg-base-300 cursor-pointer transition-colors"
-                  onClick={() => handleJoinRoom(room.id)}
-                >
-                  <div>
-                    <span className="font-semibold">{room.name}</span>
-                    <span className="text-sm text-slate-400 ml-2">
-                      by {room.creator}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="badge badge-primary">
-                      {room.players}/{room.maxPlayers}
-                    </span>
-                    {room.hasPassword && (
-                      <Lock className="w-4 h-4 text-warning" />
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+      <div className="modal-box bg-base-100 w-11/12 max-w-3xl h-3/4 flex flex-col">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">Play Online</h2>
+          <button
+            className="btn btn-sm btn-ghost gap-1"
+            onClick={handleRefresh}
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
         </div>
 
-        <div className="divider">OR CREATE</div>
+        {/* Filters */}
+        <div className="flex gap-4 mb-4">
+          <label className="input input-bordered flex items-center gap-2 flex-1 bg-base-200">
+            <Search className="w-4 h-4 opacity-70" />
+            <input
+              type="text"
+              className="grow bg-transparent"
+              placeholder="Search room name..."
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+            />
+          </label>
+          <select
+            className="select select-bordered bg-base-200"
+            value={maxPlayers}
+            onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
+          >
+            <option value={0}>Any players</option>
+            {[2, 3, 4, 5, 6, 7, 8].map((n) => (
+              <option key={n} value={n}>
+                {n} players
+              </option>
+            ))}
+          </select>
+        </div>
 
-        {/* Create Room */}
-        <div className="flex gap-2">
-          <input
-            type="text"
-            className="input input-bordered flex-1 bg-base-300"
-            placeholder="Room name"
-            value={roomName}
-            onChange={(e) => setRoomName(e.target.value)}
-          />
-          <input
-            type="password"
-            className="input input-bordered w-32 bg-base-300"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button className="btn btn-primary gap-1" onClick={handleCreateRoom}>
-            <Plus className="w-5 h-5" />
-            Create
-          </button>
+        {/* Room List */}
+        <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+          {/* Create Room Button */}
+          <div
+            className="flex items-center gap-4 p-4 rounded-lg bg-base-200 hover:bg-base-100 cursor-pointer transition-colors border-2 border-dashed border-primary/50"
+            onClick={handleCreateRoom}
+          >
+            <div className="w-16 h-16 bg-primary/20 rounded-lg flex items-center justify-center">
+              <Plus className="w-8 h-8 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold">Create a New Room</h3>
+              <p className="text-base-content/60">Public or Private Room</p>
+            </div>
+          </div>
+
+          {loading && rooms.length === 0 ? (
+            <div className="text-center py-8">
+              <span className="loading loading-spinner loading-lg"></span>
+              <p className="mt-2 text-base-content/60">Loading rooms...</p>
+            </div>
+          ) : filteredRooms.length === 0 ? (
+            <div className="text-center py-8 text-base-content/50">
+              <Gamepad2 className="w-16 h-16 mx-auto mb-4 opacity-50" />
+              <p>No rooms available</p>
+              <p className="text-sm mt-1">Create one to get started!</p>
+            </div>
+          ) : (
+            filteredRooms.map((room) => (
+              <div
+                key={room.id}
+                className="flex items-center justify-between p-4 rounded-lg bg-base-200 hover:bg-base-100 cursor-pointer transition-colors"
+                onClick={() => handleJoinRoom(room.id)}
+              >
+                <div>
+                  <h3 className="font-bold text-lg">{room.name}</h3>
+                  <p className="text-base-content/60 text-sm">
+                    by {room.creator}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="badge badge-lg gap-1">
+                    <Users className="w-4 h-4" />
+                    {room.players}/{room.maxPlayers}
+                  </div>
+                  {room.hasPassword && (
+                    <Lock className="w-5 h-5 text-warning" />
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         <div className="modal-action">

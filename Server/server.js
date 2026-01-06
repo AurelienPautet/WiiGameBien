@@ -117,6 +117,10 @@ io.on("connect", (socket) => {
     levels = get_my_levels(input_name, input_nb_players, socket);
   });
 
+  socket.on("get_rooms", () => {
+    room_list(socket);
+  });
+
   socket.on("new-room", async (name, rounds, list_id, creator) => {
     room_id = await create_room(name, 10, list_id, creator, io);
     //console.log("Room caca:", room_id);

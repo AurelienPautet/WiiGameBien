@@ -10,6 +10,7 @@ export const MODALS = {
   PROFILE: "profile",
   RANKINGS: "rankings",
   ROOM_SELECTOR: "roomSelector",
+  CREATE_ROOM: "createRoom",
   LEVEL_SELECTOR: "levelSelector",
   MY_LEVELS: "myLevels",
   TANK_SELECT: "tankSelect",

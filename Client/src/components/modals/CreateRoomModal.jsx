@@ -1,29 +1,49 @@
-import { useState, useCallback } from "react";
-import { useModal, useSocket } from "../../contexts";
+import { useState, useCallback, useEffect } from "react";
+import { useModal, useSocket, useGame, useAuth } from "../../contexts";
 import { LevelSelector } from "../ui";
 
 export const CreateRoomModal = () => {
   const { closeModal } = useModal();
   const { socket } = useSocket();
+  const { startOnlineGame } = useGame();
+  const { user } = useAuth();
   const [selectedLevels, setSelectedLevels] = useState([]);
   const [roomName, setRoomName] = useState("");
   const [password, setPassword] = useState("");
   const [rounds, setRounds] = useState(10);
+  const [isCreating, setIsCreating] = useState(false);
 
   const handleMultiSelect = useCallback((levelIds) => {
     setSelectedLevels(levelIds);
   }, []);
 
+  // Listen for room creation success to auto-join
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleRoomCreated = (roomId) => {
+      setIsCreating(false);
+      startOnlineGame(roomId);
+      closeModal();
+    };
+
+    socket.on("room_created", handleRoomCreated);
+
+    return () => {
+      socket.off("room_created", handleRoomCreated);
+    };
+  }, [socket, startOnlineGame, closeModal]);
+
   const handleCreateRoom = () => {
     if (!roomName || selectedLevels.length === 0) return;
+    if (!user) {
+      alert("You must be logged in to create a room");
+      return;
+    }
 
-    socket?.emit("create_room", {
-      name: roomName,
-      password,
-      rounds,
-      levels: selectedLevels,
-    });
-    closeModal();
+    setIsCreating(true);
+    // Server expects signature: (name, rounds, list_id, creator)
+    socket.emit("new-room", roomName, rounds, selectedLevels, user.username);
   };
 
   return (
@@ -40,12 +60,15 @@ export const CreateRoomModal = () => {
             value={roomName}
             onChange={(e) => setRoomName(e.target.value)}
           />
+          {/* Note: Server currently doesn't seem to support password in new-room event, but keeping UI for future */}
           <input
             type="password"
             className="input input-bordered w-32 bg-base-200"
             placeholder="Password (optional)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={true} // Disabled until server support confirmed
+            title="Password protection coming soon"
           />
           <div className="flex items-center gap-2">
             <span className="text-sm">Rounds:</span>
@@ -66,20 +89,29 @@ export const CreateRoomModal = () => {
         </div>
 
         <div className="modal-action">
-          <button className="btn" onClick={closeModal}>
+          <button className="btn" onClick={closeModal} disabled={isCreating}>
             Cancel
           </button>
           <button
             className="btn btn-primary"
-            disabled={!roomName || selectedLevels.length === 0}
+            disabled={!roomName || selectedLevels.length === 0 || isCreating}
             onClick={handleCreateRoom}
           >
-            Create Room ({selectedLevels.length} levels)
+            {isCreating ? (
+              <>
+                <span className="loading loading-spinner text-white"></span>
+                Creating...
+              </>
+            ) : (
+              `Create Room (${selectedLevels.length} levels)`
+            )}
           </button>
         </div>
       </div>
       <form method="dialog" className="modal-backdrop">
-        <button onClick={closeModal}>close</button>
+        <button onClick={closeModal} disabled={isCreating}>
+          close
+        </button>
       </form>
     </dialog>
   );
