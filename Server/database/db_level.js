@@ -58,6 +58,11 @@ function save_level(
   type,
   socket
 ) {
+  if (!users[socket.id]) {
+    console.log("User not logged in, cannot save level");
+    socket.emit("save_level_fail", "You must be logged in to save a level");
+    return;
+  }
   const player_id = users[socket.id].id;
 
   if (level_id != -1) {
