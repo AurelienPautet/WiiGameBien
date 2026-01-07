@@ -99,9 +99,14 @@ export class InputHandler {
   _onMouseMove(event) {
     if (!this.canvas) return;
     const rect = this.canvas.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
-    this.aim = { x: mouseX / this.scale, y: mouseY / this.scale };
+
+    const scaleX = this.canvas.width / rect.width;
+    const scaleY = this.canvas.height / rect.height;
+
+    const mouseX = (event.clientX - rect.left) * scaleX;
+    const mouseY = (event.clientY - rect.top) * scaleY;
+
+    this.aim = { x: mouseX, y: mouseY };
   }
 
   _onClick(event) {
