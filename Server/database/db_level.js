@@ -192,7 +192,7 @@ function fetch_levels(query_tosend, values, socket, response_event) {
           level_blocks_destroyed: stats ? stats.blocks_destroyed : 0,
         });
       }
-      console.log("Levels fetched:", levels);
+      //console.log("Levels fetched:", levels);
       socket.emit(response_event, levels);
       return levels;
     }

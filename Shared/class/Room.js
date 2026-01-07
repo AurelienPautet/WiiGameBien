@@ -12,7 +12,7 @@ try {
 }
 
 class Room {
-  static next_id = 0;
+  static next_id = 1;
   static bot_colors = {
     bot1: ["blue", "blue"],
     bot2: ["green", "green"],
