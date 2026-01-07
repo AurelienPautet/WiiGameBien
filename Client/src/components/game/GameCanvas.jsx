@@ -60,12 +60,14 @@ export const GameCanvas = ({ scale = 1 }) => {
     quitGame();
   }, [quitGame]);
 
-  // Initialize engine when game starts / mode changes
+  // Initialize engine when game starts
   useEffect(() => {
     if (!canvasRef.current || !socket) return;
 
-    // cleanup previous if exists (though return clause handles it)
-    if (engineRef.current) engineRef.current.quit();
+    // Cleanup previous engine if exists
+    if (engineRef.current) {
+      engineRef.current.quit();
+    }
 
     const engine = new GameEngine(
       canvasRef.current,
@@ -97,12 +99,12 @@ export const GameCanvas = ({ scale = 1 }) => {
 
     startGame();
 
-    // Cleanup on unmount or deps change
+    // Cleanup on unmount
     return () => {
       engine.quit();
       engineRef.current = null;
     };
-  }, [mode, levelId, roomId, socket]); // Minimal dependencies to prevent restarts
+  }, [mode, levelId, roomId, socket]);
 
   // Update engine callbacks separately
   useEffect(() => {

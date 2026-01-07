@@ -385,7 +385,7 @@ class Room {
               ] = 10;
               generateBcollision(this);
               this.blocks.splice(m, 1);
-              this.io.to(this.name).emit("level_change", {
+              this.emit_to_room("level_change", {
                 blocks: this.blocks,
                 Bcollision: this.Bcollision,
                 level_id: this.levels[this.levelid],
