@@ -337,9 +337,9 @@ function getTimeElapsed() {
 }
 
 async function create_room(name, rounds, list_id, creator, io) {
-  room = new Room(name, rounds, list_id, creator, io);
+  const room = new Room(name, rounds, list_id, creator, io);
   room.maxplayernb = await get_max_players(list_id);
-  level_json = await get_json_from_id(room.levels[room.levelid]);
+  const level_json = await get_json_from_id(room.levels[room.levelid]);
   //console.log("level_json", level_json);
   rooms[room.id] = room;
   if (room) {
