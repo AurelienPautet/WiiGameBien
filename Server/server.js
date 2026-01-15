@@ -2,12 +2,18 @@ const express = require("express");
 const app = express();
 
 const path = require("path");
+const rateLimit = require("express-rate-limit");
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+});
 
 app.use(express.static(path.join(__dirname, "../Client/dist")));
 app.use(express.static(path.join(__dirname, "../Shared")));
 
 // Fallback to index.html for client-side routing
-app.get("*", (req, res) => {
+app.get("*", limiter, (req, res) => {
   res.sendFile(path.join(__dirname, "../Client/dist/index.html"));
 });
 
