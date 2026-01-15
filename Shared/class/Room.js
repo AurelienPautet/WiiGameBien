@@ -214,8 +214,8 @@ class Room {
         } else {
           this.emit_to_room("winner", {
             socketid: -1,
-            waitingtime: waitingtime,
-            player_scores: this.scores,
+            waitingtime: this.waitingtime,
+            player_scores: this.get_all_player_stats(),
             ids_to_name: this.ids_to_names,
           });
         }
