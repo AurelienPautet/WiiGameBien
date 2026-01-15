@@ -91,8 +91,11 @@ function globalMouseMove(event) {
   input.aim = { x: mouseX, y: mouseY };
 }
 
-function globalClick(event) {
-  window.gameInput.click = true;
+function globalMouseDown(event) {
+  // Only register left mouse button
+  if (event.button === 0) {
+    window.gameInput.click = true;
+  }
 }
 
 // Attach global listeners ONCE
@@ -100,7 +103,7 @@ if (typeof window !== "undefined" && !window.gameInput.listenersAttached) {
   window.addEventListener("keydown", globalKeyDown);
   window.addEventListener("keyup", globalKeyUp);
   window.addEventListener("mousemove", globalMouseMove);
-  window.addEventListener("click", globalClick);
+  window.addEventListener("mousedown", globalMouseDown);
   window.gameInput.listenersAttached = true;
 }
 
