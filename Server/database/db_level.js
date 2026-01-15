@@ -3,6 +3,7 @@
 
 const path = require("path");
 const client = require(path.join(__dirname, "..", "db_client.js"));
+const { users } = require(path.join(__dirname, "..", "shared_state.js"));
 function get_levels(input_name, imput_nb_players, type, socket) {
   //console.log(input_name, imput_nb_players);
   //console.log(type);
@@ -58,6 +59,11 @@ function save_level(
   type,
   socket
 ) {
+  if (!users[socket.id]) {
+    console.log("User not logged in, cannot save level");
+    socket.emit("save_level_fail", "You must be logged in to save a level");
+    return;
+  }
   const player_id = users[socket.id].id;
 
   if (level_id != -1) {
@@ -131,8 +137,8 @@ function save_level(
 }
 
 async function get_max_players(list_id) {
-  query = "SELECT MIN(max_players) FROM levels WHERE id = ANY ($1)";
-  res = await client.query(query, [list_id]);
+  const query = "SELECT MIN(max_players) FROM levels WHERE id = ANY ($1)";
+  const res = await client.query(query, [list_id]);
   ////console.log(res.rows[0].min);
   return res.rows[0].min;
 }
@@ -166,7 +172,7 @@ function fetch_levels(query_tosend, values, socket, response_event) {
       );
       return "Error";
     } else {
-      levels = [];
+      let levels = [];
       for (const row of res.rows) {
         const cname = await get_creator_name(row);
         const img = await get_img_from_level_id(row.id);
@@ -192,7 +198,7 @@ function fetch_levels(query_tosend, values, socket, response_event) {
           level_blocks_destroyed: stats ? stats.blocks_destroyed : 0,
         });
       }
-      console.log("Levels fetched:", levels);
+      //console.log("Levels fetched:", levels);
       socket.emit(response_event, levels);
       return levels;
     }
@@ -237,22 +243,37 @@ function get_img_from_level_id(level_id) {
   });
 }
 
-function get_json_from_id(level_id) {
-  return new Promise((resolve, reject) => {
-    client.query(
-      "SELECT content FROM levels WHERE id = $1",
-      [level_id],
-      (err, res) => {
-        if (err) {
-          console.error("Error executing query", err.stack);
-          resolve("Error");
-        } else {
-          //console.log(res);
-          resolve(res.rows[0].content.data);
-        }
-      }
+async function get_json_from_id(level_id) {
+  try {
+    // Get basic level data
+    const res = await client.query(
+      "SELECT id, name, content, creator_id FROM levels WHERE id = $1",
+      [level_id]
     );
-  });
+
+    if (res.rows.length === 0) {
+      return null;
+    }
+
+    const row = res.rows[0];
+
+    // Get creator name
+    const creatorName = await get_creator_name(row);
+
+    // Get thumbnail
+    const img = await get_img_from_level_id(level_id);
+
+    // Return both the JSON data (for game) and metadata (for UI)
+    return {
+      data: row.content.data,
+      level_name: row.name,
+      level_creator_name: creatorName,
+      level_img: img,
+    };
+  } catch (err) {
+    console.error("Error in get_json_from_id:", err.stack);
+    return null;
+  }
 }
 
 module.exports = {

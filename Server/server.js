@@ -2,12 +2,23 @@ const express = require("express");
 const app = express();
 
 const path = require("path");
+const rateLimit = require("express-rate-limit");
 
-app.use(express.static(path.join(__dirname, "../Public")));
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+});
+
+app.use(express.static(path.join(__dirname, "../Client/dist")));
 app.use(express.static(path.join(__dirname, "../Shared")));
 
+// Fallback to index.html for client-side routing
+app.get("*", limiter, (req, res) => {
+  res.sendFile(path.join(__dirname, "../Client/dist/index.html"));
+});
+
 //console.log(path.join(__dirname, "../Public"));
-const PORT = process.env.PORT || 7000;
+const PORT = process.env.PORT || 8000;
 //console.log("PORT : ", PORT);
 const expressServer = app.listen(PORT);
 
@@ -18,6 +29,9 @@ const io = socketio(expressServer, {
       "http://localhost:7000",
       "https://wiitank-2aacc4abc5cb.herokuapp.com",
       "https://wiitank.pautet.net",
+      "http://localhost:8000",
+      "http://localhost:5173",
+      "http://localhost:5174",
     ],
     methods: ["GET", "POST"],
   },
@@ -107,15 +121,19 @@ io.on("connect", (socket) => {
   });
 
   socket.on("search_levels", (input_name, input_nb_players, type) => {
-    levels = get_levels(input_name, input_nb_players, type, socket);
+    get_levels(input_name, input_nb_players, type, socket);
   });
 
   socket.on("search_my_levels", (input_name, input_nb_players) => {
-    levels = get_my_levels(input_name, input_nb_players, socket);
+    get_my_levels(input_name, input_nb_players, socket);
+  });
+
+  socket.on("get_rooms", () => {
+    room_list(socket);
   });
 
   socket.on("new-room", async (name, rounds, list_id, creator) => {
-    room_id = await create_room(name, 10, list_id, creator, io);
+    const room_id = await create_room(name, 10, list_id, creator, io);
     //console.log("Room caca:", room_id);
     socket.emit("room_created", room_id);
   });
@@ -162,12 +180,13 @@ io.on("connect", (socket) => {
   );
 
   socket.on("quit", () => {
-    disconnect_socket(socket, io);
+    // Just leave the game room, don't logout - user stays authenticated
+    leave_game(socket, io);
     socket.join("lobby" + serverid);
   });
 
   socket.on("play", (playerName, turretc, bodyc, room_id) => {
-    room = rooms[room_id];
+    const room = rooms[room_id];
     //console.log("play", playerName, turretc, bodyc, room_id, room, rooms);
     if (room == undefined) {
       socket.emit("id-fail");
@@ -183,11 +202,18 @@ io.on("connect", (socket) => {
       socket.leave("lobby" + serverid);
       socket.join(room.id);
       io.to(room.id).emit("player-connection", playerName);
-      levels = get_level_from_id(
-        room.levels[room.levelid],
-        socket,
-        "level_change_info"
-      );
+      get_level_from_id(room.levels[room.levelid], socket, "level_change_info");
+
+      // Send user's current rating for this level
+      if (users[socket.id]) {
+        get_level_rating_from_player(
+          room.levels[room.levelid], // Use level ID directly if possible, but room.levels contains IDs
+          users[socket.id].id
+        ).then((stars) => {
+          socket.emit("your_level_rating", stars ? stars : 0);
+        });
+      }
+
       //console.log("blocks on plys", room.blocks);
       socket.emit("level_change", {
         blocks: room.blocks,
@@ -201,7 +227,7 @@ io.on("connect", (socket) => {
   });
 
   socket.on("tock", (data) => {
-    room = rooms[data.room_id];
+    const room = rooms[data.room_id];
     //console.log("tock", data);
     if ((data.serverid = serverid)) {
       if (
@@ -210,6 +236,11 @@ io.on("connect", (socket) => {
         room.players[data.mysocketid] != undefined &&
         room.players[data.mysocketid].position != undefined
       ) {
+        // Skip input processing during countdown
+        if (room.countdownActive) {
+          return;
+        }
+
         room.players[data.mysocketid].mytick = data.mytick;
         if (data.direction != undefined) {
           room.players[data.mysocketid].direction = data.direction;
@@ -231,15 +262,15 @@ io.on("connect", (socket) => {
   });
 });
 
-tickTockInterval = setTimeout(function toocking() {
-  func = setTimeout(toocking, 16.67);
-  TimeElapsed = getTimeElapsed();
-  fps_corector = TimeElapsed / 16.67;
+const tickTockInterval = setTimeout(function toocking() {
+  const func = setTimeout(toocking, 16.67);
+  const TimeElapsed = getTimeElapsed();
+  const fps_corector = TimeElapsed / 16.67;
 
   for (const room of Object.values(rooms)) {
     if (room.update(fps_corector)) {
-      for (socketid in room.players) {
-        player = room.players[socketid];
+      for (const socketid in room.players) {
+        const player = room.players[socketid];
         if (users[socketid]) {
           ////console.log("caca");
           add_round(
@@ -253,11 +284,11 @@ tickTockInterval = setTimeout(function toocking() {
         player.round_stats.reset();
       }
 
-      respawnwait = setTimeout(async () => {
-        level_json = await get_json_from_id(room.levels[room.levelid]);
-        await loadlevel(level_json, room);
+      const respawnwait = setTimeout(async () => {
+        const level_json = await get_json_from_id(room.levels[room.levelid]);
+        await loadlevel(level_json.data, room);
 
-        levels = get_level_from_id(
+        get_level_from_id(
           room.levels[room.levelid],
           room.io.to(room.id),
           "level_change_info"
@@ -265,9 +296,20 @@ tickTockInterval = setTimeout(function toocking() {
 
         room.respawn_the_room();
 
-        for (socketid in room.players) {
+        // Activate countdown - players can see but not act
+        room.countdownActive = true;
+        room.io
+          .to(room.id)
+          .emit("countdown_start", { duration: room.countdownDuration });
+
+        // End countdown after duration
+        setTimeout(() => {
+          room.countdownActive = false;
+        }, room.countdownDuration);
+
+        for (const socketid in room.players) {
           if (users[socketid]) {
-            stars = await get_level_rating_from_player(
+            const stars = await get_level_rating_from_player(
               room.levels[room.levelid].id,
               users[socketid].id
             );
@@ -280,11 +322,11 @@ tickTockInterval = setTimeout(function toocking() {
 }, 16.67); //16.67 means that this code runs at 60 fps
 
 function room_list(socket) {
-  room_ids = [];
-  room_names = [];
-  room_players = [];
-  room_players_max = [];
-  room_creator_name = [];
+  const room_ids = [];
+  const room_names = [];
+  const room_players = [];
+  const room_players_max = [];
+  const room_creator_name = [];
   for (const room of Object.values(rooms)) {
     room_ids.push(room.id);
     room_names.push(room.name);
@@ -317,10 +359,10 @@ function room_list(socket) {
 //important constants for the game
 const waitingtime = 5000;
 
-fps_corector = 1;
-users = {};
+let fps_corector_global = 1;
+const { users } = require(__dirname + "/shared_state.js");
 //Function to get time elapsed in milliseconds between two moments
-oldTime = performance.now();
+let oldTime = performance.now();
 
 function getTimeElapsed() {
   const now = performance.now();
@@ -330,20 +372,20 @@ function getTimeElapsed() {
 }
 
 async function create_room(name, rounds, list_id, creator, io) {
-  room = new Room(name, rounds, list_id, creator, io);
+  const room = new Room(name, rounds, list_id, creator, io);
   room.maxplayernb = await get_max_players(list_id);
-  level_json = await get_json_from_id(room.levels[room.levelid]);
-  console.log("level_json", level_json);
+  const level_json = await get_json_from_id(room.levels[room.levelid]);
+  //console.log("level_json", level_json);
   rooms[room.id] = room;
   if (room) {
-    loadlevel(level_json, room);
+    loadlevel(level_json.data, room);
   }
   room_list(0);
   console.log("Room created:", room.id, room.name);
   return room.id;
   ////console.log(rooms);
 }
-rooms = {};
+const rooms = {};
 
 //create_room("2 players", 10, [2], "GAME MASTER", io);
 /*
@@ -353,19 +395,26 @@ setTimeout(() => {
 
 function disconnect_socket(socket, io) {
   console.log(socket.id, "Got disconnect!");
+  // Logout user on actual disconnect
   if (users[socket.id]) {
     logout(socket);
   }
+  // Also leave game room
+  leave_game(socket, io);
+}
+
+// Leave game room without logging out - called on quit
+function leave_game(socket, io) {
   try {
     for (const r of Object.values(rooms)) {
       socket.leave(r.id);
       r.delete_player(socket.id);
     }
   } catch (error) {
-    console.error("Error handling player disconnection:", error);
+    console.error("Error handling player leaving game:", error);
   }
   room_list(0);
 }
 
-serverid = makeid(15);
+const serverid = makeid(15);
 //console.log(serverid);

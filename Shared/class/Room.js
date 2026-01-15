@@ -12,7 +12,7 @@ try {
 }
 
 class Room {
-  static next_id = 0;
+  static next_id = 1;
   static bot_colors = {
     bot1: ["blue", "blue"],
     bot2: ["green", "green"],
@@ -63,6 +63,10 @@ class Room {
     this.bot2_spawns = [];
     this.bot3_spawns = [];
     this.bot4_spawns = [];
+
+    // Countdown state - when true, render but skip player input/actions
+    this.countdownActive = false;
+    this.countdownDuration = 3000; // 3 seconds
   }
 
   spawn_new_player(playerName, turretc, bodyc, socketid) {
@@ -171,7 +175,11 @@ class Room {
     //console.log("Updating room:", this.name, "tick:", this.tick);
     this.update_bullets();
     this.update_mines();
-    this.update_players();
+
+    // Only update player movements/actions if not in countdown
+    if (!this.countdownActive) {
+      this.update_players();
+    }
     //console.log(this.players);
     this.emit_to_room("tick", {
       players: this.players,
@@ -214,8 +222,8 @@ class Room {
         } else {
           this.emit_to_room("winner", {
             socketid: -1,
-            waitingtime: waitingtime,
-            player_scores: this.scores,
+            waitingtime: this.waitingtime,
+            player_scores: this.get_all_player_stats(),
             ids_to_name: this.ids_to_names,
           });
         }
@@ -385,7 +393,7 @@ class Room {
               ] = 10;
               generateBcollision(this);
               this.blocks.splice(m, 1);
-              this.io.to(this.name).emit("level_change", {
+              this.emit_to_room("level_change", {
                 blocks: this.blocks,
                 Bcollision: this.Bcollision,
                 level_id: this.levels[this.levelid],

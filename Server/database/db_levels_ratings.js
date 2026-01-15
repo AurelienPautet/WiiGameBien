@@ -1,6 +1,7 @@
 console.log(__dirname, "db_levels_ratings.js loaded");
 const path = require("path");
 const client = require(path.join(__dirname, "..", "db_client.js"));
+const { users } = require(path.join(__dirname, "..", "shared_state.js"));
 
 async function get_level_rating_from_player(level_id, player_id) {
   return new Promise((resolve, reject) => {
@@ -22,9 +23,25 @@ async function get_level_rating_from_player(level_id, player_id) {
 }
 
 async function rate_lvl(rate, level_id, socket) {
-  //console.log("rate_lvl", rate, level_id);
+  console.log(
+    "rate_lvl called - socket.id:",
+    socket.id,
+    "rate:",
+    rate,
+    "level_id:",
+    level_id
+  );
+  console.log("users[socket.id]:", users[socket.id]);
+
+  // Check if user is logged in
+  if (!users[socket.id]) {
+    console.log("rate_lvl FAILED - user not in users object");
+    socket.emit("rate_fail", "not logged in");
+    return false;
+  }
+
   try {
-    player_id = users[socket.id].id;
+    const player_id = users[socket.id].id;
     return new Promise((resolve) => {
       client.query(
         "SELECT * FROM ratings WHERE player_id = $1 AND level_id = $2",
@@ -69,8 +86,8 @@ async function rate_lvl(rate, level_id, socket) {
       );
     });
   } catch (err) {
-    //console.log(err);
-    socket.emit("rate_fail", "not logged in");
+    console.error("rate_lvl error:", err);
+    socket.emit("rate_fail", "server error");
     return false;
   }
 }
