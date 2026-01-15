@@ -23,10 +23,19 @@ async function get_level_rating_from_player(level_id, player_id) {
 }
 
 async function rate_lvl(rate, level_id, socket) {
-  //console.log("rate_lvl", rate, level_id);
+  console.log(
+    "rate_lvl called - socket.id:",
+    socket.id,
+    "rate:",
+    rate,
+    "level_id:",
+    level_id
+  );
+  console.log("users[socket.id]:", users[socket.id]);
 
   // Check if user is logged in
   if (!users[socket.id]) {
+    console.log("rate_lvl FAILED - user not in users object");
     socket.emit("rate_fail", "not logged in");
     return false;
   }

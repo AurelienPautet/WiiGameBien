@@ -5,10 +5,12 @@ import {
   AuthProvider,
   ModalProvider,
   GameProvider,
+  ToastProvider,
   useModal,
   useGame,
   MODALS,
 } from "./contexts";
+import { ToastContainer } from "./components/ui";
 import { LandingPage, CANVAS_WIDTH, CANVAS_HEIGHT } from "./components/landing";
 import {
   AuthModal,
@@ -86,7 +88,11 @@ const MainContent = () => {
       >
         {/* Show game canvas when playing, otherwise show landing page */}
         {isPlaying ? (
-          <GameCanvas scale={scale} />
+          <>
+            <GameCanvas scale={scale} />
+            {/* Toast notifications during game */}
+            <ToastContainer />
+          </>
         ) : (
           <>
             {/* Landing page */}
@@ -137,11 +143,13 @@ function App() {
     <BrowserRouter>
       <SocketProvider>
         <AuthProvider>
-          <ModalProvider>
-            <GameProvider>
-              <AppRouter />
-            </GameProvider>
-          </ModalProvider>
+          <ToastProvider>
+            <ModalProvider>
+              <GameProvider>
+                <AppRouter />
+              </GameProvider>
+            </ModalProvider>
+          </ToastProvider>
         </AuthProvider>
       </SocketProvider>
     </BrowserRouter>

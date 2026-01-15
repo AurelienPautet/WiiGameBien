@@ -204,6 +204,12 @@ function new_user_session(socket, email) {
 }
 
 function verify_session(socket, session_id) {
+  console.log(
+    "verify_session called for socket:",
+    socket.id,
+    "session_id:",
+    session_id?.substring(0, 10) + "..."
+  );
   client.query(
     "SELECT * FROM player_sessions join players on players.id = player_sessions.player_id where session_token = $1 AND expiration_timestamp > NOW()",
     [session_id],
@@ -211,11 +217,17 @@ function verify_session(socket, session_id) {
       if (err) {
         console.log("Error executing query", err.stack);
       } else if (res.rows.length == 0) {
-        console.log("Session not found or expired");
+        console.log("Session not found or expired for socket:", socket.id);
         socket.emit("session_not_valid");
         logout(socket);
       } else {
         const user = res.rows[0];
+        console.log(
+          "Session valid, registering user:",
+          user.email,
+          "for socket:",
+          socket.id
+        );
         users[socket.id] = new User(user.email);
         socket.emit("login_success", user.username, user.email);
         log_attemps(user.email, socket.handshake.address, "auto_login_success");

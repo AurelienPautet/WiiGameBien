@@ -1,11 +1,13 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useGame, useSocket, useModal } from "../../contexts";
 import { GameEngine } from "../../engine/GameEngine";
+import { EndGameScreen } from "./EndGameScreen";
 
 export const GameCanvas = ({ scale = 1 }) => {
   const canvasRef = useRef(null);
   const fadingCanvasRef = useRef(null);
   const engineRef = useRef(null);
+  const [isEndGameVisible, setIsEndGameVisible] = useState(false);
 
   const {
     mode,
@@ -20,6 +22,22 @@ export const GameCanvas = ({ scale = 1 }) => {
   } = useGame();
   const { socket } = useSocket();
   const { openModal } = useModal();
+
+  // Listen for winner event to blur canvases
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleWinner = (data) => {
+      setIsEndGameVisible(true);
+      // Hide after waiting time
+      setTimeout(() => {
+        setIsEndGameVisible(false);
+      }, data.waitingtime);
+    };
+
+    socket.on("winner", handleWinner);
+    return () => socket.off("winner", handleWinner);
+  }, [socket]);
 
   // Update engine scale when window is resized
   useEffect(() => {
@@ -129,19 +147,22 @@ export const GameCanvas = ({ scale = 1 }) => {
     return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, [handlePause]);
 
+  // Canvas blur style when end game is visible
+  const canvasBlurStyle = isEndGameVisible ? { filter: "blur(4px)" } : {};
+
   return (
     <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-black">
       {/* Fading canvas for track trails */}
       <canvas
         ref={fadingCanvasRef}
         className="absolute"
-        style={{ width: 1150, height: 800 }}
+        style={{ width: 1150, height: 800, ...canvasBlurStyle }}
       />
       {/* Main game canvas */}
       <canvas
         ref={canvasRef}
         className="absolute z-10"
-        style={{ width: 1150, height: 800 }}
+        style={{ width: 1150, height: 800, ...canvasBlurStyle }}
       />
 
       {/* Pause overlay */}
@@ -158,6 +179,9 @@ export const GameCanvas = ({ scale = 1 }) => {
           </div>
         </div>
       )}
+
+      {/* End game screen overlay */}
+      <EndGameScreen />
     </div>
   );
 };

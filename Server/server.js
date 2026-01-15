@@ -169,7 +169,8 @@ io.on("connect", (socket) => {
   );
 
   socket.on("quit", () => {
-    disconnect_socket(socket, io);
+    // Just leave the game room, don't logout - user stays authenticated
+    leave_game(socket, io);
     socket.join("lobby" + serverid);
   });
 
@@ -191,6 +192,17 @@ io.on("connect", (socket) => {
       socket.join(room.id);
       io.to(room.id).emit("player-connection", playerName);
       get_level_from_id(room.levels[room.levelid], socket, "level_change_info");
+
+      // Send user's current rating for this level
+      if (users[socket.id]) {
+        get_level_rating_from_player(
+          room.levels[room.levelid], // Use level ID directly if possible, but room.levels contains IDs
+          users[socket.id].id
+        ).then((stars) => {
+          socket.emit("your_level_rating", stars ? stars : 0);
+        });
+      }
+
       //console.log("blocks on plys", room.blocks);
       socket.emit("level_change", {
         blocks: room.blocks,
@@ -356,16 +368,23 @@ setTimeout(() => {
 
 function disconnect_socket(socket, io) {
   console.log(socket.id, "Got disconnect!");
+  // Logout user on actual disconnect
   if (users[socket.id]) {
     logout(socket);
   }
+  // Also leave game room
+  leave_game(socket, io);
+}
+
+// Leave game room without logging out - called on quit
+function leave_game(socket, io) {
   try {
     for (const r of Object.values(rooms)) {
       socket.leave(r.id);
       r.delete_player(socket.id);
     }
   } catch (error) {
-    console.error("Error handling player disconnection:", error);
+    console.error("Error handling player leaving game:", error);
   }
   room_list(0);
 }
