@@ -61,7 +61,7 @@ export function LevelCard({
       {/* Thumbnail */}
       <div className={`flex-shrink-0 ${locked ? "blur-sm" : ""}`}>
         <img
-          src={thumbnailSrc || "/ressources/image/minia/test.png"}
+          src={thumbnailSrc || "ressources/image/minia/test.png"}
           alt={`Level ${levelId} preview`}
           className="w-32 h-24 object-cover rounded border-2 border-base-content/20"
         />
@@ -121,12 +121,12 @@ function BotBadge({ botType, count }) {
       <span className="text-sm font-medium">{count}*</span>
       <div className="relative w-8 h-6">
         <img
-          src={`/ressources/image/tank_player/body_${color}.png`}
+          src={`ressources/image/tank_player/body_${color}.png`}
           alt=""
           className="absolute w-6 h-6"
         />
         <img
-          src={`/ressources/image/tank_player/turret_${color}.png`}
+          src={`ressources/image/tank_player/turret_${color}.png`}
           alt=""
           className="absolute w-8 h-5 -left-3"
         />

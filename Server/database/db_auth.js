@@ -3,7 +3,7 @@ const path = require("path");
 const client = require(path.join(__dirname, "..", "db_client.js"));
 const User = require(path.join(__dirname, "..", "User_class.js"));
 
-const { makeid } = require(__dirname + "/../../Shared/scripts/commons.js");
+const { makeid } = require(__dirname + "/../../shared/scripts/commons.js");
 const { signupbis, verifyToken } = require(path.join(
   __dirname,
   "..",

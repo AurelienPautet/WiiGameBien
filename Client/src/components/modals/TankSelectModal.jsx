@@ -84,7 +84,7 @@ export const TankSelectModal = () => {
           <div className="w-32 h-20 opacity-40 transition-all duration-200">
             {selectedIndex > 0 && (
               <img
-                src={`/ressources/image/tank_player/${type}_${
+                src={`ressources/image/tank_player/${type}_${
                   items[selectedIndex - 1]
                 }.png`}
                 alt={`${type} ${items[selectedIndex - 1]}`}
@@ -101,7 +101,7 @@ export const TankSelectModal = () => {
             } transition-all duration-200`}
           >
             <img
-              src={`/ressources/image/tank_player/${type}_${items[selectedIndex]}.png`}
+              src={`ressources/image/tank_player/${type}_${items[selectedIndex]}.png`}
               alt={`${type} ${items[selectedIndex]}`}
               className="w-full h-full object-contain select-none"
               draggable={false}
@@ -112,7 +112,7 @@ export const TankSelectModal = () => {
           <div className="w-32 h-20 opacity-40 transition-all duration-200">
             {selectedIndex < items.length - 1 && (
               <img
-                src={`/ressources/image/tank_player/${type}_${
+                src={`ressources/image/tank_player/${type}_${
                   items[selectedIndex + 1]
                 }.png`}
                 alt={`${type} ${items[selectedIndex + 1]}`}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { HashRouter, Routes, Route, useLocation } from "react-router-dom";
 import {
   SocketProvider,
   AuthProvider,
@@ -140,7 +140,7 @@ const AppRouter = () => {
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <SocketProvider>
         <AuthProvider>
           <ToastProvider>
@@ -152,7 +152,7 @@ function App() {
           </ToastProvider>
         </AuthProvider>
       </SocketProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 

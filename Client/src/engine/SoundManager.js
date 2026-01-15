@@ -9,32 +9,32 @@ export class SoundManager {
     // Preload all sounds
     this.sounds = {
       tir: new Howl({
-        src: ["/ressources/sounds/tir.mp3"],
+        src: ["ressources/sounds/tir.mp3"],
         volume: 0.5,
         pool: 10, // Allow 10 simultaneous instances
       }),
       kill: new Howl({
-        src: ["/ressources/sounds/kill.mp3"],
+        src: ["ressources/sounds/kill.mp3"],
         volume: 0.6,
         pool: 10,
       }),
       explose: new Howl({
-        src: ["/ressources/sounds/eplose.mp3"],
+        src: ["ressources/sounds/eplose.mp3"],
         volume: 0.7,
         pool: 10,
       }),
       fuse: new Howl({
-        src: ["/ressources/sounds/fuse.mp3"],
+        src: ["ressources/sounds/fuse.mp3"],
         volume: 0.4,
         pool: 10,
       }),
       plant: new Howl({
-        src: ["/ressources/sounds/plant.mp3"],
+        src: ["ressources/sounds/plant.mp3"],
         volume: 0.5,
         pool: 10,
       }),
       ricochet: new Howl({
-        src: ["/ressources/sounds/ricochet.mp3"],
+        src: ["ressources/sounds/ricochet.mp3"],
         volume: 0.4,
         pool: 10,
       }),

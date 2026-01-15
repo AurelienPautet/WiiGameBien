@@ -48,7 +48,7 @@ export function getBotColor(botType) {
  */
 export function hexToDataUrl(hex) {
   if (!hex || hex.length === 0) {
-    return "/ressources/image/minia/test.png"; // Fallback
+    return "ressources/image/minia/test.png"; // Fallback
   }
 
   try {
@@ -61,6 +61,6 @@ export function hexToDataUrl(hex) {
     return `data:image/jpeg;base64,${base64}`;
   } catch (e) {
     console.error("Error converting hex to data URL:", e);
-    return "/ressources/image/minia/test.png";
+    return "ressources/image/minia/test.png";
   }
 }

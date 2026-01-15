@@ -166,12 +166,12 @@ export const LandingPage = () => {
       <div className="h-56 w-72 bg-base-100 flex justify-center items-center relative rounded-md">
         <img
           className="w-28 h-24 absolute"
-          src={`/ressources/image/tank_player/body_${tankColors.body}.png`}
+          src={`ressources/image/tank_player/body_${tankColors.body}.png`}
           alt="Tank body"
         />
         <img
           className="w-32 h-16 absolute -mt-5 -ml-15"
-          src={`/ressources/image/tank_player/turret_${tankColors.turret}.png`}
+          src={`ressources/image/tank_player/turret_${tankColors.turret}.png`}
           alt="Tank turret"
         />
         <button

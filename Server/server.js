@@ -10,7 +10,7 @@ const limiter = rateLimit({
 });
 
 app.use(express.static(path.join(__dirname, "../Client/dist")));
-app.use(express.static(path.join(__dirname, "../Shared")));
+app.use(express.static(path.join(__dirname, "../shared")));
 
 // Fallback to index.html for client-side routing
 app.get("*", limiter, (req, res) => {
@@ -39,10 +39,10 @@ const io = socketio(expressServer, {
   },
 });
 
-const { loadlevel } = require(__dirname + "/../Shared/scripts/level_loader.js");
-const { makeid } = require(__dirname + "/../Shared/scripts/commons.js");
+const { loadlevel } = require(__dirname + "/../shared/scripts/level_loader.js");
+const { makeid } = require(__dirname + "/../shared/scripts/commons.js");
 
-const Room = require(__dirname + "/../Shared/class/Room.js");
+const Room = require(__dirname + "/../shared/class/Room.js");
 
 const { get_level_rating_from_player, rate_lvl } = require(__dirname +
   "/database/db_levels_ratings.js");

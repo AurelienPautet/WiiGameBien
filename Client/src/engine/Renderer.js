@@ -43,23 +43,23 @@ export class Renderer {
     // Load tank images
     colors.forEach((color) => {
       this.images[`body_${color}`] = this._loadImage(
-        `/ressources/image/tank_player/body_${color}.png`
+        `ressources/image/tank_player/body_${color}.png`
       );
       this.images[`turret_${color}`] = this._loadImage(
-        `/ressources/image/tank_player/turret_${color}.png`
+        `ressources/image/tank_player/turret_${color}.png`
       );
     });
 
     // Load other images
     this.images.body_tracks = this._loadImage(
-      "/ressources/image/tank_player/body_tracks.png"
+      "ressources/image/tank_player/body_tracks.png"
     );
     this.images.turret_decalc_bot = this._loadImage(
-      "/ressources/image/tank_player/turret_decalc_bot.png"
+      "ressources/image/tank_player/turret_decalc_bot.png"
     );
-    this.images.dead = this._loadImage("/ressources/image/dead.png");
-    this.images.hole = this._loadImage("/ressources/image/block/hole.png");
-    this.images.flag = this._loadImage("/ressources/image/block/flag.png");
+    this.images.dead = this._loadImage("ressources/image/dead.png");
+    this.images.hole = this._loadImage("ressources/image/block/hole.png");
+    this.images.flag = this._loadImage("ressources/image/block/flag.png");
 
     // Theme-based images
     this._loadThemeImages(this.theme);
@@ -73,15 +73,15 @@ export class Renderer {
 
   _loadThemeImages(theme) {
     this.images.block1 = this._loadImage(
-      `/ressources/image/block/Cube${theme}-1.png`
+      `ressources/image/block/Cube${theme}-1.png`
     );
     this.images.block2 = this._loadImage(
-      `/ressources/image/block/Cube${theme}-2.png`
+      `ressources/image/block/Cube${theme}-2.png`
     );
     this.images.bullet = this._loadImage(
-      `/ressources/image/bullet/bullet-${theme}.png`
+      `ressources/image/bullet/bullet-${theme}.png`
     );
-    this.images.bg = this._loadImage(`/ressources/image/bg${theme}.png`);
+    this.images.bg = this._loadImage(`ressources/image/bg${theme}.png`);
   }
 
   setTheme(theme) {

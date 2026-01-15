@@ -79,19 +79,19 @@ export const LevelEditor = () => {
   useEffect(() => {
     const loadAllImages = async () => {
       const imgPaths = {
-        block1: `/ressources/image/block/Cube${theme}-1.png`,
-        block2: `/ressources/image/block/Cube${theme}-2.png`,
-        flag: `/ressources/image/block/flag.png`,
-        hole: `/ressources/image/block/hole.png`,
-        bg: `/ressources/image/bg${theme}.png`,
-        body_blue: `/ressources/image/tank_player/body_blue.png`,
-        turret_blue: `/ressources/image/tank_player/turret_blue.png`,
-        body_green: `/ressources/image/tank_player/body_green.png`,
-        turret_green: `/ressources/image/tank_player/turret_green.png`,
-        body_orange: `/ressources/image/tank_player/body_orange.png`,
-        turret_orange: `/ressources/image/tank_player/turret_orange.png`,
-        body_red: `/ressources/image/tank_player/body_red.png`,
-        turret_red: `/ressources/image/tank_player/turret_red.png`,
+        block1: `ressources/image/block/Cube${theme}-1.png`,
+        block2: `ressources/image/block/Cube${theme}-2.png`,
+        flag: `ressources/image/block/flag.png`,
+        hole: `ressources/image/block/hole.png`,
+        bg: `ressources/image/bg${theme}.png`,
+        body_blue: `ressources/image/tank_player/body_blue.png`,
+        turret_blue: `ressources/image/tank_player/turret_blue.png`,
+        body_green: `ressources/image/tank_player/body_green.png`,
+        turret_green: `ressources/image/tank_player/turret_green.png`,
+        body_orange: `ressources/image/tank_player/body_orange.png`,
+        turret_orange: `ressources/image/tank_player/turret_orange.png`,
+        body_red: `ressources/image/tank_player/body_red.png`,
+        turret_red: `ressources/image/tank_player/turret_red.png`,
       };
 
       const loaded = {};
@@ -420,18 +420,18 @@ export const LevelEditor = () => {
   const baseBlocks = [
     {
       id: BLOCKS.WALL,
-      src: `/ressources/image/block/Cube${theme}-1.png`,
+      src: `ressources/image/block/Cube${theme}-1.png`,
       label: "Wall",
     },
     {
       id: BLOCKS.PLATFORM,
-      src: `/ressources/image/block/Cube${theme}-2.png`,
+      src: `ressources/image/block/Cube${theme}-2.png`,
       label: "Platform",
     },
-    { id: BLOCKS.HOLE, src: `/ressources/image/block/hole.png`, label: "Hole" },
+    { id: BLOCKS.HOLE, src: `ressources/image/block/hole.png`, label: "Hole" },
     {
       id: BLOCKS.FLAG,
-      src: `/ressources/image/block/flag.png`,
+      src: `ressources/image/block/flag.png`,
       label: "Spawn",
     },
   ];
@@ -439,26 +439,26 @@ export const LevelEditor = () => {
   const botBlocks = [
     {
       id: BLOCKS.BOT_BLUE,
-      body: `/ressources/image/tank_player/body_blue.png`,
-      turret: `/ressources/image/tank_player/turret_blue.png`,
+      body: `ressources/image/tank_player/body_blue.png`,
+      turret: `ressources/image/tank_player/turret_blue.png`,
       label: "Blue Bot",
     },
     {
       id: BLOCKS.BOT_GREEN,
-      body: `/ressources/image/tank_player/body_green.png`,
-      turret: `/ressources/image/tank_player/turret_green.png`,
+      body: `ressources/image/tank_player/body_green.png`,
+      turret: `ressources/image/tank_player/turret_green.png`,
       label: "Green Bot",
     },
     {
       id: BLOCKS.BOT_ORANGE,
-      body: `/ressources/image/tank_player/body_orange.png`,
-      turret: `/ressources/image/tank_player/turret_orange.png`,
+      body: `ressources/image/tank_player/body_orange.png`,
+      turret: `ressources/image/tank_player/turret_orange.png`,
       label: "Orange Bot",
     },
     {
       id: BLOCKS.BOT_RED,
-      body: `/ressources/image/tank_player/body_red.png`,
-      turret: `/ressources/image/tank_player/turret_red.png`,
+      body: `ressources/image/tank_player/body_red.png`,
+      turret: `ressources/image/tank_player/turret_red.png`,
       label: "Red Bot",
     },
   ];
