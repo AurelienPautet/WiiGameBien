@@ -10,11 +10,11 @@ function get_levels(input_name, imput_nb_players, type, socket) {
   let query_tosend, values;
   if (imput_nb_players == 0) {
     query_tosend =
-      "SELECT levels.id, name, content, creator_id, max_players,type,status, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' AND levels.type = $2 AND levels.status = 'up' GROUP BY levels.id ORDER BY rating";
+      "SELECT levels.id, name, content, creator_id, max_players,type,status, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' AND levels.type = $2 AND levels.status = 'up' GROUP BY levels.id ORDER BY rating DESC";
     values = [input_name, type];
   } else {
     query_tosend =
-      "SELECT levels.id, name, content, creator_id, max_players,type,status, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' AND max_players = $2 AND levels.type = $3 AND levels.status = 'up' GROUP BY levels.id ORDER BY rating";
+      "SELECT levels.id, name, content, creator_id, max_players,type,status, COALESCE(AVG(stars), 0) as rating FROM levels LEFT JOIN ratings ON levels.id = ratings.level_id WHERE name LIKE '%' || $1 || '%' AND max_players = $2 AND levels.type = $3 AND levels.status = 'up' GROUP BY levels.id ORDER BY rating DESC";
     values = [input_name, imput_nb_players, type];
   }
   fetch_levels(query_tosend, values, socket, "recieve_levels");
