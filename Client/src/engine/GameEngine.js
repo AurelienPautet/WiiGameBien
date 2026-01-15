@@ -232,6 +232,11 @@ export class GameEngine {
   }
 
   _startLoops() {
+    // Guard: Don't start loops if engine was quit during async initialization
+    if (!this.running) {
+      return;
+    }
+
     // Start render loop (requestAnimationFrame)
     this.animationId = requestAnimationFrame(this._renderLoop);
 
@@ -275,7 +280,9 @@ export class GameEngine {
     if (player) {
       player.direction = input.direction;
       player.aim = input.aim;
-      if (input.plant) player.plant(this.localRoom);
+      if (input.plant) {
+        player.plant(this.localRoom);
+      }
       if (input.click) {
         if (player.alive && player.bulletcount < player.max_bulletcount) {
           player.shoot(this.localRoom);
