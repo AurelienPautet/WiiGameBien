@@ -420,3 +420,24 @@ function leave_game(socket, io) {
 
 const serverid = makeid(15);
 //console.log(serverid);
+
+// Log and broadcast player count every minute
+setInterval(() => {
+  const playerCount = io.engine.clientsCount;
+  console.log(`[${new Date().toISOString()}] Players online: ${playerCount}`);
+  io.emit("online_count", playerCount);
+}, 60000); // 60000ms = 1 minute
+
+// Also emit count on new connections/disconnections
+io.on("connection", (socket) => {
+  // Small delay to let any pending disconnects complete first (handles refresh)
+  setImmediate(() => {
+    io.emit("online_count", io.engine.clientsCount);
+  });
+  socket.on("disconnect", () => {
+    // Delay to ensure socket is fully removed from count
+    setImmediate(() => {
+      io.emit("online_count", io.engine.clientsCount);
+    });
+  });
+});

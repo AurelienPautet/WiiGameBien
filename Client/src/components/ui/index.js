@@ -3,3 +3,4 @@ export { LevelCard } from "./LevelCard";
 export { LevelSelector } from "./LevelSelector";
 export { Toast } from "./Toast";
 export { ToastContainer } from "./ToastContainer";
+export { default as OnlineIndicator } from "./OnlineIndicator";

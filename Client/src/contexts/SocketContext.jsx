@@ -13,6 +13,7 @@ export const useSocket = () => useContext(SocketContext);
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [onlineCount, setOnlineCount] = useState(0);
 
   useEffect(() => {
     const sock = io(SERVER_URL);
@@ -25,6 +26,10 @@ export const SocketProvider = ({ children }) => {
       setIsConnected(false);
     });
 
+    sock.on("online_count", (count) => {
+      setOnlineCount(count);
+    });
+
     setSocket(sock);
 
     return () => {
@@ -33,7 +38,7 @@ export const SocketProvider = ({ children }) => {
   }, []);
 
   return (
-    <SocketContext.Provider value={{ socket, isConnected }}>
+    <SocketContext.Provider value={{ socket, isConnected, onlineCount }}>
       {children}
     </SocketContext.Provider>
   );

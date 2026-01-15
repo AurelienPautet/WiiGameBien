@@ -10,7 +10,7 @@ import {
   useGame,
   MODALS,
 } from "./contexts";
-import { ToastContainer } from "./components/ui";
+import { ToastContainer, OnlineIndicator } from "./components/ui";
 import { LandingPage, CANVAS_WIDTH, CANVAS_HEIGHT } from "./components/landing";
 import {
   AuthModal,
@@ -95,6 +95,9 @@ const MainContent = () => {
           </>
         ) : (
           <>
+            {/* Online player indicator */}
+            <OnlineIndicator />
+
             {/* Landing page */}
             <LandingPage />
 

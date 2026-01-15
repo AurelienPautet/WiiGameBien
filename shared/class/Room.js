@@ -3,10 +3,10 @@ try {
     rectanglesSeTouchent,
     rectRect,
     distance,
-  } = require("../../Shared/scripts/check_collision.js"));
+  } = require("../../shared/scripts/check_collision.js"));
 
-  ({ generateBcollision } = require("../../Shared/scripts/level_loader.js"));
-  Player = require("../../Shared/class/Player.js");
+  ({ generateBcollision } = require("../../shared/scripts/level_loader.js"));
+  Player = require("../../shared/class/Player.js");
 } catch (error) {
   console.error("Error requiring dependencies in Room.js:", error);
 }

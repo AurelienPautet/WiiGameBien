@@ -1,6 +1,6 @@
 try {
   detectCollision =
-    require("../../Shared/scripts/check_collision.js").detectCollision;
+    require("../../shared/scripts/check_collision.js").detectCollision;
 } catch (error) {
   console.error("Error requiring detectCollision:", error);
 }

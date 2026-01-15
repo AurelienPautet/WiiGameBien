@@ -2,10 +2,10 @@ try {
   ({
     rectRect,
     colliderect,
-  } = require("../../Shared/scripts/check_collision.js"));
-  Bullet = require("../../Shared/class/Bullet.js");
-  Mine = require("../../Shared/class/Mine.js");
-  Stats = require("../../Shared/class/Stats.js");
+  } = require("../../shared/scripts/check_collision.js"));
+  Bullet = require("../../shared/class/Bullet.js");
+  Mine = require("../../shared/class/Mine.js");
+  Stats = require("../../shared/class/Stats.js");
 } catch (e) {
   console.error("Error requiring dependencies in Player.js:", e);
 }
