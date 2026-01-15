@@ -1,7 +1,9 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL;
+const SERVER_URL = import.meta.env.PROD
+  ? "https://wiitank.pautet.net"
+  : "http://localhost:8000";
 console.log(SERVER_URL);
 
 const SocketContext = createContext(null);

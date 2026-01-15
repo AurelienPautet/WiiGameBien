@@ -32,6 +32,8 @@ const io = socketio(expressServer, {
       "http://localhost:8000",
       "http://localhost:5173",
       "http://localhost:5174",
+      "https://html-classic.itch.zone",
+      "https://itch.io",
     ],
     methods: ["GET", "POST"],
   },

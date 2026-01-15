@@ -6,3 +6,4 @@
 .env
 tailwind.config.js
 .github/
+.DS_Store
