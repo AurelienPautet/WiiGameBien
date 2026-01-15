@@ -55,9 +55,9 @@ export const RankingsModal = () => {
 
   // Get background class for top 3 ranks
   const getRankBgClass = (rank) => {
-    if (rank === 1) return "bg-yellow-500"; // Gold
-    if (rank === 2) return "bg-zinc-400"; // Silver
-    if (rank === 3) return "bg-amber-700"; // Bronze
+    if (rank == 1) return "bg-yellow-500"; // Gold
+    if (rank == 2) return "bg-zinc-500"; // Silver
+    if (rank == 3) return "bg-yellow-700"; // Bronze
     return "bg-base-200";
   };
 
@@ -70,7 +70,7 @@ export const RankingsModal = () => {
   return (
     <dialog className="modal modal-open">
       <div className="modal-box bg-base-200 w-11/12 max-w-3xl h-3/4 p-0 overflow-hidden flex flex-col">
-        <h1 className="text-center py-4 text-3xl font-bold">Rankings</h1>
+        <h1 className="text-center py-4 text-3xl font-bold">Online Rankings</h1>
 
         {/* Tabs */}
         <Tabs
