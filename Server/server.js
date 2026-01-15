@@ -110,11 +110,11 @@ io.on("connect", (socket) => {
   });
 
   socket.on("search_levels", (input_name, input_nb_players, type) => {
-    levels = get_levels(input_name, input_nb_players, type, socket);
+    get_levels(input_name, input_nb_players, type, socket);
   });
 
   socket.on("search_my_levels", (input_name, input_nb_players) => {
-    levels = get_my_levels(input_name, input_nb_players, socket);
+    get_my_levels(input_name, input_nb_players, socket);
   });
 
   socket.on("get_rooms", () => {
@@ -122,7 +122,7 @@ io.on("connect", (socket) => {
   });
 
   socket.on("new-room", async (name, rounds, list_id, creator) => {
-    room_id = await create_room(name, 10, list_id, creator, io);
+    const room_id = await create_room(name, 10, list_id, creator, io);
     //console.log("Room caca:", room_id);
     socket.emit("room_created", room_id);
   });
@@ -174,7 +174,7 @@ io.on("connect", (socket) => {
   });
 
   socket.on("play", (playerName, turretc, bodyc, room_id) => {
-    room = rooms[room_id];
+    const room = rooms[room_id];
     //console.log("play", playerName, turretc, bodyc, room_id, room, rooms);
     if (room == undefined) {
       socket.emit("id-fail");
@@ -190,11 +190,7 @@ io.on("connect", (socket) => {
       socket.leave("lobby" + serverid);
       socket.join(room.id);
       io.to(room.id).emit("player-connection", playerName);
-      levels = get_level_from_id(
-        room.levels[room.levelid],
-        socket,
-        "level_change_info"
-      );
+      get_level_from_id(room.levels[room.levelid], socket, "level_change_info");
       //console.log("blocks on plys", room.blocks);
       socket.emit("level_change", {
         blocks: room.blocks,
@@ -208,7 +204,7 @@ io.on("connect", (socket) => {
   });
 
   socket.on("tock", (data) => {
-    room = rooms[data.room_id];
+    const room = rooms[data.room_id];
     //console.log("tock", data);
     if ((data.serverid = serverid)) {
       if (
@@ -238,15 +234,15 @@ io.on("connect", (socket) => {
   });
 });
 
-tickTockInterval = setTimeout(function toocking() {
-  func = setTimeout(toocking, 16.67);
-  TimeElapsed = getTimeElapsed();
-  fps_corector = TimeElapsed / 16.67;
+const tickTockInterval = setTimeout(function toocking() {
+  const func = setTimeout(toocking, 16.67);
+  const TimeElapsed = getTimeElapsed();
+  const fps_corector = TimeElapsed / 16.67;
 
   for (const room of Object.values(rooms)) {
     if (room.update(fps_corector)) {
-      for (socketid in room.players) {
-        player = room.players[socketid];
+      for (const socketid in room.players) {
+        const player = room.players[socketid];
         if (users[socketid]) {
           ////console.log("caca");
           add_round(
@@ -260,11 +256,11 @@ tickTockInterval = setTimeout(function toocking() {
         player.round_stats.reset();
       }
 
-      respawnwait = setTimeout(async () => {
-        level_json = await get_json_from_id(room.levels[room.levelid]);
+      const respawnwait = setTimeout(async () => {
+        const level_json = await get_json_from_id(room.levels[room.levelid]);
         await loadlevel(level_json, room);
 
-        levels = get_level_from_id(
+        get_level_from_id(
           room.levels[room.levelid],
           room.io.to(room.id),
           "level_change_info"
@@ -272,9 +268,9 @@ tickTockInterval = setTimeout(function toocking() {
 
         room.respawn_the_room();
 
-        for (socketid in room.players) {
+        for (const socketid in room.players) {
           if (users[socketid]) {
-            stars = await get_level_rating_from_player(
+            const stars = await get_level_rating_from_player(
               room.levels[room.levelid].id,
               users[socketid].id
             );
@@ -287,11 +283,11 @@ tickTockInterval = setTimeout(function toocking() {
 }, 16.67); //16.67 means that this code runs at 60 fps
 
 function room_list(socket) {
-  room_ids = [];
-  room_names = [];
-  room_players = [];
-  room_players_max = [];
-  room_creator_name = [];
+  const room_ids = [];
+  const room_names = [];
+  const room_players = [];
+  const room_players_max = [];
+  const room_creator_name = [];
   for (const room of Object.values(rooms)) {
     room_ids.push(room.id);
     room_names.push(room.name);
@@ -324,10 +320,10 @@ function room_list(socket) {
 //important constants for the game
 const waitingtime = 5000;
 
-fps_corector = 1;
-users = {};
+let fps_corector_global = 1;
+const { users } = require(__dirname + "/shared_state.js");
 //Function to get time elapsed in milliseconds between two moments
-oldTime = performance.now();
+let oldTime = performance.now();
 
 function getTimeElapsed() {
   const now = performance.now();
@@ -350,7 +346,7 @@ async function create_room(name, rounds, list_id, creator, io) {
   return room.id;
   ////console.log(rooms);
 }
-rooms = {};
+const rooms = {};
 
 //create_room("2 players", 10, [2], "GAME MASTER", io);
 /*
@@ -374,5 +370,5 @@ function disconnect_socket(socket, io) {
   room_list(0);
 }
 
-serverid = makeid(15);
+const serverid = makeid(15);
 //console.log(serverid);

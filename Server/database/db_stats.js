@@ -1,5 +1,6 @@
 const path = require("path");
 const client = require(path.join(__dirname, "..", "db_client.js"));
+const { users } = require(path.join(__dirname, "..", "shared_state.js"));
 async function add_round(player_socket_id, level_id, stats_to_add) {
   //console.log("adding rounds", player_socket_id, level_id, stats_to_add);
   try {

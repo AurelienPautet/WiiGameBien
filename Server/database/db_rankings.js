@@ -1,5 +1,6 @@
 const path = require("path");
 const client = require(path.join(__dirname, "..", "db_client.js"));
+const { users } = require(path.join(__dirname, "..", "shared_state.js"));
 async function get_ranking(ranking_type, socket) {
   let selectExpr;
   switch (ranking_type) {

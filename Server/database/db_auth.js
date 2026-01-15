@@ -9,6 +9,7 @@ const { signupbis, verifyToken } = require(path.join(
   "..",
   "auth_server.js"
 ));
+const { users } = require(path.join(__dirname, "..", "shared_state.js"));
 
 async function log_attemps(email, ip_adress, status) {
   let res = await client.query("SELECT id from players where email = $1", [

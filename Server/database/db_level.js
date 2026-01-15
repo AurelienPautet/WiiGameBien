@@ -3,6 +3,7 @@
 
 const path = require("path");
 const client = require(path.join(__dirname, "..", "db_client.js"));
+const { users } = require(path.join(__dirname, "..", "shared_state.js"));
 function get_levels(input_name, imput_nb_players, type, socket) {
   //console.log(input_name, imput_nb_players);
   //console.log(type);
@@ -136,8 +137,8 @@ function save_level(
 }
 
 async function get_max_players(list_id) {
-  query = "SELECT MIN(max_players) FROM levels WHERE id = ANY ($1)";
-  res = await client.query(query, [list_id]);
+  const query = "SELECT MIN(max_players) FROM levels WHERE id = ANY ($1)";
+  const res = await client.query(query, [list_id]);
   ////console.log(res.rows[0].min);
   return res.rows[0].min;
 }
@@ -171,7 +172,7 @@ function fetch_levels(query_tosend, values, socket, response_event) {
       );
       return "Error";
     } else {
-      levels = [];
+      let levels = [];
       for (const row of res.rows) {
         const cname = await get_creator_name(row);
         const img = await get_img_from_level_id(row.id);
