@@ -9,8 +9,9 @@
   },
   "scripts": {
     "dev:tailwind": "npx tailwindcss -i Public/src/css/styles.css -o Public/src/css/tails.css --watch",
-    "dev:server": "nodemon Server/server.js",
-    "start": "node Server/server.js",
+    "dev": "nodemon Server/server.js",
+    "start": "npm run build && node Server/server.js",
+    "build": "cd Client && pnpm install && pnpm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

@@ -3,8 +3,13 @@ const app = express();
 
 const path = require("path");
 
-app.use(express.static(path.join(__dirname, "../Public")));
+app.use(express.static(path.join(__dirname, "../Client/dist")));
 app.use(express.static(path.join(__dirname, "../Shared")));
+
+// Fallback to index.html for client-side routing
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../Client/dist/index.html"));
+});
 
 //console.log(path.join(__dirname, "../Public"));
 const PORT = process.env.PORT || 8000;
