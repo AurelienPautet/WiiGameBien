@@ -230,6 +230,11 @@ io.on("connect", (socket) => {
         room.players[data.mysocketid] != undefined &&
         room.players[data.mysocketid].position != undefined
       ) {
+        // Skip input processing during countdown
+        if (room.countdownActive) {
+          return;
+        }
+
         room.players[data.mysocketid].mytick = data.mytick;
         if (data.direction != undefined) {
           room.players[data.mysocketid].direction = data.direction;
@@ -275,7 +280,7 @@ const tickTockInterval = setTimeout(function toocking() {
 
       const respawnwait = setTimeout(async () => {
         const level_json = await get_json_from_id(room.levels[room.levelid]);
-        await loadlevel(level_json, room);
+        await loadlevel(level_json.data, room);
 
         get_level_from_id(
           room.levels[room.levelid],
@@ -284,6 +289,17 @@ const tickTockInterval = setTimeout(function toocking() {
         );
 
         room.respawn_the_room();
+
+        // Activate countdown - players can see but not act
+        room.countdownActive = true;
+        room.io
+          .to(room.id)
+          .emit("countdown_start", { duration: room.countdownDuration });
+
+        // End countdown after duration
+        setTimeout(() => {
+          room.countdownActive = false;
+        }, room.countdownDuration);
 
         for (const socketid in room.players) {
           if (users[socketid]) {
@@ -356,7 +372,7 @@ async function create_room(name, rounds, list_id, creator, io) {
   //console.log("level_json", level_json);
   rooms[room.id] = room;
   if (room) {
-    loadlevel(level_json, room);
+    loadlevel(level_json.data, room);
   }
   room_list(0);
   console.log("Room created:", room.id, room.name);

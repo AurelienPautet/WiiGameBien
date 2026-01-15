@@ -243,22 +243,37 @@ function get_img_from_level_id(level_id) {
   });
 }
 
-function get_json_from_id(level_id) {
-  return new Promise((resolve, reject) => {
-    client.query(
-      "SELECT content FROM levels WHERE id = $1",
-      [level_id],
-      (err, res) => {
-        if (err) {
-          console.error("Error executing query", err.stack);
-          resolve("Error");
-        } else {
-          //console.log(res);
-          resolve(res.rows[0].content.data);
-        }
-      }
+async function get_json_from_id(level_id) {
+  try {
+    // Get basic level data
+    const res = await client.query(
+      "SELECT id, name, content, creator_id FROM levels WHERE id = $1",
+      [level_id]
     );
-  });
+
+    if (res.rows.length === 0) {
+      return null;
+    }
+
+    const row = res.rows[0];
+
+    // Get creator name
+    const creatorName = await get_creator_name(row);
+
+    // Get thumbnail
+    const img = await get_img_from_level_id(level_id);
+
+    // Return both the JSON data (for game) and metadata (for UI)
+    return {
+      data: row.content.data,
+      level_name: row.name,
+      level_creator_name: creatorName,
+      level_img: img,
+    };
+  } catch (err) {
+    console.error("Error in get_json_from_id:", err.stack);
+    return null;
+  }
 }
 
 module.exports = {

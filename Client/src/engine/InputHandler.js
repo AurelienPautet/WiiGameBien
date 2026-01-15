@@ -130,6 +130,15 @@ export class InputHandler {
     // Scale is handled via canvas reference in global handlers
   }
 
+  // Clear all input state (used when countdown ends to prevent teleporting)
+  clearInput() {
+    const input = window.gameInput;
+    input.direction = { x: 0, y: 0 };
+    input.click = false;
+    input.plant = false;
+    input.escapePressed = false;
+  }
+
   destroy() {
     // Don't remove listeners - they're global and shared
   }

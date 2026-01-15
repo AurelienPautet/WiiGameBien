@@ -2,7 +2,7 @@
  * SoundManager - Handles audio playback for game sounds using Howler.js
  * Provides reliable cross-browser audio support
  */
-import { Howl } from "howler";
+import { Howl, Howler } from "howler";
 
 export class SoundManager {
   constructor() {
@@ -11,7 +11,7 @@ export class SoundManager {
       tir: new Howl({
         src: ["/ressources/sounds/tir.mp3"],
         volume: 0.5,
-        pool: 10, // Allow 5 simultaneous instances
+        pool: 10, // Allow 10 simultaneous instances
       }),
       kill: new Howl({
         src: ["/ressources/sounds/kill.mp3"],
@@ -39,6 +39,8 @@ export class SoundManager {
         pool: 10,
       }),
     };
+
+    this.contextResumed = false;
   }
 
   // Play a sound with optional rate variation for variety
@@ -75,6 +77,21 @@ export class SoundManager {
   // Play fuse sound for mines about to explode
   playFuse() {
     this._play("fuse");
+  }
+
+  // Resume AudioContext (required by browsers after user interaction)
+  resume() {
+    if (!this.contextResumed) {
+      // Howler.ctx is the global AudioContext
+      if (Howler.ctx && Howler.ctx.state === "suspended") {
+        Howler.ctx.resume().then(() => {
+          console.log("AudioContext resumed");
+          this.contextResumed = true;
+        });
+      } else {
+        this.contextResumed = true;
+      }
+    }
   }
 
   // Stop all sounds and unload

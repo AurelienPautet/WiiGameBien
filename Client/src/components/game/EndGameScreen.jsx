@@ -1,8 +1,23 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSocket, useAuth, useToast, TOAST_TYPES } from "../../contexts";
 import { hexToDataUrl } from "../../utils/levelUtils";
+import {
+  Clock,
+  Crosshair,
+  Target,
+  Skull,
+  Bomb,
+  Hammer,
+  RotateCcw,
+  LogOut,
+} from "lucide-react";
 
-export const EndGameScreen = () => {
+export const EndGameScreen = ({
+  externalResult,
+  onReplay,
+  onQuit,
+  levelId,
+}) => {
   const { socket } = useSocket();
   const { user } = useAuth();
   const { addToast } = useToast();
@@ -12,7 +27,30 @@ export const EndGameScreen = () => {
   const [resultName, setResultName] = useState(""); // Winner's name for lose case
   const [scores, setScores] = useState([]);
 
-  // Level info from level_change_info event (not winner event)
+  // Handle external result (Solo Mode)
+  useEffect(() => {
+    if (externalResult) {
+      setResult(externalResult.result); // 'win' or 'lose'
+      setVisible(true);
+
+      if (externalResult.levelInfo) {
+        setLevelInfo((prev) => ({
+          ...prev,
+          name: externalResult.levelInfo.name || "Unknown",
+          creator: externalResult.levelInfo.creator || "Unknown",
+          thumbnail: externalResult.levelInfo.thumbnail
+            ? hexToDataUrl(externalResult.levelInfo.thumbnail)
+            : null,
+        }));
+      }
+    } else {
+      if (visible && !scores.length) {
+        setVisible(false);
+      }
+    }
+  }, [externalResult]);
+
+  // Level info from level_change_info event
   const [levelInfo, setLevelInfo] = useState({
     id: null,
     name: "",
@@ -22,6 +60,16 @@ export const EndGameScreen = () => {
 
   const [stars, setStars] = useState([0, 0, 0, 0, 0]);
   const [hoveredStar, setHoveredStar] = useState(-1);
+
+  // Update levelInfo ID from prop if available (Solo Mode fix)
+  useEffect(() => {
+    if (levelId) {
+      setLevelInfo((prev) => ({
+        ...prev,
+        id: levelId,
+      }));
+    }
+  }, [levelId]);
 
   // Listen to level_change_info to get level info from DB
   useEffect(() => {
@@ -36,26 +84,21 @@ export const EndGameScreen = () => {
           creator: level.level_creator_name || "Unknown",
           thumbnail: level.level_img ? hexToDataUrl(level.level_img) : null,
         });
-        // Reset stars when level changes
         setStars([0, 0, 0, 0, 0]);
       }
     };
 
     socket.on("level_change_info", handleLevelChangeInfo);
-
-    return () => {
-      socket.off("level_change_info", handleLevelChangeInfo);
-    };
+    return () => socket.off("level_change_info", handleLevelChangeInfo);
   }, [socket]);
 
-  // Handle winner event from server
+  // Handle winner event from server (multiplayer)
   useEffect(() => {
     if (!socket) return;
 
     const handleWinner = (data) => {
       const { socketid, waitingtime, player_scores, ids_to_name } = data;
 
-      // Determine result
       let resultType;
       let winnerName = "";
       if (socketid === -1) {
@@ -69,7 +112,6 @@ export const EndGameScreen = () => {
       setResult(resultType);
       setResultName(winnerName);
 
-      // Process scores - sort by wins
       const highestWins = Math.max(
         ...Object.values(player_scores).map((s) => s.wins)
       );
@@ -83,7 +125,7 @@ export const EndGameScreen = () => {
       const sortedScores = Object.entries(player_scores)
         .map(([id, score]) => ({
           id,
-          name: ids_to_name[id],
+          name: ids_to_name[id] || `Player ${id.slice(-4)}`,
           wins: score.wins,
           kills: score.kills,
           deaths: score.deaths,
@@ -96,7 +138,6 @@ export const EndGameScreen = () => {
       setScores(sortedScores);
       setVisible(true);
 
-      // Auto-hide after waiting time
       setTimeout(() => {
         setVisible(false);
         setResult(null);
@@ -105,11 +146,8 @@ export const EndGameScreen = () => {
       }, waitingtime);
     };
 
-    // Get current rating when level info is loaded
-    // Server sends a number (e.g., 3) representing star count
     const handleYourRating = (serverStars) => {
       if (typeof serverStars === "number" && serverStars > 0) {
-        // Convert number to array: 3 -> [1, 1, 1, 0, 0]
         const starsArray = [0, 1, 2, 3, 4].map((i) =>
           i < serverStars ? 1 : 0
         );
@@ -144,7 +182,6 @@ export const EndGameScreen = () => {
     };
   }, [socket, addToast]);
 
-  // Star hover handler
   const handleStarHover = useCallback(
     (index) => {
       if (!user) return;
@@ -153,7 +190,6 @@ export const EndGameScreen = () => {
     [user]
   );
 
-  // Star click handler
   const handleStarClick = useCallback(
     (index) => {
       if (!user) {
@@ -168,24 +204,32 @@ export const EndGameScreen = () => {
         addToast(TOAST_TYPES.ERROR, "Error", "No level to rate");
         return;
       }
-
-      // Update local state
       const newStars = [0, 0, 0, 0, 0].map((_, i) => (i <= index ? 1 : 0));
       setStars(newStars);
-
-      // Send rating to server
       socket?.emit("rate_lvl", index + 1, levelInfo.id);
     },
     [user, levelInfo.id, socket, addToast]
   );
 
-  // Get displayed stars (either hovered or actual)
   const getDisplayedStars = useCallback(() => {
     if (hoveredStar >= 0) {
       return [0, 1, 2, 3, 4].map((i) => i <= hoveredStar);
     }
     return stars.map((s) => s === 1);
   }, [hoveredStar, stars]);
+
+  // Format time as MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Calculate accuracy
+  const calculateAccuracy = (shots, hits) => {
+    if (shots === 0) return 0;
+    return Math.round((hits / shots) * 100);
+  };
 
   if (!visible) return null;
 
@@ -208,6 +252,8 @@ export const EndGameScreen = () => {
   }[result];
 
   const displayedStars = getDisplayedStars();
+  const stats = externalResult?.stats || {};
+  const accuracy = calculateAccuracy(stats.shots, stats.hits);
 
   return (
     <div
@@ -216,35 +262,120 @@ export const EndGameScreen = () => {
       {/* Result text */}
       <div className={`text-4xl font-bold ${resultColor}`}>{resultText}</div>
 
-      {/* Scores table */}
-      <div className="flex flex-col items-center justify-center w-full max-w-2xl gap-2">
-        {scores.map((score, index) => (
-          <div
-            key={score.id}
-            className="w-full text-xl font-bold flex items-center justify-center gap-2 animate-[scoreCascade_0.5s_ease-out_forwards] opacity-0"
-            style={{ animationDelay: `${index * 0.15}s` }}
-          >
-            <span className={score.isWinner ? "text-yellow-500" : "text-white"}>
-              {score.name} : {score.wins}
-            </span>
-            <span className="text-gray-400">............</span>
-            <span className="text-white">kills : </span>
-            <span
-              className={
-                score.hasHighestKills ? "text-green-500" : "text-white"
-              }
+      {/* Solo Mode: Stats and Buttons */}
+      {externalResult ? (
+        <div className="flex flex-col items-center gap-6 animate-fadeIn">
+          {/* Stats Row with Icons */}
+          <div className="flex items-center gap-8">
+            {/* Time */}
+            <div
+              className="flex items-center gap-2 text-white"
+              title="Time Elapsed"
             >
-              {score.kills}
-            </span>
-            <span className="text-white ml-2">deaths : </span>
-            <span
-              className={score.hasHighestDeaths ? "text-red-500" : "text-white"}
+              <Clock className="w-6 h-6 text-blue-400" />
+              <span className="font-mono text-2xl text-yellow-400">
+                {formatTime(externalResult.timeElapsed)}
+              </span>
+            </div>
+
+            {/* Shots */}
+            <div
+              className="flex items-center gap-2 text-white"
+              title="Shots Fired"
             >
-              {score.deaths}
-            </span>
+              <Crosshair className="w-6 h-6 text-orange-400" />
+              <span className="font-mono text-2xl">{stats.shots || 0}</span>
+            </div>
+
+            {/* Accuracy */}
+            <div
+              className="flex items-center gap-2 text-white"
+              title="Accuracy"
+            >
+              <Target className="w-6 h-6 text-green-400" />
+              <span className="font-mono text-2xl">{accuracy}%</span>
+            </div>
+
+            {/* Kills */}
+            <div className="flex items-center gap-2 text-white" title="Kills">
+              <Skull className="w-6 h-6 text-red-400" />
+              <span className="font-mono text-2xl">{stats.kills || 0}</span>
+            </div>
+
+            {/* Bombs */}
+            <div
+              className="flex items-center gap-2 text-white"
+              title="Bombs Planted"
+            >
+              <Bomb className="w-6 h-6 text-purple-400" />
+              <span className="font-mono text-2xl">{stats.plants || 0}</span>
+            </div>
+
+            {/* Blocks */}
+            <div
+              className="flex items-center gap-2 text-white"
+              title="Blocks Destroyed"
+            >
+              <Hammer className="w-6 h-6 text-yellow-400" />
+              <span className="font-mono text-2xl">
+                {stats.blocksDestroyed || 0}
+              </span>
+            </div>
           </div>
-        ))}
-      </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-4">
+            <button
+              onClick={onReplay}
+              className="btn btn-success btn-lg text-white gap-2"
+            >
+              <RotateCcw className="w-5 h-5" />
+              Play Again
+            </button>
+            <button
+              onClick={onQuit}
+              className="btn btn-error btn-lg text-white gap-2"
+            >
+              <LogOut className="w-5 h-5" />
+              Quit
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Multiplayer Mode: Scores table */
+        <div className="flex flex-col items-center justify-center w-full max-w-2xl gap-2">
+          {scores.map((score, index) => (
+            <div
+              key={score.id}
+              className="w-full text-xl font-bold flex items-center justify-center gap-2 animate-[scoreCascade_0.5s_ease-out_forwards] opacity-0"
+              style={{ animationDelay: `${index * 0.15}s` }}
+            >
+              <span
+                className={score.isWinner ? "text-yellow-500" : "text-white"}
+              >
+                {score.name} : {score.wins}
+              </span>
+              <span className="text-gray-400">............</span>
+              <span className="text-white">kills : </span>
+              <span
+                className={
+                  score.hasHighestKills ? "text-green-500" : "text-white"
+                }
+              >
+                {score.kills}
+              </span>
+              <span className="text-white ml-2">deaths : </span>
+              <span
+                className={
+                  score.hasHighestDeaths ? "text-red-500" : "text-white"
+                }
+              >
+                {score.deaths}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Level info and rating */}
       <div className="flex items-center justify-center gap-4 text-white text-xl font-bold">

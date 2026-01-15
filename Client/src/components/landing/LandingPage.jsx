@@ -31,11 +31,31 @@ export const LandingPage = () => {
   const { openModal, activeModal } = useModal();
   const { user } = useAuth();
 
+  // Player name from localStorage
+  const [playerName, setPlayerName] = useState(() => {
+    return localStorage.getItem("playerName") || "";
+  });
+
   // Tank colors from localStorage
   const [tankColors, setTankColors] = useState({
     body: "orange",
     turret: "orange",
   });
+
+  // Save player name to localStorage on change
+  const handleNameChange = (e) => {
+    const name = e.target.value;
+    setPlayerName(name);
+    localStorage.setItem("playerName", name);
+  };
+
+  // When logged in, use account username as player name
+  useEffect(() => {
+    if (user?.username) {
+      localStorage.setItem("playerName", user.username);
+      setPlayerName(user.username);
+    }
+  }, [user]);
 
   // Load tank colors from localStorage on mount and when modal closes
   useEffect(() => {
@@ -162,16 +182,20 @@ export const LandingPage = () => {
         </button>
       </div>
 
-      {/* Name Input */}
-      <div className="h-20 w-1/3 flex justify-center items-center mt-4">
-        <input
-          className="input input-bordered bg-base-300 text-white placeholder:text-slate-300 focus:outline-primary w-64"
-          placeholder="Type your name.."
-          type="text"
-          name="name"
-          maxLength={20}
-        />
-      </div>
+      {/* Name Input - only shown when not logged in */}
+      {!user && (
+        <div className="h-20 w-1/3 flex justify-center items-center mt-4">
+          <input
+            className="input input-bordered bg-base-300 text-white placeholder:text-slate-300 focus:outline-primary w-64"
+            placeholder="Type your name.."
+            type="text"
+            name="name"
+            maxLength={20}
+            value={playerName}
+            onChange={handleNameChange}
+          />
+        </div>
+      )}
 
       {/* Play Buttons */}
       <div className="h-24 w-1/3 flex justify-center items-center rounded-md mt-3 gap-4">

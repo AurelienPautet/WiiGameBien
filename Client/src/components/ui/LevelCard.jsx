@@ -13,6 +13,7 @@ import { extractBotCounts, getBotColor } from "../../utils/levelUtils";
  * @param {Function} props.onClick - Click handler
  * @param {boolean} props.selected - Whether card is selected
  * @param {boolean} props.locked - Whether level is locked
+ * @param {string} props.author - Level author name
  */
 export function LevelCard({
   levelId,
@@ -23,6 +24,7 @@ export function LevelCard({
   onClick,
   selected = false,
   locked = false,
+  author,
 }) {
   const botCounts = extractBotCounts(levelJson);
 
@@ -37,8 +39,9 @@ export function LevelCard({
       className={`
         relative flex gap-4 p-4 rounded-lg cursor-pointer
         transition-all duration-200
-        bg-base-200
-        ${selected ? "ring-2 ring-primary bg-base-300" : "hover:bg-base-100"}
+        bg-base-300
+        border-4 border-base-300
+        ${selected ? "border-primary bg-base-300" : "hover:bg-base-200"}
         ${locked ? "opacity-70" : ""}
       `}
       onClick={locked ? undefined : onClick}
@@ -72,10 +75,15 @@ export function LevelCard({
       >
         {/* Title row */}
         <div className="flex justify-between items-start">
-          <h3 className="text-lg font-bold">
-            <span className="text-base-content/60">level {levelId}:</span>
-            <span className="ml-2">{levelName}</span>
-          </h3>
+          <div className="flex flex-col">
+            <h3 className="text-lg font-bold">
+              <span className="text-base-content/60">level {levelId}:</span>
+              <span className="ml-2">{levelName}</span>
+            </h3>
+            <span className="text-xs text-base-content/50">
+              by {author || "Unknown"}
+            </span>
+          </div>
 
           {/* Star rating */}
           <div className="flex gap-0.5">

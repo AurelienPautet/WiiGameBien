@@ -63,6 +63,10 @@ class Room {
     this.bot2_spawns = [];
     this.bot3_spawns = [];
     this.bot4_spawns = [];
+
+    // Countdown state - when true, render but skip player input/actions
+    this.countdownActive = false;
+    this.countdownDuration = 3000; // 3 seconds
   }
 
   spawn_new_player(playerName, turretc, bodyc, socketid) {
@@ -171,7 +175,11 @@ class Room {
     //console.log("Updating room:", this.name, "tick:", this.tick);
     this.update_bullets();
     this.update_mines();
-    this.update_players();
+
+    // Only update player movements/actions if not in countdown
+    if (!this.countdownActive) {
+      this.update_players();
+    }
     //console.log(this.players);
     this.emit_to_room("tick", {
       players: this.players,

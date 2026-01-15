@@ -66,6 +66,7 @@ export class GameEngine {
     // Game state
     this.running = false;
     this.paused = false;
+    this.inCountdown = false; // When true, render but ignore input
     this.loopId = null;
     this.animationId = null;
 
@@ -77,6 +78,10 @@ export class GameEngine {
     // Solo mode state
     this.localRoom = null;
     this.mysocketid = null;
+    this.gameOverTriggered = false;
+    this.startTime = 0;
+    this.initialBotCount = 0;
+    this.onGameOver = null;
 
     // Online mode state
     this.roomId = null;
@@ -94,6 +99,7 @@ export class GameEngine {
     // Callbacks
     this.onPause = null;
     this.onQuit = null;
+    this.onCountdownStart = null; // Called when countdown should begin
 
     // Bind methods
     this._renderLoop = this._renderLoop.bind(this);
@@ -139,6 +145,8 @@ export class GameEngine {
 
     // Generate a fake socket ID for solo mode
     this.mysocketid = "solo_player_" + Math.random().toString(36).substr(2, 9);
+    this.startTime = performance.now();
+    this.gameOverTriggered = false;
 
     // Check if Room class is available globally (loaded via script tag)
     if (typeof Room === "undefined") {
@@ -159,6 +167,13 @@ export class GameEngine {
 
       this.socket.once("recieve_json_from_id", async (levelJson) => {
         try {
+          // levelJson now contains { data: [...], level_name, level_creator_name, level_img }
+          // Store full object as metadata for end screen
+          this.levelMetadata = levelJson;
+
+          // Extract the actual level data array for loading
+          const levelData = levelJson.data || levelJson; // Fallback for backward compat
+
           // Create local room using global Room class with LocalIO for particle/sound events
           this.localRoom = new Room(
             "Solo Room",
@@ -171,7 +186,7 @@ export class GameEngine {
 
           // Load level using global loadlevel function
           if (typeof loadlevel === "function") {
-            await loadlevel(levelJson, this.localRoom);
+            await loadlevel(levelData, this.localRoom);
           }
 
           // Spawn player
@@ -184,6 +199,12 @@ export class GameEngine {
 
           // Spawn bots
           this.localRoom.spawn_all_bots();
+
+          // Count initial bots/enemies to determine win condition
+          // Players object uses socketid as key
+          this.initialBotCount = Object.entries(this.localRoom.players).filter(
+            ([socketid, _player]) => socketid !== this.mysocketid
+          ).length;
 
           // Start loops
           this._startLoops();
@@ -237,6 +258,16 @@ export class GameEngine {
       return;
     }
 
+    // Start in countdown mode (solo only - multiplayer countdown is triggered by server)
+    if (this.mode === "solo") {
+      this.inCountdown = true;
+
+      // Trigger countdown callback so UI can show countdown
+      if (this.onCountdownStart) {
+        this.onCountdownStart();
+      }
+    }
+
     // Start render loop (requestAnimationFrame)
     this.animationId = requestAnimationFrame(this._renderLoop);
 
@@ -258,11 +289,37 @@ export class GameEngine {
     }
   }
 
+  // Called when countdown finishes to enable gameplay
+  endCountdown() {
+    this.inCountdown = false;
+    // Clear any input that was buffered during countdown to prevent teleporting
+    this.input.clearInput();
+    // Reset start time for accurate timing
+    this.startTime = performance.now();
+  }
+
   _soloUpdate() {
     if (!this.localRoom) return;
 
+    // During countdown, just render current state - NO game updates (freeze everything)
+    if (this.inCountdown) {
+      // Just sync state for rendering (no room.update() - freeze players and bots)
+      this.players = this.localRoom.players;
+      this.blocks = this.localRoom.blocks;
+      this.Bcollision = this.localRoom.Bcollision;
+      this.bullets = this.localRoom.bullets;
+      this.mines = this.localRoom.mines;
+      this.holes = this.localRoom.holes;
+      return;
+    }
+
     // Get input
     const input = this.input.getInputState();
+
+    // Resume AudioContext on first interaction if needed
+    if (input.click || input.direction.x !== 0 || input.direction.y !== 0) {
+      this.sounds.resume();
+    }
 
     // Handle pause
     if (input.escapePressed && this.onPause) {
@@ -270,9 +327,35 @@ export class GameEngine {
       return;
     }
 
-    // Make player invincible in solo mode (as per original)
-    if (this.localRoom.players[this.mysocketid]) {
-      this.localRoom.players[this.mysocketid].alive = true;
+    // Check for game over conditions
+    const myPlayer = this.localRoom.players[this.mysocketid];
+    if (myPlayer) {
+      // 1. Check for Loss (Player died)
+      if (!myPlayer.alive && this.running && !this.gameOverTriggered) {
+        this.gameOverTriggered = true;
+        this._triggerSoloGameOver(false);
+        return;
+      }
+
+      // 2. Check for Win (All bots/enemies died)
+      // Players are stored with socketid as key. Filter out our player by key.
+      const enemyEntries = Object.entries(this.localRoom.players).filter(
+        ([socketid, _player]) => socketid !== this.mysocketid
+      );
+
+      // Check if any enemy is alive
+      const anyEnemyAlive = enemyEntries.some(([_id, p]) => p.alive);
+
+      if (
+        this.initialBotCount > 0 &&
+        !anyEnemyAlive &&
+        this.running &&
+        !this.gameOverTriggered
+      ) {
+        this.gameOverTriggered = true;
+        this._triggerSoloGameOver(true);
+        return;
+      }
     }
 
     // Update player
@@ -335,7 +418,11 @@ export class GameEngine {
     // Update room
     this.localRoom.update(this.fpsCorrector);
 
-    // Play sounds
+    // Play sounds - LocalIO handles this via tick_sounds event from Room?
+    // If we play it here AND in LocalIO, it might be double.
+    // However, if Room.js clears sounds after emission, checking here is safe effectively if empty.
+    // But if sound works "sometimes", maybe we are overflooding the pool?
+    // Let's try to keep both but ensure we don't error.
     this.sounds.playSounds(this.localRoom.sounds);
 
     // Sync local state for rendering
@@ -470,6 +557,37 @@ export class GameEngine {
     // Leave room if online
     if (this.socket && this.mode === "online") {
       this.socket.emit("quit");
+    }
+  }
+
+  _triggerSoloGameOver(isWin) {
+    if (this.onGameOver) {
+      const endTime = performance.now();
+      const timeElapsed = Math.floor((endTime - this.startTime) / 1000);
+
+      // Get player stats
+      const myPlayer = this.localRoom?.players[this.mysocketid];
+      const playerStats = myPlayer?.round_stats?.stats || {};
+
+      this.onGameOver({
+        result: isWin ? "win" : "lose",
+        timeElapsed: timeElapsed,
+        gridId: this.localRoom ? this.localRoom.grid_id : null,
+        levelInfo: this.levelMetadata
+          ? {
+              name: this.levelMetadata.level_name,
+              creator: this.levelMetadata.level_creator_name,
+              thumbnail: this.levelMetadata.level_img,
+            }
+          : null,
+        stats: {
+          shots: playerStats.shots || 0,
+          hits: playerStats.hits || 0,
+          kills: playerStats.kills || 0,
+          plants: playerStats.plants || 0,
+          blocksDestroyed: playerStats.blocks_destroyed || 0,
+        },
+      });
     }
   }
 

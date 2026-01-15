@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Search, Users, Lock, Plus, RefreshCw, Gamepad2 } from "lucide-react";
 import { useModal, useSocket, useGame, MODALS } from "../../contexts";
+import { RoomCard } from "../ui/RoomCard";
 
 export const RoomSelectorModal = () => {
   const { closeModal, openModal } = useModal();
@@ -110,10 +111,10 @@ export const RoomSelectorModal = () => {
         <div className="flex-1 overflow-y-auto space-y-3 pr-2">
           {/* Create Room Button */}
           <div
-            className="flex items-center gap-4 p-4 rounded-lg bg-base-200 hover:bg-base-100 cursor-pointer transition-colors border-2 border-dashed border-primary/50"
+            className="flex items-center gap-4 p-4 rounded-lg bg-base-300 border-4 border-base-300 hover:bg-base-200 cursor-pointer transition-colors"
             onClick={handleCreateRoom}
           >
-            <div className="w-16 h-16 bg-primary/20 rounded-lg flex items-center justify-center">
+            <div className="w-16 h-16 bg-primary/20 rounded-lg flex items-center justify-center shrink-0">
               <Plus className="w-8 h-8 text-primary" />
             </div>
             <div>
@@ -135,27 +136,11 @@ export const RoomSelectorModal = () => {
             </div>
           ) : (
             filteredRooms.map((room) => (
-              <div
+              <RoomCard
                 key={room.id}
-                className="flex items-center justify-between p-4 rounded-lg bg-base-200 hover:bg-base-100 cursor-pointer transition-colors"
+                room={room}
                 onClick={() => handleJoinRoom(room.id)}
-              >
-                <div>
-                  <h3 className="font-bold text-lg">{room.name}</h3>
-                  <p className="text-base-content/60 text-sm">
-                    by {room.creator}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="badge badge-lg gap-1">
-                    <Users className="w-4 h-4" />
-                    {room.players}/{room.maxPlayers}
-                  </div>
-                  {room.hasPassword && (
-                    <Lock className="w-5 h-5 text-warning" />
-                  )}
-                </div>
-              </div>
+              />
             ))
           )}
         </div>

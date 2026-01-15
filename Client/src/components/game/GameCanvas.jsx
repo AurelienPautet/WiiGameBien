@@ -2,12 +2,15 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { useGame, useSocket, useModal } from "../../contexts";
 import { GameEngine } from "../../engine/GameEngine";
 import { EndGameScreen } from "./EndGameScreen";
+import { CountdownOverlay } from "./CountdownOverlay";
 
 export const GameCanvas = ({ scale = 1 }) => {
   const canvasRef = useRef(null);
   const fadingCanvasRef = useRef(null);
   const engineRef = useRef(null);
   const [isEndGameVisible, setIsEndGameVisible] = useState(false);
+  const [soloResult, setSoloResult] = useState(null);
+  const [showCountdown, setShowCountdown] = useState(false);
 
   const {
     mode,
@@ -23,29 +26,6 @@ export const GameCanvas = ({ scale = 1 }) => {
   const { socket } = useSocket();
   const { openModal } = useModal();
 
-  // Listen for winner event to blur canvases
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleWinner = (data) => {
-      setIsEndGameVisible(true);
-      // Hide after waiting time
-      setTimeout(() => {
-        setIsEndGameVisible(false);
-      }, data.waitingtime);
-    };
-
-    socket.on("winner", handleWinner);
-    return () => socket.off("winner", handleWinner);
-  }, [socket]);
-
-  // Update engine scale when window is resized
-  useEffect(() => {
-    if (engineRef.current) {
-      engineRef.current.setScale(scale);
-    }
-  }, [scale]);
-
   // Refs for stable access in effect
   const playerNameRef = useRef(playerName);
   const tankColorsRef = useRef(tankColors);
@@ -54,6 +34,52 @@ export const GameCanvas = ({ scale = 1 }) => {
     playerNameRef.current = playerName;
     tankColorsRef.current = tankColors;
   }, [playerName, tankColors]);
+
+  // Listen for winner event to blur canvases (online mode)
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleWinner = (data) => {
+      setIsEndGameVisible(true);
+      // Hide after waiting time - countdown will be triggered by server
+      setTimeout(() => {
+        setIsEndGameVisible(false);
+      }, data.waitingtime);
+    };
+
+    // Listen for countdown start from server (after respawn in multiplayer)
+    const handleCountdownStartServer = () => {
+      setShowCountdown(true);
+      // Server controls the timing, client just shows the UI
+    };
+
+    socket.on("winner", handleWinner);
+    socket.on("countdown_start", handleCountdownStartServer);
+
+    return () => {
+      socket.off("winner", handleWinner);
+      socket.off("countdown_start", handleCountdownStartServer);
+    };
+  }, [socket]);
+
+  // Handle countdown start callback from engine
+  const handleCountdownStart = useCallback(() => {
+    setShowCountdown(true);
+  }, []);
+
+  // Handle countdown complete - tell engine to start gameplay
+  const handleCountdownComplete = useCallback(() => {
+    setShowCountdown(false);
+    if (engineRef.current) {
+      engineRef.current.endCountdown();
+    }
+  }, []);
+
+  // Handle Solo Game Over callback
+  const handleSoloGameOver = useCallback((result) => {
+    setSoloResult(result);
+    setIsEndGameVisible(true);
+  }, []);
 
   // Handle pause toggle
   const handlePause = useCallback(
@@ -74,9 +100,60 @@ export const GameCanvas = ({ scale = 1 }) => {
 
   // Handle quit
   const handleQuit = useCallback(() => {
+    setSoloResult(null);
+    setIsEndGameVisible(false);
+    setShowCountdown(false);
     engineRef.current?.quit();
     quitGame();
   }, [quitGame]);
+
+  // Handle replay - creates fresh engine instance
+  const handleReplay = useCallback(() => {
+    setSoloResult(null);
+    setIsEndGameVisible(false);
+    setShowCountdown(false);
+
+    // Cleanup old engine completely
+    if (engineRef.current) {
+      engineRef.current.quit();
+      engineRef.current = null;
+    }
+
+    // Create a fresh engine
+    if (canvasRef.current && fadingCanvasRef.current && socket) {
+      const engine = new GameEngine(
+        canvasRef.current,
+        fadingCanvasRef.current,
+        socket
+      );
+      engineRef.current = engine;
+
+      // Set callbacks
+      engine.onPause = () => handlePause();
+      engine.onQuit = handleQuit;
+      engine.onGameOver = handleSoloGameOver;
+      engine.onCountdownStart = handleCountdownStart;
+      engine.setScale(scale);
+
+      // Start the game (countdown will be triggered by engine)
+      engine.startSolo(levelId, playerNameRef.current, tankColorsRef.current);
+    }
+  }, [
+    levelId,
+    socket,
+    scale,
+    handlePause,
+    handleQuit,
+    handleSoloGameOver,
+    handleCountdownStart,
+  ]);
+
+  // Update engine scale when window is resized
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.setScale(scale);
+    }
+  }, [scale]);
 
   // Initialize engine when game starts
   useEffect(() => {
@@ -127,25 +204,27 @@ export const GameCanvas = ({ scale = 1 }) => {
   // Update engine callbacks separately
   useEffect(() => {
     if (engineRef.current) {
-      engineRef.current.onPause = () => handlePause(); // Wrap to avoid passing event obj
+      engineRef.current.onPause = () => handlePause();
       engineRef.current.onQuit = handleQuit;
+      engineRef.current.onGameOver = handleSoloGameOver;
+      engineRef.current.onCountdownStart = handleCountdownStart;
     }
-  }, [handlePause, handleQuit]);
+  }, [handlePause, handleQuit, handleSoloGameOver, handleCountdownStart]);
 
-  // Handle ESC key for pause
+  // Handle ESC key for pause (but not during countdown)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.code === "Escape") {
-        if (e.repeat) return; // Prevent flickering when holding key
+      if (e.code === "Escape" && !showCountdown) {
+        if (e.repeat) return;
         e.preventDefault();
         e.stopPropagation();
         handlePause();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown, true); // Use capture to ensure priority
+    window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [handlePause]);
+  }, [handlePause, showCountdown]);
 
   // Canvas blur style when end game is visible
   const canvasBlurStyle = isEndGameVisible ? { filter: "blur(4px)" } : {};
@@ -165,8 +244,14 @@ export const GameCanvas = ({ scale = 1 }) => {
         style={{ width: 1150, height: 800, ...canvasBlurStyle }}
       />
 
+      {/* Countdown overlay */}
+      <CountdownOverlay
+        isActive={showCountdown}
+        onComplete={handleCountdownComplete}
+      />
+
       {/* Pause overlay */}
-      {isPaused && (
+      {isPaused && !showCountdown && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-50 bg-black/50">
           <h2 className="text-4xl font-bold text-white mb-8">PAUSED</h2>
           <div className="flex gap-4">
@@ -181,7 +266,12 @@ export const GameCanvas = ({ scale = 1 }) => {
       )}
 
       {/* End game screen overlay */}
-      <EndGameScreen />
+      <EndGameScreen
+        externalResult={soloResult}
+        onReplay={handleReplay}
+        onQuit={handleQuit}
+        levelId={levelId}
+      />
     </div>
   );
 };

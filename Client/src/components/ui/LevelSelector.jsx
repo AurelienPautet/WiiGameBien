@@ -167,6 +167,7 @@ export function LevelSelector({
                 thumbnailSrc={hexToDataUrl(level.level_img)}
                 onClick={() => handleCardClick(level.level_id)}
                 selected={selectedIds.includes(level.level_id)}
+                author={level.level_creator_name}
               />
 
               {/* Action buttons for myLevels mode */}
