@@ -11,7 +11,7 @@
     "dev:tailwind": "npx tailwindcss -i Public/src/css/styles.css -o Public/src/css/tails.css --watch",
     "dev": "nodemon Server/server.js",
     "start": "npm run build && node Server/server.js",
-    "build": "cd Client && npm install && npm run build",
+    "build": "cd Client && npm install --include=dev && npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
