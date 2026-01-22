@@ -4,28 +4,39 @@ const OnlineIndicator = () => {
   const { onlineCount, isConnected } = useSocket();
 
   return (
-    <div
-      className="absolute top-3 right-3 flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-sm z-50"
-      style={{
-        background: "rgba(0, 0, 0, 0.5)",
-        border: "1px solid rgba(255, 255, 255, 0.1)",
-      }}
-    >
-      {/* Status dot */}
+    <div className="absolute top-4 right-4 z-50">
       <div
-        className="w-2 h-2 rounded-full"
-        style={{
-          backgroundColor: isConnected ? "#22c55e" : "#ef4444",
-          boxShadow: isConnected ? "0 0 6px #22c55e" : "0 0 6px #ef4444",
-        }}
-      />
-      {/* Player count */}
-      <span
-        className="text-xs font-medium"
-        style={{ color: "rgba(255, 255, 255, 0.8)" }}
+        className={`
+          flex items-center gap-3 px-4 py-2.5
+          rounded-xl backdrop-blur-md 
+          border border-white/5 shadow-lg
+          transition-all duration-300
+          ${isConnected ? "bg-base-100/80 hover:bg-base-100/90" : "bg-error/20 border-error/30"}
+        `}
       >
-        {onlineCount} online
-      </span>
+        {/* Status Indicator */}
+        <div className="relative flex items-center justify-center">
+          <div
+            className={`
+              w-2.5 h-2.5 rounded-full 
+              ${isConnected ? "bg-success shadow-[0_0_8px_oklch(var(--success)/0.6)]" : "bg-error shadow-[0_0_8px_oklch(var(--error)/0.6)]"}
+            `}
+          />
+          {isConnected && (
+            <div className="absolute inset-0 w-full h-full rounded-full bg-success/40 animate-ping" />
+          )}
+        </div>
+
+        {/* Player Count */}
+        <div className="flex items-center gap-2">
+          <span className="text-base-content font-bold text-sm tracking-wide">
+            {onlineCount}
+          </span>
+          <span className="text-base-content/60 text-xs font-semibold uppercase tracking-wider">
+            Online
+          </span>
+        </div>
+      </div>
     </div>
   );
 };
