@@ -1,30 +1,29 @@
-const client = require(__dirname + "/db_client.js");
+const { db, schema } = require(__dirname + "/db");
+const { players } = schema;
+const { eq } = require("drizzle-orm");
 
 async function get_user_info(email) {
-  return new Promise((resolve, reject) => {
-    client.query(
-      "SELECT * FROM players WHERE email = $1",
-      [email],
-      (err, res) => {
-        if (err) {
-          console.error("Error executing query", err.stack);
-          resolve(false);
-        } else if (res.rows.length == 0) {
-          resolve(false);
-        } else {
-          const user = res.rows[0];
-          resolve(user);
-        }
-      }
-    );
-  });
+  try {
+    const res = await db.select().from(players).where(eq(players.email, email));
+
+    if (res.length === 0) {
+      return false;
+    }
+    return res[0];
+  } catch (err) {
+    console.error("Error executing query", err);
+    return false;
+  }
 }
+
 class User {
   constructor(email) {
     this.email = email;
     get_user_info(email).then((res) => {
-      this.username = res.username;
-      this.id = res.id;
+      if (res) {
+        this.username = res.username;
+        this.id = res.id;
+      }
     });
   }
 }

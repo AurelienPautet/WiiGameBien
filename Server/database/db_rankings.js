@@ -1,40 +1,45 @@
 const path = require("path");
-const client = require(path.join(__dirname, "..", "db_client.js"));
+const { db, schema } = require(path.join(__dirname, "..", "db"));
+const { players, rounds } = schema;
+const { eq, sql, sum, count } = require("drizzle-orm");
 const { users } = require(path.join(__dirname, "..", "shared_state.js"));
+
 async function get_ranking(ranking_type, socket) {
   let selectExpr;
+
   switch (ranking_type) {
     case "KILLS":
-      selectExpr = "SUM(kills)";
+    case "KILLS":
+      selectExpr = sum(rounds.kills);
       break;
     case "ROUNDS_PLAYED":
-      selectExpr = "COUNT(rounds.id)";
+      selectExpr = count(rounds.id);
       break;
     case "WINS":
-      selectExpr = "SUM(wins)";
+      selectExpr = sum(rounds.wins);
       break;
     default:
       socket.emit("ranking_error", "Invalid ranking type");
       return;
   }
 
-  const query = `
-    SELECT username, ${selectExpr} as total_data,
-      RANK() OVER (ORDER BY ${selectExpr} DESC) as rank
-    FROM players
-    JOIN rounds ON players.id = rounds.player_id
-    GROUP BY username
-    ORDER BY rank ASC
-  `;
+  try {
+    const res = await db
+      .select({
+        username: players.username,
+        total_data: selectExpr,
+        rank: sql`RANK() OVER (ORDER BY ${selectExpr} DESC)`,
+      })
+      .from(players)
+      .innerJoin(rounds, eq(players.id, rounds.playerId))
+      .groupBy(players.username)
+      .orderBy(sql`rank ASC`);
 
-  client.query(query, (err, res) => {
-    if (err) {
-      console.error("Error executing query", err.stack);
-      socket.emit("ranking_error", "problem with database");
-    } else {
-      socket.emit("ranking", res.rows, ranking_type);
-    }
-  });
+    socket.emit("ranking", res, ranking_type);
+  } catch (err) {
+    console.error("Error executing query get_ranking:", err);
+    socket.emit("ranking_error", "problem with database");
+  }
 }
 
 async function get_user_rank(player_socket_id, ranking_type, socket) {
@@ -44,38 +49,50 @@ async function get_user_rank(player_socket_id, ranking_type, socket) {
     let selectExpr;
     switch (ranking_type) {
       case "KILLS":
-        selectExpr = "SUM(kills)";
+        selectExpr = sum(rounds.kills);
         break;
       case "ROUNDS_PLAYED":
-        selectExpr = "COUNT(rounds.id)";
+        selectExpr = count(rounds.id);
         break;
       case "WINS":
-        selectExpr = "SUM(wins)";
+        selectExpr = sum(rounds.wins);
         break;
       default:
         socket.emit("personal_ranking", null);
         return;
     }
 
-    const query = `
-      SELECT username, total_data, rank FROM (
-        SELECT username, ${selectExpr} as total_data,
-          RANK() OVER (ORDER BY ${selectExpr} DESC) as rank
-        FROM players
-        JOIN rounds ON players.id = rounds.player_id
-        GROUP BY username
-      ) ranked
-      WHERE username = (SELECT username FROM players WHERE id = $1)
-    `;
+    // Get user's username first
+    const userRes = await db
+      .select({ username: players.username })
+      .from(players)
+      .where(eq(players.id, player_id));
 
-    const res = await client.query(query, [player_id]);
+    if (userRes.length === 0) {
+      socket.emit("personal_ranking", null);
+      return;
+    }
 
-    if (res.rows.length > 0) {
-      const user = res.rows[0];
+    const username = userRes[0].username;
+
+    // Get ranking with user's position
+    const res = await db
+      .select({
+        username: players.username,
+        total_data: selectExpr,
+        rank: sql`RANK() OVER (ORDER BY ${selectExpr} DESC)`,
+      })
+      .from(players)
+      .innerJoin(rounds, eq(players.id, rounds.playerId))
+      .groupBy(players.username);
+
+    const userRank = res.find((r) => r.username === username);
+
+    if (userRank) {
       socket.emit("personal_ranking", {
-        username: user.username,
-        total_data: user.total_data,
-        rank: user.rank,
+        username: userRank.username,
+        total_data: userRank.total_data,
+        rank: userRank.rank,
       });
     } else {
       socket.emit("personal_ranking", null);

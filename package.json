@@ -12,22 +12,27 @@
     "dev": "nodemon Server/server.js",
     "start": "npm run build && node Server/server.js",
     "build": "cd Client && npm install --include=dev && npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:migrate-data": "node Server/db/migrate_data.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.45.1",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.2.1",
     "google-auth-library": "^10.1.0",
     "pg": "^8.13.1",
     "socket-types": "^1.0.0",
-    "socket.io": "^4.8.1",
-    "express-rate-limit": "^8.2.1"
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.12.0",
+    "drizzle-kit": "^0.31.8",
     "eslint": "^9.12.0",
     "globals": "^15.11.0",
     "tailwindcss": "^3.4.13"
