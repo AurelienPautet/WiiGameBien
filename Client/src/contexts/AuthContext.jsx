@@ -1,131 +1,136 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { useSocket } from "./SocketContext";
+import {
+  useVerifySession,
+  useLogin,
+  useSignup,
+  useGoogleLogin,
+  useLogout,
+} from "../hooks/api";
 
 const AuthContext = createContext(null);
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  const { socket } = useSocket();
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [authError, setAuthError] = useState(null); // { field: 'email'|'password'|'username', message: string }
   const [needsGoogleUsername, setNeedsGoogleUsername] = useState(false);
   const [pendingGoogleToken, setPendingGoogleToken] = useState(null);
 
-  // Check for stored session on mount
-  useEffect(() => {
-    if (!socket) return;
+  const {
+    data: sessionData,
+    isLoading,
+    error: sessionError,
+  } = useVerifySession();
+  const loginMutation = useLogin();
+  const signupMutation = useSignup();
+  const googleLoginMutation = useGoogleLogin();
+  const logoutMutation = useLogout();
 
-    const sessionId = localStorage.getItem("session_id");
-    if (sessionId) {
-      socket.emit("local_session_id", sessionId);
-    } else {
-      setIsLoading(false);
-    }
-  }, [socket]);
-
-  useEffect(() => {
-    if (!socket) return;
-
-    // Success handlers
-    socket.on("signup_success", (username, email) => {
-      setUser({ username, email });
-      setAuthError(null);
-      setNeedsGoogleUsername(false);
-      setPendingGoogleToken(null);
-      setIsLoading(false);
-    });
-
-    socket.on("login_success", (username, email) => {
-      setUser({ username, email });
-      setAuthError(null);
-      setNeedsGoogleUsername(false);
-      setPendingGoogleToken(null);
-      setIsLoading(false);
-    });
-
-    // Session handlers
-    socket.on("session_created", (sessionId) => {
-      localStorage.setItem("session_id", sessionId);
-    });
-
-    socket.on("session_not_valid", () => {
-      localStorage.removeItem("session_id");
-      setUser(null);
-      setIsLoading(false);
-    });
-
-    // Error handlers
-    socket.on("signup_fail", (field) => {
-      if (field === "username") {
-        setAuthError({ field: "username", message: "Username already taken" });
-      } else if (field === "email") {
-        setAuthError({ field: "email", message: "Email already taken" });
-      }
-      setIsLoading(false);
-    });
-
-    socket.on("login_fail", (field) => {
-      if (field === "email") {
-        setAuthError({ field: "email", message: "Email not found" });
-      } else if (field === "password") {
-        setAuthError({ field: "password", message: "Invalid password" });
-      } else if (field === "show_username_input") {
-        // New Google user needs to provide a username
-        setNeedsGoogleUsername(true);
-      }
-      setIsLoading(false);
-    });
-
-    return () => {
-      socket.off("signup_success");
-      socket.off("login_success");
-      socket.off("session_created");
-      socket.off("session_not_valid");
-      socket.off("signup_fail");
-      socket.off("login_fail");
-    };
-  }, [socket]);
+  const user = sessionData || null;
 
   const login = (email, password) => {
-    setAuthError(null);
-    socket?.emit("login", email, password);
+    loginMutation.mutate({ email, password });
   };
 
   const register = (username, email, password) => {
-    setAuthError(null);
-    socket?.emit("signup", username, email, password);
+    signupMutation.mutate({ username, email, password });
   };
 
   const googleLogin = (idToken, username = "") => {
-    setAuthError(null);
     setPendingGoogleToken(idToken);
-    socket?.emit("google_login", idToken, username);
+    googleLoginMutation.mutate(
+      { idToken, username },
+      {
+        onError: (error) => {
+          if (
+            error.data?.error === "username_required" ||
+            error.message?.includes("Username required")
+          ) {
+            setNeedsGoogleUsername(true);
+          }
+        },
+        onSuccess: () => {
+          setNeedsGoogleUsername(false);
+          setPendingGoogleToken(null);
+        },
+      },
+    );
   };
 
   const submitGoogleUsername = (username) => {
     if (pendingGoogleToken) {
-      setAuthError(null);
-      socket?.emit("google_login", pendingGoogleToken, username);
+      googleLogin(pendingGoogleToken, username);
     }
   };
 
-  const clearAuthError = () => {
-    setAuthError(null);
+  const logout = () => {
+    logoutMutation.mutate();
+    setNeedsGoogleUsername(false);
+    setPendingGoogleToken(null);
   };
 
-  const logout = () => {
-    localStorage.removeItem("session_id");
-    socket?.emit("logout");
-    setUser(null);
+  const getMutationError = () => {
+    if (loginMutation.error) {
+      const err = loginMutation.error;
+      if (err.data?.error === "email") {
+        return {
+          field: "email",
+          message: err.data?.message || "Email not found",
+        };
+      }
+      if (err.data?.error === "password") {
+        return {
+          field: "password",
+          message: err.data?.message || "Invalid password",
+        };
+      }
+      return { field: "general", message: err.message };
+    }
+    if (signupMutation.error) {
+      const err = signupMutation.error;
+      if (err.data?.error === "username") {
+        return {
+          field: "username",
+          message: err.data?.message || "Username already taken",
+        };
+      }
+      if (err.data?.error === "email") {
+        return {
+          field: "email",
+          message: err.data?.message || "Email already registered",
+        };
+      }
+      return { field: "general", message: err.message };
+    }
+    if (googleLoginMutation.error && !needsGoogleUsername) {
+      const err = googleLoginMutation.error;
+      if (err.data?.error === "username") {
+        return {
+          field: "username",
+          message: err.data?.message || "Username already taken",
+        };
+      }
+      return { field: "general", message: err.message };
+    }
+    return null;
+  };
+
+  const authError = getMutationError();
+
+  const clearAuthError = () => {
+    loginMutation.reset();
+    signupMutation.reset();
+    googleLoginMutation.reset();
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        isLoading,
+        isLoading:
+          isLoading ||
+          loginMutation.isPending ||
+          signupMutation.isPending ||
+          googleLoginMutation.isPending,
         authError,
         needsGoogleUsername,
         login,

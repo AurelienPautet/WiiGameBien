@@ -2,24 +2,44 @@ const express = require("express");
 const app = express();
 
 const path = require("path");
+const cors = require("cors");
 const rateLimit = require("express-rate-limit");
+const apiRoutes = require("./routes");
+const { setRoomsRef } = require("./routes/rooms.routes");
+
+app.use(express.json({ limit: "10mb" }));
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:7000",
+      "https://wiitank-2aacc4abc5cb.herokuapp.com",
+      "https://wiitank.pautet.net",
+      "http://localhost:8000",
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "https://html-classic.itch.zone",
+      "https://itch.io",
+    ],
+    credentials: true,
+  }),
+);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
 });
 
+app.use("/api", limiter, apiRoutes);
+
 app.use(express.static(path.join(__dirname, "../Client/dist")));
 app.use(express.static(path.join(__dirname, "../shared")));
 
-// Fallback to index.html for client-side routing
 app.get("*", limiter, (req, res) => {
   res.sendFile(path.join(__dirname, "../Client/dist/index.html"));
 });
 
-//console.log(path.join(__dirname, "../Public"));
 const PORT = process.env.PORT || 8000;
-//console.log("PORT : ", PORT);
 const expressServer = app.listen(PORT);
 
 const socketio = require("socket.io");
@@ -44,31 +64,13 @@ const { makeid } = require(__dirname + "/../shared/scripts/commons.js");
 
 const Room = require(__dirname + "/../shared/class/Room.js");
 
-const { get_level_rating_from_player, rate_lvl } = require(__dirname +
-  "/database/db_levels_ratings.js");
-const {
-  get_levels,
-  get_my_levels,
-  get_level_from_id,
-  save_level,
-  get_max_players,
-  get_creator_name,
-  fetch_levels,
-  get_statsfrom_level_id,
-  get_img_from_level_id,
-  get_json_from_id,
-} = require(__dirname + "/database/db_level.js");
-const { get_user_stats, add_round } = require(__dirname +
-  "/database/db_stats.js");
-const { get_ranking, get_user_rank } = require(__dirname +
-  "/database/db_rankings.js");
-const {
-  signup,
-  login,
-  google_login,
-  logout,
-  verify_session,
-} = require(__dirname + "/database/db_auth.js");
+const { get_level_rating_from_player } = require(
+  __dirname + "/database/db_levels_ratings.js",
+);
+const { get_max_players, get_json_from_id, get_level_from_id } = require(
+  __dirname + "/database/db_level.js",
+);
+const { add_round } = require(__dirname + "/database/db_stats.js");
 
 io.on("connect", (socket) => {
   room_list(socket);
@@ -85,7 +87,6 @@ io.on("connect", (socket) => {
   });
 
   socket.on("get_json_from_id", (level_id) => {
-    //console.log("get_json_from_id", level_id);
     get_json_from_id(level_id)
       .then((json) => {
         socket.emit("recieve_json_from_id", json);
@@ -96,90 +97,10 @@ io.on("connect", (socket) => {
       });
   });
 
-  socket.on("local_session_id", (session_id) => {
-    verify_session(socket, session_id);
-  });
-
-  socket.on("signup", (username, email, password) => {
-    //console.log("signup", username, email, password);
-    signup(username, email, password, socket);
-  });
-  socket.on("login", (email, password) => {
-    //console.log("login", email, password);
-    login(email, password, socket);
-  });
-
-  socket.on("google_login", (id_token, username) => {
-    //console.log("google_login", id_token, username);
-    google_login(id_token, username, socket);
-  });
-
-  socket.on("logout", () => {
-    logout(socket);
-  });
-
-  socket.on("rate_lvl", (rate, level_id) => {
-    rate_lvl(rate, level_id, socket);
-  });
-
-  socket.on("search_levels", (input_name, input_nb_players, type) => {
-    get_levels(input_name, input_nb_players, type, socket);
-  });
-
-  socket.on("search_my_levels", (input_name, input_nb_players) => {
-    get_my_levels(input_name, input_nb_players, socket);
-  });
-
-  socket.on("get_rooms", () => {
-    room_list(socket);
-  });
-
   socket.on("new-room", async (name, rounds, list_id, creator) => {
     const room_id = await create_room(name, 10, list_id, creator, io);
-    //console.log("Room caca:", room_id);
     socket.emit("room_created", room_id);
   });
-
-  socket.on("get_player_stats", () => {
-    if (users[socket.id]) {
-      get_user_stats(socket.id, socket);
-    } else {
-      socket.emit("no_user");
-    }
-  });
-
-  socket.on("ranking", (ranking_type) => {
-    ////console.log("ranking", ranking_type);
-    get_ranking(ranking_type, socket);
-  });
-
-  socket.on("personal_ranking", (mysocketid, ranking_type) => {
-    if (users[mysocketid]) {
-      get_user_rank(mysocketid, ranking_type, socket);
-    }
-  });
-
-  socket.on("load_level_editor", (level_id) => {
-    //console.log("load_level_editor", level_id);
-    get_level_from_id(level_id, socket, "recieve_level_from_id");
-  });
-
-  socket.on(
-    "save_level",
-    (level_id, levelData, hexData, level_name, max_players, type) => {
-      //console.log(
-
-      save_level(
-        level_id,
-        levelData,
-        hexData,
-        level_name,
-        max_players,
-        type,
-        socket
-      );
-    }
-  );
 
   socket.on("quit", () => {
     // Just leave the game room, don't logout - user stays authenticated
@@ -210,7 +131,7 @@ io.on("connect", (socket) => {
       if (users[socket.id]) {
         get_level_rating_from_player(
           room.levels[room.levelid], // Use level ID directly if possible, but room.levels contains IDs
-          users[socket.id].id
+          users[socket.id].id,
         ).then((stars) => {
           socket.emit("your_level_rating", stars ? stars : 0);
         });
@@ -278,7 +199,7 @@ const tickTockInterval = setTimeout(function toocking() {
           add_round(
             socketid,
             room.levels[room.levelid],
-            player.round_stats.stats
+            player.round_stats.stats,
           );
         } else {
           add_round(null, room.levels[room.levelid], player.round_stats.stats);
@@ -293,7 +214,7 @@ const tickTockInterval = setTimeout(function toocking() {
         get_level_from_id(
           room.levels[room.levelid],
           room.io.to(room.id),
-          "level_change_info"
+          "level_change_info",
         );
 
         room.respawn_the_room();
@@ -313,7 +234,7 @@ const tickTockInterval = setTimeout(function toocking() {
           if (users[socketid]) {
             const stars = await get_level_rating_from_player(
               room.levels[room.levelid].id,
-              users[socketid].id
+              users[socketid].id,
             );
             io.to(socketid).emit("your_level_rating", stars ? stars : 0);
           }
@@ -344,7 +265,7 @@ function room_list(socket) {
       room_names,
       room_creator_name,
       room_players,
-      room_players_max
+      room_players_max,
     );
   } else {
     io.to("lobby" + serverid).emit(
@@ -353,7 +274,7 @@ function room_list(socket) {
       room_names,
       room_creator_name,
       room_players,
-      room_players_max
+      room_players_max,
     );
   }
 }
@@ -388,6 +309,9 @@ async function create_room(name, rounds, list_id, creator, io) {
   ////console.log(rooms);
 }
 const rooms = {};
+
+// Share rooms reference with HTTP routes
+setRoomsRef(rooms);
 
 //create_room("2 players", 10, [2], "GAME MASTER", io);
 /*

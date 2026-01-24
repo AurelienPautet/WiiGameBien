@@ -1,52 +1,24 @@
-import { useState, useEffect } from "react";
-import { Search, Users, Lock, Plus, RefreshCw, Gamepad2 } from "lucide-react";
+import { useState } from "react";
+import { Search, Plus, RefreshCw, Gamepad2 } from "lucide-react";
 import { useModal, useSocket, useGame, MODALS } from "../../contexts";
 import { RoomCard } from "../ui/RoomCard";
+import { useRooms } from "../../hooks/api";
 
 export const RoomSelectorModal = () => {
   const { closeModal, openModal } = useModal();
   const { socket } = useSocket();
   const { startOnlineGame } = useGame();
-  const [rooms, setRooms] = useState([]);
   const [searchName, setSearchName] = useState("");
   const [maxPlayers, setMaxPlayers] = useState(0);
-  const [loading, setLoading] = useState(true);
 
-  // Fetch rooms and set up listener
-  useEffect(() => {
-    if (!socket) return;
+  // Use React Query for fetching rooms
+  const { data: roomsData = [], isLoading, refetch } = useRooms();
 
-    // Handler for room_list event (server sends 5 arrays: ids, names, creators, players, maxPlayers)
-    const handleRoomList = (lids, lname, lcreator, lplayers, lmaxplayers) => {
-      const roomList = [];
-      if (lname && lname.length > 0) {
-        for (let i = 0; i < lname.length; i++) {
-          roomList.push({
-            id: lids[i],
-            name: lname[i],
-            creator: lcreator[i],
-            players: lplayers[i],
-            maxPlayers: lmaxplayers[i],
-          });
-        }
-      }
-      setRooms(roomList);
-      setLoading(false);
-    };
-
-    socket.on("room_list", handleRoomList);
-
-    // Server now supports get_rooms event to fetch on demand
-    socket.emit("get_rooms");
-
-    return () => {
-      socket.off("room_list", handleRoomList);
-    };
-  }, [socket]);
+  // Transform data if needed (API returns objects, not arrays)
+  const rooms = roomsData;
 
   const handleRefresh = () => {
-    setLoading(true);
-    socket?.emit("get_rooms");
+    refetch();
   };
 
   // Filter rooms based on search
@@ -76,7 +48,9 @@ export const RoomSelectorModal = () => {
             className="btn btn-sm btn-ghost gap-1"
             onClick={handleRefresh}
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+            />
             Refresh
           </button>
         </div>
@@ -123,7 +97,7 @@ export const RoomSelectorModal = () => {
             </div>
           </div>
 
-          {loading && rooms.length === 0 ? (
+          {isLoading && rooms.length === 0 ? (
             <div className="text-center py-8">
               <span className="loading loading-spinner loading-lg"></span>
               <p className="mt-2 text-base-content/60">Loading rooms...</p>

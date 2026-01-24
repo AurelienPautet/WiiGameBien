@@ -13,6 +13,7 @@ const {
   sum,
   min,
   desc,
+  inArray,
 } = require("drizzle-orm");
 const { users } = require(path.join(__dirname, "..", "shared_state.js"));
 
@@ -198,7 +199,7 @@ async function get_max_players(list_id) {
   const res = await db
     .select({ min: min(levels.maxPlayers) })
     .from(levels)
-    .where(sql`${levels.id} = ANY(${list_id})`);
+    .where(inArray(levels.id, list_id));
 
   return res[0]?.min;
 }
