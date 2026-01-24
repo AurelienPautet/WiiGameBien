@@ -1,14 +1,14 @@
 const path = require("path");
 const { db, schema } = require(path.join(__dirname, "..", "db"));
 const { players, rounds } = schema;
-const { eq, sql, sum, count, desc } = require("drizzle-orm");
+const { eq, sql, sum, count } = require("drizzle-orm");
 const { users } = require(path.join(__dirname, "..", "shared_state.js"));
 
 async function get_ranking(ranking_type, socket) {
   let selectExpr;
-  let orderExpr;
 
   switch (ranking_type) {
+    case "KILLS":
     case "KILLS":
       selectExpr = sum(rounds.kills);
       break;
