@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSocket, useAuth, useModal, MODALS } from "../contexts";
+import { useSaveLevel, useLevel } from "../hooks/api";
 import { Save, X, Trash2 } from "lucide-react";
 
 // Constants matching the old level editor
@@ -75,6 +76,8 @@ export const LevelEditor = () => {
 
   const theme = 6; // Default theme
 
+  const saveLevelMutation = useSaveLevel();
+
   // Load images on mount
   useEffect(() => {
     const loadAllImages = async () => {
@@ -104,53 +107,36 @@ export const LevelEditor = () => {
     loadAllImages();
   }, [theme]);
 
-  // Load existing level if editing
+  const { data: levelData } = useLevel(levelId ? parseInt(levelId) : null);
+
   useEffect(() => {
-    if (levelId && socket) {
-      socket.emit("load_level_editor", parseInt(levelId));
-
-      const handleReceiveLevel = (levels) => {
-        if (levels && levels.length > 0) {
-          const level = levels[0];
-          setLayout(level.level_json.data);
-          setLevelName(level.level_name);
-          setMode(level.level_type || "online");
-        }
-      };
-
-      socket.on("recieve_level_from_id", handleReceiveLevel);
-
-      return () => {
-        socket.off("recieve_level_from_id", handleReceiveLevel);
-      };
+    if (levelData) {
+      setLayout(levelData.level_json?.data || createEmptyLayout());
+      setLevelName(levelData.level_name || "");
+      setMode(levelData.level_type || "online");
     }
-  }, [levelId, socket]);
+  }, [levelData]);
 
-  // Socket save handlers
   useEffect(() => {
-    if (!socket) return;
-
-    const handleSaveSuccess = (newLevelId) => {
+    if (saveLevelMutation.isSuccess) {
       setSaving(false);
-      // Navigate back to home and open My Levels modal
       navigate("/");
       openModal(MODALS.MY_LEVELS);
-    };
-
-    const handleSaveFail = (reason) => {
+    }
+    if (saveLevelMutation.isError) {
       setSaving(false);
-      console.error("Save failed:", reason);
-      // Could show error toast here
-    };
-
-    socket.on("save_level_success", handleSaveSuccess);
-    socket.on("save_level_fail", handleSaveFail);
-
-    return () => {
-      socket.off("save_level_success", handleSaveSuccess);
-      socket.off("save_level_fail", handleSaveFail);
-    };
-  }, [socket, navigate]);
+      console.error("Save failed:", saveLevelMutation.error);
+      alert(
+        "Failed to save level: " +
+          (saveLevelMutation.error?.message || "Unknown error"),
+      );
+    }
+  }, [
+    saveLevelMutation.isSuccess,
+    saveLevelMutation.isError,
+    navigate,
+    openModal,
+  ]);
 
   // Draw block on canvas
   const drawBlock = useCallback(
@@ -198,7 +184,7 @@ export const LevelEditor = () => {
           break;
       }
     },
-    [images]
+    [images],
   );
 
   // Canvas render loop
@@ -234,7 +220,7 @@ export const LevelEditor = () => {
           ctx,
           selectedBlock,
           mouseGridPos.x * CELL_SIZE,
-          mouseGridPos.y * CELL_SIZE
+          mouseGridPos.y * CELL_SIZE,
         );
         ctx.globalAlpha = 1.0;
       }
@@ -278,7 +264,7 @@ export const LevelEditor = () => {
         }
       }
     },
-    [selectedBlock]
+    [selectedBlock],
   );
 
   // Mouse event handlers
@@ -339,7 +325,7 @@ export const LevelEditor = () => {
     if (newMode === "online") {
       // Remove bot spawns when switching to online (players only, no bots)
       setLayout((prev) =>
-        prev.map((block) => (block >= 10 ? BLOCKS.EMPTY : block))
+        prev.map((block) => (block >= 10 ? BLOCKS.EMPTY : block)),
       );
     }
     // When selecting a bot in online mode, reset to wall
@@ -399,15 +385,14 @@ export const LevelEditor = () => {
     const maxPlayers = spawnCount;
 
     setSaving(true);
-    socket.emit(
-      "save_level",
-      levelId ? parseInt(levelId) : -1,
+    saveLevelMutation.mutate({
+      id: levelId ? parseInt(levelId) : null,
       levelData,
       hexData,
       levelName,
       maxPlayers,
-      mode
-    );
+      type: mode,
+    });
   };
 
   // Close editor - go back to My Levels modal

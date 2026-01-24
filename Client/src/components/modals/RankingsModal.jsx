@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { User } from "lucide-react";
-import { useModal, useSocket, useAuth } from "../../contexts";
+import { useModal, useAuth } from "../../contexts";
 import { Tabs } from "../ui";
+import { useRankings, usePersonalRank } from "../../hooks/api";
 
 const RANKING_TABS = [
   { value: "KILLS", label: "Kills" },
@@ -11,49 +12,13 @@ const RANKING_TABS = [
 
 export const RankingsModal = () => {
   const { closeModal } = useModal();
-  const { socket } = useSocket();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("KILLS");
-  const [rankings, setRankings] = useState([]);
-  const [personalRank, setPersonalRank] = useState(null);
 
-  // Fetch rankings when tab changes or modal opens
-  useEffect(() => {
-    if (!socket) return;
+  // React Query hooks
+  const { data: rankings = [], isLoading } = useRankings(activeTab);
+  const { data: personalRank } = usePersonalRank(activeTab);
 
-    // Request rankings for the active tab
-    socket.emit("ranking", activeTab);
-
-    // Also request personal ranking if logged in
-    if (user) {
-      socket.emit("personal_ranking", socket.id, activeTab);
-    }
-  }, [socket, activeTab, user]);
-
-  // Listen for ranking responses
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleRanking = (data, rankingType) => {
-      if (rankingType === activeTab) {
-        setRankings(data || []);
-      }
-    };
-
-    const handlePersonalRanking = (data) => {
-      setPersonalRank(data);
-    };
-
-    socket.on("ranking", handleRanking);
-    socket.on("personal_ranking", handlePersonalRanking);
-
-    return () => {
-      socket.off("ranking", handleRanking);
-      socket.off("personal_ranking", handlePersonalRanking);
-    };
-  }, [socket, activeTab]);
-
-  // Get background class for top 3 ranks
   const getRankBgClass = (rank) => {
     if (rank == 1) return "bg-yellow-500"; // Gold
     if (rank == 2) return "bg-zinc-500"; // Silver
@@ -61,7 +26,6 @@ export const RankingsModal = () => {
     return "bg-base-200";
   };
 
-  // Get text styling for top 3 ranks
   const getRankTextClass = (rank) => {
     if (rank <= 3) return "text-white font-bold";
     return "";
@@ -81,7 +45,11 @@ export const RankingsModal = () => {
 
         {/* Rankings List */}
         <div className="bg-base-100 flex-1 p-4 overflow-y-auto">
-          {rankings.length === 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <span className="loading loading-spinner loading-lg"></span>
+            </div>
+          ) : rankings.length === 0 ? (
             <p className="text-center text-slate-400">No rankings available</p>
           ) : (
             <div className="space-y-2">
@@ -89,7 +57,7 @@ export const RankingsModal = () => {
                 <div
                   key={player.username}
                   className={`flex items-center rounded-lg p-3 ${getRankBgClass(
-                    player.rank
+                    player.rank,
                   )} ${getRankTextClass(player.rank)}`}
                 >
                   <span className="text-2xl w-12 text-center font-bold">
@@ -114,7 +82,7 @@ export const RankingsModal = () => {
           {user && personalRank ? (
             <div
               className={`flex items-center rounded-lg p-3 ${getRankBgClass(
-                personalRank.rank
+                personalRank.rank,
               )} ${getRankTextClass(personalRank.rank)}`}
             >
               <span className="text-2xl w-12 text-center font-bold">

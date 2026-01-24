@@ -10,6 +10,7 @@ import {
   useGame,
   MODALS,
 } from "./contexts";
+import { QueryProvider } from "./providers/QueryProvider";
 import { ToastContainer, OnlineIndicator } from "./components/ui";
 import { LandingPage, CANVAS_WIDTH, CANVAS_HEIGHT } from "./components/landing";
 import {
@@ -144,17 +145,19 @@ const AppRouter = () => {
 function App() {
   return (
     <HashRouter>
-      <SocketProvider>
-        <AuthProvider>
-          <ToastProvider>
-            <ModalProvider>
-              <GameProvider>
-                <AppRouter />
-              </GameProvider>
-            </ModalProvider>
-          </ToastProvider>
-        </AuthProvider>
-      </SocketProvider>
+      <QueryProvider>
+        <SocketProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <ModalProvider>
+                <GameProvider>
+                  <AppRouter />
+                </GameProvider>
+              </ModalProvider>
+            </ToastProvider>
+          </AuthProvider>
+        </SocketProvider>
+      </QueryProvider>
     </HashRouter>
   );
 }

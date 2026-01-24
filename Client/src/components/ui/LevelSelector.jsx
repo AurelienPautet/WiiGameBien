@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Search, Gamepad2, Plus, Pencil, Trash2 } from "lucide-react";
-import { useSocket, useAuth } from "../../contexts";
+import { useAuth } from "../../contexts";
 import { LevelCard } from "./LevelCard";
 import { hexToDataUrl } from "../../utils/levelUtils";
+import { useLevels, useMyLevels } from "../../hooks/api";
 
 /**
  * LevelSelector - Reusable level selection component
@@ -23,9 +24,7 @@ export function LevelSelector({
   onDelete,
   onCreate,
 }) {
-  const { socket } = useSocket();
   const { user } = useAuth();
-  const [levels, setLevels] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [searchName, setSearchName] = useState("");
   const [maxPlayers, setMaxPlayers] = useState(0);
@@ -36,27 +35,14 @@ export function LevelSelector({
   const showActions = mode === "myLevels";
   const levelType = mode === "solo" ? "solo" : "online";
 
-  useEffect(() => {
-    if (!socket) return;
+  // Use appropriate hook based on mode
+  const levelsQuery =
+    mode === "myLevels"
+      ? useMyLevels({ name: searchName, players: maxPlayers })
+      : useLevels({ name: searchName, players: maxPlayers, type: levelType });
 
-    const handleLevels = (data) => {
-      setLevels(data || []);
-    };
-
-    // Different API endpoints per mode
-    if (mode === "myLevels") {
-      socket.on("recieve_my_levels", handleLevels);
-      socket.emit("search_my_levels", searchName, maxPlayers);
-    } else {
-      socket.on("recieve_levels", handleLevels);
-      socket.emit("search_levels", searchName, maxPlayers, levelType);
-    }
-
-    return () => {
-      socket.off("recieve_levels", handleLevels);
-      socket.off("recieve_my_levels", handleLevels);
-    };
-  }, [socket, searchName, maxPlayers, mode, levelType]);
+  const levels = levelsQuery.data || [];
+  const isLoading = levelsQuery.isLoading;
 
   const handleCardClick = (levelId) => {
     if (showActions) return; // myLevels mode uses buttons instead
@@ -66,7 +52,7 @@ export function LevelSelector({
       setSelectedIds((prev) =>
         prev.includes(levelId)
           ? prev.filter((id) => id !== levelId)
-          : [...prev, levelId]
+          : [...prev, levelId],
       );
     } else {
       // Single select for solo mode
@@ -147,7 +133,11 @@ export function LevelSelector({
 
       {/* Level List */}
       <div className="flex-1 overflow-y-auto space-y-3 pr-2">
-        {levels.length === 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <span className="loading loading-spinner loading-lg"></span>
+          </div>
+        ) : levels.length === 0 ? (
           <div className="text-center text-base-content/50 py-8">
             <Gamepad2 className="w-16 h-16 mx-auto mb-4 opacity-50" />
             <p>

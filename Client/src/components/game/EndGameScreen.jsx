@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSocket, useAuth, useToast, TOAST_TYPES } from "../../contexts";
 import { hexToDataUrl } from "../../utils/levelUtils";
+import { useRateLevel } from "../../hooks/api";
 import {
   Clock,
   Crosshair,
@@ -61,6 +62,8 @@ export const EndGameScreen = ({
   const [stars, setStars] = useState([0, 0, 0, 0, 0]);
   const [hoveredStar, setHoveredStar] = useState(-1);
 
+  const rateLevelMutation = useRateLevel();
+
   // Update levelInfo ID from prop if available (Solo Mode fix)
   useEffect(() => {
     if (levelId) {
@@ -113,13 +116,13 @@ export const EndGameScreen = ({
       setResultName(winnerName);
 
       const highestWins = Math.max(
-        ...Object.values(player_scores).map((s) => s.wins)
+        ...Object.values(player_scores).map((s) => s.wins),
       );
       const highestKills = Math.max(
-        ...Object.values(player_scores).map((s) => s.kills)
+        ...Object.values(player_scores).map((s) => s.kills),
       );
       const highestDeaths = Math.max(
-        ...Object.values(player_scores).map((s) => s.deaths)
+        ...Object.values(player_scores).map((s) => s.deaths),
       );
 
       const sortedScores = Object.entries(player_scores)
@@ -149,7 +152,7 @@ export const EndGameScreen = ({
     const handleYourRating = (serverStars) => {
       if (typeof serverStars === "number" && serverStars > 0) {
         const starsArray = [0, 1, 2, 3, 4].map((i) =>
-          i < serverStars ? 1 : 0
+          i < serverStars ? 1 : 0,
         );
         setStars(starsArray);
       } else if (Array.isArray(serverStars)) {
@@ -157,37 +160,40 @@ export const EndGameScreen = ({
       }
     };
 
-    const handleRateSuccess = (rate) => {
-      addToast(
-        TOAST_TYPES.SUCCESS,
-        "Success",
-        `You rated the level with ${rate} stars`
-      );
-    };
-
-    const handleRateFail = (reason) => {
-      addToast(TOAST_TYPES.ERROR, "Error", `Can't rate: ${reason}`);
-    };
-
     socket.on("winner", handleWinner);
     socket.on("your_level_rating", handleYourRating);
-    socket.on("rate_success", handleRateSuccess);
-    socket.on("rate_fail", handleRateFail);
 
     return () => {
       socket.off("winner", handleWinner);
       socket.off("your_level_rating", handleYourRating);
-      socket.off("rate_success", handleRateSuccess);
-      socket.off("rate_fail", handleRateFail);
     };
-  }, [socket, addToast]);
+  }, [socket]);
+
+  useEffect(() => {
+    if (rateLevelMutation.isSuccess) {
+      const rate =
+        rateLevelMutation.data?.stars || rateLevelMutation.variables?.stars;
+      addToast(
+        TOAST_TYPES.SUCCESS,
+        "Success",
+        `You rated the level with ${rate} stars`,
+      );
+    }
+    if (rateLevelMutation.isError) {
+      addToast(
+        TOAST_TYPES.ERROR,
+        "Error",
+        `Can't rate: ${rateLevelMutation.error?.message || "Unknown error"}`,
+      );
+    }
+  }, [rateLevelMutation.isSuccess, rateLevelMutation.isError, addToast]);
 
   const handleStarHover = useCallback(
     (index) => {
       if (!user) return;
       setHoveredStar(index);
     },
-    [user]
+    [user],
   );
 
   const handleStarClick = useCallback(
@@ -196,7 +202,7 @@ export const EndGameScreen = ({
         addToast(
           TOAST_TYPES.ERROR,
           "Error",
-          "You need to be logged in to rate a level"
+          "You need to be logged in to rate a level",
         );
         return;
       }
@@ -206,9 +212,9 @@ export const EndGameScreen = ({
       }
       const newStars = [0, 0, 0, 0, 0].map((_, i) => (i <= index ? 1 : 0));
       setStars(newStars);
-      socket?.emit("rate_lvl", index + 1, levelInfo.id);
+      rateLevelMutation.mutate({ levelId: levelInfo.id, stars: index + 1 });
     },
-    [user, levelInfo.id, socket, addToast]
+    [user, levelInfo.id, rateLevelMutation, addToast],
   );
 
   const getDisplayedStars = useCallback(() => {

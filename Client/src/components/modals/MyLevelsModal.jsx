@@ -1,12 +1,13 @@
 import { useNavigate } from "react-router-dom";
-import { useModal, useSocket, useAuth } from "../../contexts";
+import { useModal, useAuth } from "../../contexts";
 import { LevelSelector } from "../ui";
+import { useDeleteLevel } from "../../hooks/api";
 
 export const MyLevelsModal = () => {
   const navigate = useNavigate();
   const { closeModal } = useModal();
-  const { socket } = useSocket();
   const { user } = useAuth();
+  const deleteLevel = useDeleteLevel();
 
   const handleEdit = (levelId) => {
     closeModal();
@@ -16,10 +17,10 @@ export const MyLevelsModal = () => {
   const handleDelete = (levelId) => {
     if (
       window.confirm(
-        "Are you sure you want to delete this level? This cannot be undone."
+        "Are you sure you want to delete this level? This cannot be undone.",
       )
     ) {
-      socket?.emit("delete_map", levelId);
+      deleteLevel.mutate(levelId);
     }
   };
 

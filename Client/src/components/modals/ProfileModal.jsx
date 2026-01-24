@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   User,
   LogOut,
@@ -13,25 +12,13 @@ import {
   Bomb,
   Hammer,
 } from "lucide-react";
-import { useModal, useAuth, useSocket } from "../../contexts";
+import { useModal, useAuth } from "../../contexts";
+import { usePlayerStats } from "../../hooks/api";
 
 export const ProfileModal = () => {
   const { closeModal } = useModal();
   const { user, logout } = useAuth();
-  const { socket } = useSocket();
-  const [stats, setStats] = useState(null);
-
-  useEffect(() => {
-    if (!socket) return;
-    socket.emit("get_player_stats");
-    const onStats = (data) => {
-      setStats(data);
-    };
-    socket.on("player_stats", onStats);
-    return () => {
-      socket.off("player_stats", onStats);
-    };
-  }, [socket]);
+  const { data: stats, isLoading } = usePlayerStats();
 
   const handleLogout = () => {
     logout();
@@ -39,14 +26,14 @@ export const ProfileModal = () => {
   };
 
   const s = stats || {};
-  const rounds = s.rounds_played || 0;
-  const wins = s.wins || 0;
-  const kills = s.kills || 0;
-  const deaths = s.deaths || 0;
-  const shots = s.shots || 0;
-  const hits = s.hits || 0;
-  const plants = s.plants || 0;
-  const blocks = s.blocks_destroyed || 0;
+  const rounds = Number(s.rounds_played) || 0;
+  const wins = Number(s.wins) || 0;
+  const kills = Number(s.kills) || 0;
+  const deaths = Number(s.deaths) || 0;
+  const shots = Number(s.shots) || 0;
+  const hits = Number(s.hits) || 0;
+  const plants = Number(s.plants) || 0;
+  const blocks = Number(s.blocks_destroyed) || 0;
   const winRate =
     rounds > 0 ? ((wins / rounds) * 100).toFixed(2) + "%" : "0.00%";
   const kdRatio = deaths > 0 ? (kills / deaths).toFixed(2) : kills.toFixed(2);
@@ -56,7 +43,6 @@ export const ProfileModal = () => {
   return (
     <dialog className="modal modal-open">
       <div className="modal-box w-11/12 max-w-4xl bg-base-100 p-0 overflow-hidden">
-        {/* Header */}
         {/* Header */}
         <div className="p-8 pb-4 flex flex-col items-center justify-center text-center gap-4">
           <div className="avatar placeholder">
@@ -91,77 +77,83 @@ export const ProfileModal = () => {
             Combat Statistics
           </h3>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <StatCard
-              title="Rounds Played"
-              value={rounds}
-              icon={Activity}
-              color="text-info"
-            />
-            <StatCard
-              title="Wins"
-              value={wins}
-              icon={Trophy}
-              color="text-warning"
-            />
-            <StatCard
-              title="Win Rate"
-              value={winRate}
-              icon={TrendingUp}
-              color="text-success"
-            />
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <span className="loading loading-spinner loading-lg"></span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <StatCard
+                title="Rounds Played"
+                value={rounds}
+                icon={Activity}
+                color="text-info"
+              />
+              <StatCard
+                title="Wins"
+                value={wins}
+                icon={Trophy}
+                color="text-warning"
+              />
+              <StatCard
+                title="Win Rate"
+                value={winRate}
+                icon={TrendingUp}
+                color="text-success"
+              />
 
-            <StatCard
-              title="Kills"
-              value={kills}
-              icon={Swords}
-              color="text-error"
-            />
-            <StatCard
-              title="Deaths"
-              value={deaths}
-              icon={Skull}
-              color="text-base-content"
-            />
-            <StatCard
-              title="K/D Ratio"
-              value={kdRatio}
-              icon={Scale}
-              color="text-secondary"
-            />
+              <StatCard
+                title="Kills"
+                value={kills}
+                icon={Swords}
+                color="text-error"
+              />
+              <StatCard
+                title="Deaths"
+                value={deaths}
+                icon={Skull}
+                color="text-base-content"
+              />
+              <StatCard
+                title="K/D Ratio"
+                value={kdRatio}
+                icon={Scale}
+                color="text-secondary"
+              />
 
-            <StatCard
-              title="Shots Fired"
-              value={shots}
-              icon={Crosshair}
-              color="text-accent"
-            />
-            <StatCard
-              title="Hits"
-              value={hits}
-              icon={Target}
-              color="text-primary"
-            />
-            <StatCard
-              title="Accuracy"
-              value={accuracy}
-              icon={Target}
-              color="text-primary"
-            />
+              <StatCard
+                title="Shots Fired"
+                value={shots}
+                icon={Crosshair}
+                color="text-accent"
+              />
+              <StatCard
+                title="Hits"
+                value={hits}
+                icon={Target}
+                color="text-primary"
+              />
+              <StatCard
+                title="Accuracy"
+                value={accuracy}
+                icon={Target}
+                color="text-primary"
+              />
 
-            <StatCard
-              title="Mines Planted"
-              value={plants}
-              icon={Bomb}
-              color="text-error"
-            />
-            <StatCard
-              title="Blocks Broken"
-              value={blocks}
-              icon={Hammer}
-              color="text-warning"
-            />
-          </div>
+              <StatCard
+                title="Mines Planted"
+                value={plants}
+                icon={Bomb}
+                color="text-error"
+              />
+              <StatCard
+                title="Blocks Broken"
+                value={blocks}
+                icon={Hammer}
+                color="text-warning"
+              />
+            </div>
+          )}
         </div>
 
         <div className="modal-action p-6 pt-0 bg-base-100 mt-0">
