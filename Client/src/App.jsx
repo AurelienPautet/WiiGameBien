@@ -73,7 +73,23 @@ const useWindowScale = () => {
 // Main game/landing content with fixed dimensions and dynamic scaling
 const MainContent = () => {
   const scale = useWindowScale();
-  const { isPlaying } = useGame();
+  const { isPlaying, cycleTheme } = useGame();
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ignore if typing in an input
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
+        return;
+      }
+
+      if (e.code === "KeyT") {
+        cycleTheme();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [cycleTheme]);
 
   return (
     <div className="w-screen h-screen overflow-hidden bg-base-300 flex items-center justify-center">

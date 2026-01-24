@@ -1,8 +1,9 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import { useGame, useSocket, useModal } from "../../contexts";
+import { useGame, useSocket, useModal, MODALS } from "../../contexts";
 import { GameEngine } from "../../engine/GameEngine";
 import { EndGameScreen } from "./EndGameScreen";
 import { CountdownOverlay } from "./CountdownOverlay";
+import { useSubmitSoloRound } from "../../hooks/api";
 
 export const GameCanvas = ({ scale = 1 }) => {
   const canvasRef = useRef(null);
@@ -22,9 +23,13 @@ export const GameCanvas = ({ scale = 1 }) => {
     quitGame,
     isPaused,
     resumeGame,
+    theme,
   } = useGame();
   const { socket } = useSocket();
   const { openModal } = useModal();
+
+  // Mutation for submitting solo rounds
+  const submitSoloRoundMutation = useSubmitSoloRound();
 
   // Refs for stable access in effect
   const playerNameRef = useRef(playerName);
@@ -75,11 +80,29 @@ export const GameCanvas = ({ scale = 1 }) => {
     }
   }, []);
 
-  // Handle Solo Game Over callback
-  const handleSoloGameOver = useCallback((result) => {
-    setSoloResult(result);
-    setIsEndGameVisible(true);
-  }, []);
+  // Handle Solo Game Over callback - submit round to server
+  const handleSoloGameOver = useCallback(
+    (result) => {
+      setSoloResult(result);
+      setIsEndGameVisible(true);
+
+      // Submit solo round to server for stats tracking
+      if (levelId) {
+        submitSoloRoundMutation.mutate({
+          levelId,
+          success: result.result === "win",
+          timeMs: (result.timeElapsed || 0) * 1000,
+          kills: result.stats?.kills || 0,
+          deaths: result.stats?.deaths || 0,
+          shots: result.stats?.shots || 0,
+          hits: result.stats?.hits || 0,
+          plants: result.stats?.plants || 0,
+          blocksDestroyed: result.stats?.blocksDestroyed || 0,
+        });
+      }
+    },
+    [levelId, submitSoloRoundMutation],
+  );
 
   // Handle pause toggle
   const handlePause = useCallback(
@@ -95,17 +118,22 @@ export const GameCanvas = ({ scale = 1 }) => {
         engineRef.current?.pause();
       }
     },
-    [isPaused, pauseGame, resumeGame]
+    [isPaused, pauseGame, resumeGame],
   );
 
   // Handle quit
   const handleQuit = useCallback(() => {
+    const wasSolo = mode === "solo";
     setSoloResult(null);
     setIsEndGameVisible(false);
     setShowCountdown(false);
     engineRef.current?.quit();
     quitGame();
-  }, [quitGame]);
+
+    if (wasSolo) {
+      openModal(MODALS.LEVEL_SELECTOR);
+    }
+  }, [quitGame, mode, openModal]);
 
   // Handle replay - creates fresh engine instance
   const handleReplay = useCallback(() => {
@@ -124,7 +152,7 @@ export const GameCanvas = ({ scale = 1 }) => {
       const engine = new GameEngine(
         canvasRef.current,
         fadingCanvasRef.current,
-        socket
+        socket,
       );
       engineRef.current = engine;
 
@@ -155,6 +183,13 @@ export const GameCanvas = ({ scale = 1 }) => {
     }
   }, [scale]);
 
+  // Update engine theme
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.setTheme(theme);
+    }
+  }, [theme]);
+
   // Initialize engine when game starts
   useEffect(() => {
     if (!canvasRef.current || !socket) return;
@@ -167,7 +202,7 @@ export const GameCanvas = ({ scale = 1 }) => {
     const engine = new GameEngine(
       canvasRef.current,
       fadingCanvasRef.current,
-      socket
+      socket,
     );
     engineRef.current = engine;
 
@@ -178,13 +213,13 @@ export const GameCanvas = ({ scale = 1 }) => {
           await engine.startSolo(
             levelId,
             playerNameRef.current,
-            tankColorsRef.current
+            tankColorsRef.current,
           );
         } else if (mode === "online" && roomId) {
           await engine.startOnline(
             roomId,
             playerNameRef.current,
-            tankColorsRef.current
+            tankColorsRef.current,
           );
         }
       } catch (err) {
@@ -219,6 +254,8 @@ export const GameCanvas = ({ scale = 1 }) => {
         e.preventDefault();
         e.stopPropagation();
         handlePause();
+      } else if (e.key === "Shift" && !e.repeat) {
+        engineRef.current?.toggleDebug();
       }
     };
 

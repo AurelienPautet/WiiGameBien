@@ -1,23 +1,70 @@
 import { useState } from "react";
-import { User } from "lucide-react";
+import { User, Trophy, Gamepad2 } from "lucide-react";
 import { useModal, useAuth } from "../../contexts";
 import { Tabs } from "../ui";
-import { useRankings, usePersonalRank } from "../../hooks/api";
+import {
+  useRankings,
+  usePersonalRank,
+  useGlobalSoloLeaderboard,
+} from "../../hooks/api";
 
-const RANKING_TABS = [
+// Online ranking tabs
+const ONLINE_TABS = [
   { value: "KILLS", label: "Kills" },
   { value: "WINS", label: "Wins" },
   { value: "ROUNDS_PLAYED", label: "Rounds Played" },
 ];
 
+// Solo ranking tabs
+const SOLO_TABS = [
+  { value: "LEVELS_COMPLETED", label: "Levels Completed" },
+  { value: "LEVELS_PLAYED", label: "Levels Played" },
+  { value: "KILLS", label: "Kills" },
+];
+
+// Top-level mode tabs
+const MODE_TABS = [
+  { value: "ONLINE", label: "Online" },
+  { value: "SOLO", label: "Solo" },
+];
+
+// Get display label for tab value
+const getTabLabel = (value) => {
+  const allTabs = [...ONLINE_TABS, ...SOLO_TABS];
+  const tab = allTabs.find((t) => t.value === value);
+  return tab ? tab.label : value.replace("_", " ");
+};
+
 export const RankingsModal = () => {
   const { closeModal } = useModal();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("KILLS");
+  const [mode, setMode] = useState("ONLINE"); // ONLINE or SOLO
+  const [onlineTab, setOnlineTab] = useState("KILLS");
+  const [soloTab, setSoloTab] = useState("LEVELS_COMPLETED");
 
-  // React Query hooks
-  const { data: rankings = [], isLoading } = useRankings(activeTab);
-  const { data: personalRank } = usePersonalRank(activeTab);
+  // Active tab based on mode
+  const activeTab = mode === "ONLINE" ? onlineTab : soloTab;
+  const setActiveTab = mode === "ONLINE" ? setOnlineTab : setSoloTab;
+
+  // React Query hooks for online rankings
+  const { data: onlineRankings = [], isLoading: onlineLoading } =
+    useRankings(onlineTab);
+  const { data: personalOnlineRank } = usePersonalRank(onlineTab);
+
+  // React Query hook for solo leaderboard with type
+  const { data: soloRankings = [], isLoading: soloLoading } =
+    useGlobalSoloLeaderboard(soloTab, 50);
+
+  // Current rankings based on mode
+  const rankings = mode === "ONLINE" ? onlineRankings : soloRankings;
+  const isLoading = mode === "ONLINE" ? onlineLoading : soloLoading;
+
+  // Find current user in solo leaderboard
+  const personalSoloRank = user
+    ? soloRankings.find((p) => p.username === user.username)
+    : null;
+  const personalRank =
+    mode === "ONLINE" ? personalOnlineRank : personalSoloRank;
 
   const getRankBgClass = (rank) => {
     if (rank == 1) return "bg-yellow-500"; // Gold
@@ -34,11 +81,31 @@ export const RankingsModal = () => {
   return (
     <dialog className="modal modal-open">
       <div className="modal-box bg-base-200 w-11/12 max-w-3xl h-3/4 p-0 overflow-hidden flex flex-col">
-        <h1 className="text-center py-4 text-3xl font-bold">Online Rankings</h1>
+        <h1 className="text-center py-4 text-3xl font-bold">
+          {mode === "ONLINE" ? "Online Rankings" : "Solo Leaderboard"}
+        </h1>
 
-        {/* Tabs */}
+        {/* Mode Toggle */}
+        <div className="flex justify-center gap-2 px-4 pb-2">
+          {MODE_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              className={`btn btn-sm ${mode === tab.value ? "btn-primary" : "btn-ghost"}`}
+              onClick={() => setMode(tab.value)}
+            >
+              {tab.value === "ONLINE" ? (
+                <Trophy size={16} className="mr-1" />
+              ) : (
+                <Gamepad2 size={16} className="mr-1" />
+              )}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Sub-tabs - different for each mode */}
         <Tabs
-          tabs={RANKING_TABS}
+          tabs={mode === "ONLINE" ? ONLINE_TABS : SOLO_TABS}
           activeTab={activeTab}
           onTabChange={setActiveTab}
         />
@@ -68,7 +135,7 @@ export const RankingsModal = () => {
                     {player.username}
                   </span>
                   <span className="font-bold mr-4">
-                    {player.total_data} {activeTab.replace("_", " ")}
+                    {player.total_data} {getTabLabel(activeTab)}
                   </span>
                 </div>
               ))}
@@ -93,7 +160,7 @@ export const RankingsModal = () => {
                 {personalRank.username} (YOU)
               </span>
               <span className="font-bold mr-4">
-                {personalRank.total_data} {activeTab.replace("_", " ")}
+                {personalRank.total_data} {getTabLabel(activeTab)}
               </span>
             </div>
           ) : (
@@ -101,10 +168,14 @@ export const RankingsModal = () => {
               <span className="text-2xl w-12 text-center font-bold">XXX</span>
               <User className="w-10 h-10 mx-2 text-base-content/50" />
               <span className="flex-1 font-semibold text-base-content/70">
-                Login to see your own rank
+                {user
+                  ? mode === "SOLO"
+                    ? "Play solo to appear on leaderboard"
+                    : "Play online to appear on leaderboard"
+                  : "Login to see your rank"}
               </span>
               <span className="font-bold mr-4 text-base-content/50">
-                XXX {activeTab.replace("_", " ")}
+                XXX {getTabLabel(activeTab)}
               </span>
             </div>
           )}

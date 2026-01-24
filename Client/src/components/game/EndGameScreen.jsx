@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSocket, useAuth, useToast, TOAST_TYPES } from "../../contexts";
 import { hexToDataUrl } from "../../utils/levelUtils";
-import { useRateLevel } from "../../hooks/api";
+import { useRateLevel, useLevelLeaderboard } from "../../hooks/api";
 import {
   Clock,
   Crosshair,
@@ -11,6 +11,8 @@ import {
   Hammer,
   RotateCcw,
   LogOut,
+  Trophy,
+  User,
 } from "lucide-react";
 
 export const EndGameScreen = ({
@@ -63,6 +65,18 @@ export const EndGameScreen = ({
   const [hoveredStar, setHoveredStar] = useState(-1);
 
   const rateLevelMutation = useRateLevel();
+
+  // Fetch level leaderboard for solo mode (best times)
+  const { data: levelLeaderboard = [] } = useLevelLeaderboard(
+    externalResult ? levelId : null,
+    10,
+  );
+
+  // Find current user's rank in leaderboard
+  const myLeaderboardEntry = useMemo(() => {
+    if (!user || !levelLeaderboard.length) return null;
+    return levelLeaderboard.find((entry) => entry.username === user.username);
+  }, [user, levelLeaderboard]);
 
   // Update levelInfo ID from prop if available (Solo Mode fix)
   useEffect(() => {
@@ -268,18 +282,18 @@ export const EndGameScreen = ({
       {/* Result text */}
       <div className={`text-4xl font-bold ${resultColor}`}>{resultText}</div>
 
-      {/* Solo Mode: Stats and Buttons */}
+      {/* Solo Mode: Stats, Leaderboard and Buttons */}
       {externalResult ? (
-        <div className="flex flex-col items-center gap-6 animate-fadeIn">
+        <div className="flex flex-col items-center gap-4 animate-fadeIn">
           {/* Stats Row with Icons */}
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-6 flex-wrap justify-center">
             {/* Time */}
             <div
               className="flex items-center gap-2 text-white"
               title="Time Elapsed"
             >
-              <Clock className="w-6 h-6 text-blue-400" />
-              <span className="font-mono text-2xl text-yellow-400">
+              <Clock className="w-5 h-5 text-blue-400" />
+              <span className="font-mono text-xl text-yellow-400">
                 {formatTime(externalResult.timeElapsed)}
               </span>
             </div>
@@ -289,8 +303,8 @@ export const EndGameScreen = ({
               className="flex items-center gap-2 text-white"
               title="Shots Fired"
             >
-              <Crosshair className="w-6 h-6 text-orange-400" />
-              <span className="font-mono text-2xl">{stats.shots || 0}</span>
+              <Crosshair className="w-5 h-5 text-orange-400" />
+              <span className="font-mono text-xl">{stats.shots || 0}</span>
             </div>
 
             {/* Accuracy */}
@@ -298,14 +312,14 @@ export const EndGameScreen = ({
               className="flex items-center gap-2 text-white"
               title="Accuracy"
             >
-              <Target className="w-6 h-6 text-green-400" />
-              <span className="font-mono text-2xl">{accuracy}%</span>
+              <Target className="w-5 h-5 text-green-400" />
+              <span className="font-mono text-xl">{accuracy}%</span>
             </div>
 
             {/* Kills */}
             <div className="flex items-center gap-2 text-white" title="Kills">
-              <Skull className="w-6 h-6 text-red-400" />
-              <span className="font-mono text-2xl">{stats.kills || 0}</span>
+              <Skull className="w-5 h-5 text-red-400" />
+              <span className="font-mono text-xl">{stats.kills || 0}</span>
             </div>
 
             {/* Bombs */}
@@ -313,8 +327,8 @@ export const EndGameScreen = ({
               className="flex items-center gap-2 text-white"
               title="Bombs Planted"
             >
-              <Bomb className="w-6 h-6 text-purple-400" />
-              <span className="font-mono text-2xl">{stats.plants || 0}</span>
+              <Bomb className="w-5 h-5 text-purple-400" />
+              <span className="font-mono text-xl">{stats.plants || 0}</span>
             </div>
 
             {/* Blocks */}
@@ -322,12 +336,82 @@ export const EndGameScreen = ({
               className="flex items-center gap-2 text-white"
               title="Blocks Destroyed"
             >
-              <Hammer className="w-6 h-6 text-yellow-400" />
-              <span className="font-mono text-2xl">
+              <Hammer className="w-5 h-5 text-yellow-400" />
+              <span className="font-mono text-xl">
                 {stats.blocksDestroyed || 0}
               </span>
             </div>
           </div>
+
+          {/* Level Leaderboard - Best Times */}
+          {levelLeaderboard.length > 0 && (
+            <div className="bg-black/40 rounded-lg p-3 max-w-md w-full">
+              <div className="flex items-center gap-2 mb-2 text-white text-sm font-bold">
+                <Trophy className="w-4 h-4 text-yellow-400" />
+                Best Times
+              </div>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {levelLeaderboard.slice(0, 5).map((entry) => {
+                  const isMe = user && entry.username === user.username;
+                  return (
+                    <div
+                      key={entry.rank}
+                      className={`flex items-center justify-between text-sm px-2 py-1 rounded ${
+                        isMe
+                          ? "bg-primary/30 text-primary-content"
+                          : "text-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`w-5 text-center font-bold ${
+                            entry.rank === 1
+                              ? "text-yellow-400"
+                              : entry.rank === 2
+                                ? "text-gray-400"
+                                : entry.rank === 3
+                                  ? "text-yellow-700"
+                                  : ""
+                          }`}
+                        >
+                          {entry.rank}
+                        </span>
+                        <User className="w-4 h-4" />
+                        <span>{entry.username}</span>
+                        {isMe && (
+                          <span className="text-xs opacity-70">(you)</span>
+                        )}
+                      </div>
+                      <span className="font-mono text-yellow-400">
+                        {formatTime(Math.floor(entry.timeMs / 1000))}
+                      </span>
+                    </div>
+                  );
+                })}
+                {/* Show user's rank if not in top 5 */}
+                {myLeaderboardEntry && myLeaderboardEntry.rank > 5 && (
+                  <>
+                    <div className="text-center text-xs text-gray-500">...</div>
+                    <div className="flex items-center justify-between text-sm px-2 py-1 rounded bg-primary/30 text-primary-content">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 text-center font-bold">
+                          {myLeaderboardEntry.rank}
+                        </span>
+                        <User className="w-4 h-4" />
+                        <span>{myLeaderboardEntry.username}</span>
+                        <span className="text-xs opacity-70">(you)</span>
+                      </div>
+                      <span className="font-mono text-yellow-400">
+                        {formatTime(
+                          Math.floor(myLeaderboardEntry.timeMs / 1000),
+                        )}
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex gap-4">

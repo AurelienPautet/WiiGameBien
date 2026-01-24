@@ -3,3 +3,4 @@ export * from "./useLevels";
 export * from "./useStats";
 export * from "./useRankings";
 export * from "./useRooms";
+export * from "./useSolo";

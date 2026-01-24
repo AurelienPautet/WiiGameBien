@@ -16,6 +16,7 @@ export const GameProvider = ({ children }) => {
       body: "orange",
       turret: "orange",
     },
+    theme: 1,
   });
 
   // Start solo game with a level
@@ -101,6 +102,13 @@ export const GameProvider = ({ children }) => {
     });
   }, []);
 
+  const cycleTheme = useCallback(() => {
+    setGameState((prev) => ({
+      ...prev,
+      theme: prev.theme < 6 ? prev.theme + 1 : 1,
+    }));
+  }, []);
+
   return (
     <GameContext.Provider
       value={{
@@ -110,6 +118,7 @@ export const GameProvider = ({ children }) => {
         pauseGame,
         resumeGame,
         quitGame,
+        cycleTheme,
       }}
     >
       {children}

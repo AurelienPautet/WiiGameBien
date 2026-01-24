@@ -39,7 +39,11 @@ export const useSaveLevel = () => {
     mutationFn: ({ id, ...data }) =>
       id ? levelsApi.updateLevel(id, data) : levelsApi.createLevel(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["levels"] });
+      // Invalidate all levels queries including filtered ones and 'my levels'
+      queryClient.invalidateQueries({
+        queryKey: ["levels"],
+        refetchType: "active",
+      });
     },
   });
 };
@@ -50,7 +54,10 @@ export const useDeleteLevel = () => {
   return useMutation({
     mutationFn: (id) => levelsApi.deleteLevel(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["levels"] });
+      queryClient.invalidateQueries({
+        queryKey: ["levels"],
+        refetchType: "active",
+      });
     },
   });
 };

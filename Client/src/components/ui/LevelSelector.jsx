@@ -1,9 +1,20 @@
-import { useState, useEffect } from "react";
-import { Search, Gamepad2, Plus, Pencil, Trash2 } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import {
+  Search,
+  Gamepad2,
+  Plus,
+  Pencil,
+  Trash2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 import { useAuth } from "../../contexts";
 import { LevelCard } from "./LevelCard";
 import { hexToDataUrl } from "../../utils/levelUtils";
 import { useLevels, useMyLevels } from "../../hooks/api";
+
+const SOLO_SELECTOR_STATE_KEY = "soloLevelSelectorState";
 
 /**
  * LevelSelector - Reusable level selection component
@@ -25,15 +36,57 @@ export function LevelSelector({
   onCreate,
 }) {
   const { user } = useAuth();
+  const listRef = useRef(null);
+
+  const savedState = useMemo(() => {
+    if (mode !== "solo") return null;
+    try {
+      const saved = localStorage.getItem(SOLO_SELECTOR_STATE_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  }, [mode]);
+
   const [selectedIds, setSelectedIds] = useState([]);
-  const [searchName, setSearchName] = useState("");
+  const [searchName, setSearchName] = useState(savedState?.searchName || "");
   const [maxPlayers, setMaxPlayers] = useState(0);
+
+  // Solo mode sorting
+  const [sortBy, setSortBy] = useState(savedState?.sortBy || "rating");
+  const [sortOrder, setSortOrder] = useState(savedState?.sortOrder || "desc");
+
+  // Restore scroll position after levels load
+  useEffect(() => {
+    if (mode === "solo" && savedState?.scrollTop && listRef.current) {
+      // Small delay to let content render
+      const timer = setTimeout(() => {
+        if (listRef.current) {
+          listRef.current.scrollTop = savedState.scrollTop;
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [mode, savedState?.scrollTop]);
+
+  useEffect(() => {
+    if (mode === "solo") {
+      const state = {
+        searchName,
+        sortBy,
+        sortOrder,
+        scrollTop: listRef.current?.scrollTop || 0,
+      };
+      localStorage.setItem(SOLO_SELECTOR_STATE_KEY, JSON.stringify(state));
+    }
+  }, [mode, searchName, sortBy, sortOrder]);
 
   // Determine API parameters based on mode
   const showPlayerFilter = mode === "room" || mode === "myLevels";
   const isMultiSelect = mode === "room";
   const showActions = mode === "myLevels";
   const levelType = mode === "solo" ? "solo" : "online";
+  const showSoloFilters = mode === "solo";
 
   // Use appropriate hook based on mode
   const levelsQuery =
@@ -41,8 +94,45 @@ export function LevelSelector({
       ? useMyLevels({ name: searchName, players: maxPlayers })
       : useLevels({ name: searchName, players: maxPlayers, type: levelType });
 
-  const levels = levelsQuery.data || [];
+  const rawLevels = levelsQuery.data || [];
   const isLoading = levelsQuery.isLoading;
+
+  // Sort levels client-side for solo mode
+  const levels = useMemo(() => {
+    if (!showSoloFilters) return rawLevels;
+
+    return [...rawLevels].sort((a, b) => {
+      let aVal, bVal;
+
+      switch (sortBy) {
+        case "rating":
+          aVal = a.level_rating || 0;
+          bVal = b.level_rating || 0;
+          break;
+        case "success_rate":
+          aVal = a.solo_success_rate || 0;
+          bVal = b.solo_success_rate || 0;
+          break;
+        case "times_played":
+          aVal = a.solo_times_played || 0;
+          bVal = b.solo_times_played || 0;
+          break;
+        case "best_time":
+          // For best time, treat null as Infinity (worst)
+          aVal = a.solo_best_time_ms || Infinity;
+          bVal = b.solo_best_time_ms || Infinity;
+          break;
+        default:
+          return 0;
+      }
+
+      if (sortOrder === "asc") {
+        return aVal - bVal;
+      } else {
+        return bVal - aVal;
+      }
+    });
+  }, [rawLevels, sortBy, sortOrder, showSoloFilters]);
 
   const handleCardClick = (levelId) => {
     if (showActions) return; // myLevels mode uses buttons instead
@@ -80,11 +170,15 @@ export function LevelSelector({
     onEdit?.(levelId);
   };
 
+  const toggleSortOrder = () => {
+    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header with filters */}
-      <div className="flex gap-4 mb-4">
-        <label className="input input-bordered flex items-center gap-2 flex-1 bg-base-200">
+      <div className="flex gap-4 mb-4 flex-wrap">
+        <label className="input input-bordered flex items-center gap-2 flex-1 min-w-48 bg-base-200">
           <Search className="w-4 h-4 opacity-70" />
           <input
             type="text"
@@ -110,6 +204,33 @@ export function LevelSelector({
           </select>
         )}
 
+        {/* Solo mode sorting controls */}
+        {showSoloFilters && (
+          <>
+            <select
+              className="select select-bordered bg-base-200"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="rating">Sort by Rating</option>
+              <option value="success_rate">Sort by Success Rate</option>
+              <option value="times_played">Sort by Popularity</option>
+              <option value="best_time">Sort by Best Time</option>
+            </select>
+            <button
+              className="btn btn-square btn-ghost"
+              onClick={toggleSortOrder}
+              title={sortOrder === "desc" ? "Descending" : "Ascending"}
+            >
+              {sortOrder === "desc" ? (
+                <ArrowDown className="w-5 h-5" />
+              ) : (
+                <ArrowUp className="w-5 h-5" />
+              )}
+            </button>
+          </>
+        )}
+
         {mode === "myLevels" && onCreate && (
           <button className="btn btn-primary gap-2" onClick={onCreate}>
             <Plus className="w-5 h-5" />
@@ -132,7 +253,24 @@ export function LevelSelector({
       )}
 
       {/* Level List */}
-      <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+      <div
+        ref={listRef}
+        className="flex-1 overflow-y-auto space-y-3 pr-2"
+        onScroll={() => {
+          if (mode === "solo" && listRef.current) {
+            const state = {
+              searchName,
+              sortBy,
+              sortOrder,
+              scrollTop: listRef.current.scrollTop,
+            };
+            localStorage.setItem(
+              SOLO_SELECTOR_STATE_KEY,
+              JSON.stringify(state),
+            );
+          }
+        }}
+      >
         {isLoading ? (
           <div className="flex justify-center py-8">
             <span className="loading loading-spinner loading-lg"></span>
@@ -158,6 +296,10 @@ export function LevelSelector({
                 onClick={() => handleCardClick(level.level_id)}
                 selected={selectedIds.includes(level.level_id)}
                 author={level.level_creator_name}
+                isSolo={mode === "solo"}
+                soloTimesPlayed={level.solo_times_played || 0}
+                soloSuccessRate={level.solo_success_rate || 0}
+                soloBestTimeMs={level.solo_best_time_ms}
               />
 
               {/* Action buttons for myLevels mode */}

@@ -2,8 +2,18 @@ const express = require("express");
 const router = express.Router();
 const path = require("path");
 const { db, schema } = require(path.join(__dirname, "..", "db"));
-const { levels, levelsImg, ratings, rounds, players } = schema;
-const { eq, like, and, sql, count, sum, min, desc } = require("drizzle-orm");
+const { levels, levelsImg, ratings, rounds, players, soloRounds } = schema;
+const {
+  eq,
+  like,
+  and,
+  sql,
+  count,
+  sum,
+  min,
+  desc,
+  asc,
+} = require("drizzle-orm");
 const { authMiddleware } = require("../middleware/auth.middleware");
 
 async function getCreatorName(creatorId) {
@@ -40,12 +50,42 @@ async function getStatsFromLevelId(levelId) {
   return res.length > 0 ? res[0] : null;
 }
 
+async function getSoloStatsFromLevelId(levelId) {
+  const res = await db
+    .select({
+      timesPlayed: count(soloRounds.id),
+      totalWins: sum(sql`CASE WHEN ${soloRounds.success} THEN 1 ELSE 0 END`),
+      bestTimeMs: sql`MIN(CASE WHEN ${soloRounds.success} THEN ${soloRounds.timeMs} END)`,
+    })
+    .from(soloRounds)
+    .where(eq(soloRounds.levelId, levelId));
+
+  if (res.length === 0) return null;
+
+  const stats = res[0];
+  const timesPlayed = Number(stats.timesPlayed) || 0;
+  const totalWins = Number(stats.totalWins) || 0;
+
+  return {
+    times_played: timesPlayed,
+    success_rate:
+      timesPlayed > 0 ? Math.round((totalWins / timesPlayed) * 100) : 0,
+    best_time_ms: stats.bestTimeMs ? Number(stats.bestTimeMs) : null,
+  };
+}
+
 async function formatLevels(rows) {
   const results = [];
   for (const row of rows) {
     const cname = await getCreatorName(row.creatorId);
     const img = await getImgFromLevelId(row.id);
     const stats = await getStatsFromLevelId(row.id);
+
+    // Fetch solo stats for solo levels
+    let soloStats = null;
+    if (row.type === "solo") {
+      soloStats = await getSoloStatsFromLevelId(row.id);
+    }
 
     results.push({
       level_id: row.id,
@@ -65,6 +105,10 @@ async function formatLevels(rows) {
       level_hits: stats?.hits || 0,
       level_plants: stats?.plants || 0,
       level_blocks_destroyed: stats?.blocks_destroyed || 0,
+      // Solo-specific stats
+      solo_times_played: soloStats?.times_played || 0,
+      solo_success_rate: soloStats?.success_rate || 0,
+      solo_best_time_ms: soloStats?.best_time_ms || null,
     });
   }
   return results;
