@@ -47,7 +47,7 @@ async function get_levels(input_name, imput_nb_players, type, socket) {
     const rows = await query;
     await format_and_send_levels(rows, socket, "recieve_levels");
   } catch (err) {
-    console.error("Error executing query fetch_levels:", err);
+    console.error("Error executing query get_levels:", err);
   }
 }
 
