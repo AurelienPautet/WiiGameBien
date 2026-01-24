@@ -6,7 +6,7 @@ const { eq, and, gt } = require("drizzle-orm");
 const User = require(path.join(__dirname, "..", "User_class.js"));
 
 const { makeid } = require(__dirname + "/../../shared/scripts/commons.js");
-const { signupbis, verifyToken } = require(
+const { verifyToken } = require(
   path.join(__dirname, "..", "auth_server.js"),
 );
 const { users } = require(path.join(__dirname, "..", "shared_state.js"));
