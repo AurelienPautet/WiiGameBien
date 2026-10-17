@@ -65,7 +65,7 @@ describe("mine policy", () => {
   it("does not mine in the open with a distant target", async () => {
     const room = await runArena(openArena, 400);
     const bot = room.players.bot0 as AIBot;
-    // bot2 in the open: no corridor, target far, no pursuit — no mines.
+    // bot6 in the open: no corridor, target far, no pursuit — no mines.
     expect(bot.round_stats.stats.plants).toBe(0);
   });
 });

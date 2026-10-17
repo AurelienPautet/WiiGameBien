@@ -3,8 +3,9 @@ import type { Size } from "../types.js";
 // The v2 bot personality table. Every behavioural difference between bot kinds
 // is DATA in this file — the brain (PR2) reads these numbers and contains no
 // per-kind branches, so a new kind is a new row (+ a level spawn cell), not new
-// code. Kinds map to the same level cells / colors as the legacy system
-// (11→bot1 … 14→bot4); the Wii Play Tanks! roster is the tuning reference.
+// code. The roster is exactly the nine enemy tanks of Wii Play "Tanks!"
+// (bot1…bot9 ↔ level cells 11…19), plus "match": the host-added FFA combatant
+// that drives an exactly-human chassis and has no level cell.
 
 export type AIBotKind =
   | "bot1"
@@ -13,7 +14,10 @@ export type AIBotKind =
   | "bot4"
   | "bot5"
   | "bot6"
-  | "bot7";
+  | "bot7"
+  | "bot8"
+  | "bot9"
+  | "match";
 
 // Player-chassis overrides applied in the AIBot constructor. These mirror the
 // legacy BOT_CONFIGS chassis values kind-for-kind so a v2 bot *shoots the same
@@ -64,22 +68,27 @@ export interface Archetype {
   ai: ArchetypeAI;
 }
 
-// Initial tuning (refined against the PR3 capability sims). Roles:
-//   bot1 (blue)   stationary ricochet sentry — forgiving: slow turret, partial lead
-//   bot2 (green)  aggressive presser — closes to mid range, strafes, light mines
-//   bot3 (orange) kiting sniper — 600 px/s direct shots, strong dodge, full-ish lead
-//   bot4 (red)    stationary ricochet master — fast turret, full lead, deadly precise
-//   bot5 (yellow) miner — no gun at all; fast, mine-obsessed area denial (Wii yellow)
-//   bot6 (purple) hunter — fast closer with 5 bullets + mines, corners the player
-//   bot7 (dimgray) match bot — host-added FFA combatant on an exactly-human
+// Tuning reference: the nine Wii Play "Tanks!" enemy types. Roles:
+//   bot1 (brown)   Brown — stationary turret, ordinary shells (bounce once)
+//   bot2 (grey)    Grey — basic mobile soldier, ordinary shells
+//   bot3 (teal)    Teal — no-rebound rockets aimed directly; dodges direct fire only
+//   bot4 (green)   Green — stationary sniper: rockets rebound twice, picky about shots
+//   bot5 (yellow)  Yellow — mine-obsessed; mobile, throws shells only occasionally
+//   bot6 (purple)  Warrior — fast, rapid-fire ordinary shells + light mines
+//   bot7 (magenta) Rover — rapid-fire rusher that never dodges
+//   bot8 (white)   White — rapid fire, mildly seeking, near-blind evasion
+//   bot9 (black)   Elite — fastest; rapid no-rebound rockets + mines, evades well
+//   match (dimgray) FFA match bot — host-added combatant on an exactly-human
 //                 chassis (no level cell; spawned via Room.spawn_lobby_bot)
 export const ARCHETYPES: Record<AIBotKind, Archetype> = {
   bot1: {
+    // Wii Brown — a stationary turret with ordinary shells (bounce once), the
+    // most forgiving enemy of the roster.
     chassis: {
       canMove: false,
       mvtspeed: 180,
       shoot_speed: 300,
-      shoot_max_bounce: 3,
+      shoot_max_bounce: 2,
       bullet_type: 1,
       bullet_size: { w: 15, h: 15 },
       max_bulletcount: 3,
@@ -88,12 +97,12 @@ export const ARCHETYPES: Record<AIBotKind, Archetype> = {
     ai: {
       thinkPeriod: 10,
       turretSlewRadS: 1.6,
-      cooldownTicks: 120,
+      cooldownTicks: 130,
       reactionTicks: 18,
       aimTolRad: 0.08,
       leadFactor: 0.35,
       aimSigmaRad: 0.05,
-      maxPlanBounces: 2,
+      maxPlanBounces: 1,
       fanRays: 6,
       unfoldBudget: 6,
       // Sentries take low-priority long shots (300 px/s across a big map
@@ -114,23 +123,25 @@ export const ARCHETYPES: Record<AIBotKind, Archetype> = {
     },
   },
   bot2: {
+    // Wii Grey — the basic mobile soldier: roams at mid range with ordinary
+    // shells (bounce once) and dodges a little.
     chassis: {
       canMove: true,
       mvtspeed: 180,
       shoot_speed: 300,
-      shoot_max_bounce: 3,
+      shoot_max_bounce: 2,
       bullet_type: 1,
       bullet_size: { w: 15, h: 15 },
       max_bulletcount: 3,
-      max_minecount: 2,
+      max_minecount: 0,
     },
     ai: {
       thinkPeriod: 6,
       turretSlewRadS: 2.4,
-      cooldownTicks: 45,
-      reactionTicks: 10,
+      cooldownTicks: 70,
+      reactionTicks: 12,
       aimTolRad: 0.1,
-      leadFactor: 0.55,
+      leadFactor: 0.5,
       aimSigmaRad: 0.06,
       maxPlanBounces: 1,
       fanRays: 0,
@@ -139,18 +150,20 @@ export const ARCHETYPES: Record<AIBotKind, Archetype> = {
       qualityPerBullet: 0.25,
       bandMinPx: 170,
       bandMaxPx: 320,
-      dodgeSkill: 0.5,
+      dodgeSkill: 0.45,
       threatHorizonS: 0.7,
       bounceAwareDodge: false,
-      minesEnabled: true,
-      mineCooldownTicks: 600,
-      chokeP: 0.1,
-      fleeDropP: 0.2,
+      minesEnabled: false,
+      mineCooldownTicks: 0,
+      chokeP: 0,
+      fleeDropP: 0,
       breachEnabled: false,
       idleScanRadS: 0.8,
     },
   },
   bot3: {
+    // Wii Teal — fires 600 px/s rockets that never rebound, aimed directly;
+    // dodges shells fired straight at it and ignores ricochets.
     chassis: {
       canMove: true,
       mvtspeed: 180,
@@ -159,35 +172,37 @@ export const ARCHETYPES: Record<AIBotKind, Archetype> = {
       bullet_type: 2,
       bullet_size: { w: 15, h: 15 },
       max_bulletcount: 3,
-      max_minecount: 2,
+      max_minecount: 0,
     },
     ai: {
       thinkPeriod: 6,
       turretSlewRadS: 3.2,
-      cooldownTicks: 70,
+      cooldownTicks: 80,
       reactionTicks: 8,
       aimTolRad: 0.05,
-      leadFactor: 0.9,
-      aimSigmaRad: 0.025,
+      leadFactor: 0.85,
+      aimSigmaRad: 0.03,
       maxPlanBounces: 0,
       fanRays: 0,
       unfoldBudget: 0,
-      minQuality: 0.45,
+      minQuality: 0.4,
       qualityPerBullet: 0.25,
-      bandMinPx: 330,
-      bandMaxPx: 520,
-      dodgeSkill: 0.95,
+      bandMinPx: 250,
+      bandMaxPx: 450,
+      dodgeSkill: 0.7,
       threatHorizonS: 0.9,
-      bounceAwareDodge: true,
-      minesEnabled: true,
-      mineCooldownTicks: 450,
-      chokeP: 0.2,
-      fleeDropP: 0.35,
-      breachEnabled: true,
+      bounceAwareDodge: false, // only sensitive to shells fired directly at it
+      minesEnabled: false,
+      mineCooldownTicks: 0,
+      chokeP: 0,
+      fleeDropP: 0,
+      breachEnabled: false,
       idleScanRadS: 0.8,
     },
   },
   bot4: {
+    // Wii Green — a stationary sniper: rockets rebound twice, and it is picky,
+    // holding fire until a clean (usually banked) solution appears.
     chassis: {
       canMove: false,
       mvtspeed: 180,
@@ -201,7 +216,7 @@ export const ARCHETYPES: Record<AIBotKind, Archetype> = {
     ai: {
       thinkPeriod: 6,
       turretSlewRadS: 4.5,
-      cooldownTicks: 55,
+      cooldownTicks: 100,
       reactionTicks: 5,
       aimTolRad: 0.03,
       leadFactor: 1.0,
@@ -209,7 +224,7 @@ export const ARCHETYPES: Record<AIBotKind, Archetype> = {
       maxPlanBounces: 2,
       fanRays: 10,
       unfoldBudget: 10,
-      minQuality: 0.35,
+      minQuality: 0.55, // minQuality + (max-1)*qualityPerBullet stays under the ceiling
       qualityPerBullet: 0.25,
       bandMinPx: 0,
       bandMaxPx: 0,
@@ -225,29 +240,31 @@ export const ARCHETYPES: Record<AIBotKind, Archetype> = {
     },
   },
   bot5: {
+    // Wii Yellow — lives for mines, keeps a respectful middle distance, and
+    // throws the occasional slow ordinary shell at the player.
     chassis: {
       canMove: true,
-      mvtspeed: 200, // slightly faster than players: hard to corner
+      mvtspeed: 200,
       shoot_speed: 300,
-      shoot_max_bounce: 3,
+      shoot_max_bounce: 2,
       bullet_type: 1,
       bullet_size: { w: 15, h: 15 },
-      max_bulletcount: 0, // NO gun — the fire gate (bulletcount < max) never opens
+      max_bulletcount: 3,
       max_minecount: 4,
     },
     ai: {
       thinkPeriod: 8,
       turretSlewRadS: 2.0,
-      cooldownTicks: 0,
-      reactionTicks: 0,
-      aimTolRad: 0,
-      leadFactor: 0,
-      aimSigmaRad: 0,
+      cooldownTicks: 150, // shells are an afterthought for this one
+      reactionTicks: 20,
+      aimTolRad: 0.12,
+      leadFactor: 0.3,
+      aimSigmaRad: 0.08,
       maxPlanBounces: 0,
       fanRays: 0,
-      unfoldBudget: 0,
-      minQuality: 1,
-      qualityPerBullet: 0,
+      unfoldBudget: 2,
+      minQuality: 0.4,
+      qualityPerBullet: 0.25,
       // Keeps a respectful middle distance while it seeds the arena.
       bandMinPx: 250,
       bandMaxPx: 450,
@@ -263,11 +280,13 @@ export const ARCHETYPES: Record<AIBotKind, Archetype> = {
     },
   },
   bot6: {
+    // Wii Purple — fast and aggressive: rapid-fire ordinary shells plus light
+    // minelaying, corners the player at knife range.
     chassis: {
       canMove: true,
-      mvtspeed: 210, // the fastest thing on the field
+      mvtspeed: 210,
       shoot_speed: 300,
-      shoot_max_bounce: 3,
+      shoot_max_bounce: 2,
       bullet_type: 1,
       bullet_size: { w: 15, h: 15 },
       max_bulletcount: 5, // player-grade magazine — sustained crossfire
@@ -300,6 +319,123 @@ export const ARCHETYPES: Record<AIBotKind, Archetype> = {
     },
   },
   bot7: {
+    // Wii Red/Magenta — a rapid-fire rover: charges straight at the player,
+    // sprays ordinary shells, and never even tries to dodge.
+    chassis: {
+      canMove: true,
+      mvtspeed: 195,
+      shoot_speed: 300,
+      shoot_max_bounce: 2,
+      bullet_type: 1,
+      bullet_size: { w: 15, h: 15 },
+      max_bulletcount: 5,
+      max_minecount: 0,
+    },
+    ai: {
+      thinkPeriod: 6,
+      turretSlewRadS: 3.4,
+      cooldownTicks: 38,
+      reactionTicks: 6,
+      aimTolRad: 0.06,
+      leadFactor: 0.65,
+      aimSigmaRad: 0.045,
+      maxPlanBounces: 1,
+      fanRays: 4,
+      unfoldBudget: 6,
+      minQuality: 0.15,
+      qualityPerBullet: 0.15,
+      bandMinPx: 80, // presses into the player's face
+      bandMaxPx: 300,
+      dodgeSkill: 0, // fearless — Wii red never evades
+      threatHorizonS: 0,
+      bounceAwareDodge: false,
+      minesEnabled: false,
+      mineCooldownTicks: 0,
+      chokeP: 0,
+      fleeDropP: 0,
+      breachEnabled: false,
+      idleScanRadS: 0.9,
+    },
+  },
+  bot8: {
+    // Wii White — the stealth-fighter: rapid-fire seeker with sloppy aim and
+    // effectively blind evasion (it barely notices incoming shells).
+    chassis: {
+      canMove: true,
+      mvtspeed: 180,
+      shoot_speed: 300,
+      shoot_max_bounce: 2,
+      bullet_type: 1,
+      bullet_size: { w: 15, h: 15 },
+      max_bulletcount: 5,
+      max_minecount: 0,
+    },
+    ai: {
+      thinkPeriod: 7,
+      turretSlewRadS: 2.8,
+      cooldownTicks: 48,
+      reactionTicks: 9,
+      aimTolRad: 0.08,
+      leadFactor: 0.5,
+      aimSigmaRad: 0.075,
+      maxPlanBounces: 1,
+      fanRays: 2,
+      unfoldBudget: 4,
+      minQuality: 0.22,
+      qualityPerBullet: 0.15,
+      bandMinPx: 150,
+      bandMaxPx: 330,
+      dodgeSkill: 0.08, // "basically blind": almost never reacts to threats
+      threatHorizonS: 0.4,
+      bounceAwareDodge: false,
+      minesEnabled: false,
+      mineCooldownTicks: 0,
+      chokeP: 0,
+      fleeDropP: 0,
+      breachEnabled: false,
+      idleScanRadS: 0.9,
+    },
+  },
+  bot9: {
+    // Wii Black — the elite: the fastest tank on the field, firing pairs of
+    // no-rebound rockets, laying the occasional mine, and dodging like a pro.
+    chassis: {
+      canMove: true,
+      mvtspeed: 240, // fastest of the nine
+      shoot_speed: 600,
+      shoot_max_bounce: 1,
+      bullet_type: 2,
+      bullet_size: { w: 15, h: 15 },
+      max_bulletcount: 2, // fires its rockets in quick pairs
+      max_minecount: 2,
+    },
+    ai: {
+      thinkPeriod: 6,
+      turretSlewRadS: 3.2,
+      cooldownTicks: 45,
+      reactionTicks: 6,
+      aimTolRad: 0.05,
+      leadFactor: 0.9,
+      aimSigmaRad: 0.025,
+      maxPlanBounces: 0,
+      fanRays: 0,
+      unfoldBudget: 0,
+      minQuality: 0.3,
+      qualityPerBullet: 0.2,
+      bandMinPx: 150,
+      bandMaxPx: 400,
+      dodgeSkill: 0.95,
+      threatHorizonS: 1.0,
+      bounceAwareDodge: true,
+      minesEnabled: true,
+      mineCooldownTicks: 450,
+      chokeP: 0.2,
+      fleeDropP: 0.3,
+      breachEnabled: false,
+      idleScanRadS: 0.9,
+    },
+  },
+  match: {
     // The chassis IS the contract: every value equals the Player constructor
     // default (a lobby bot drives exactly the tank a human gets) — pinned by
     // room-lobby-bots.test.ts. The brain is a bot6 tuned for fair play at a

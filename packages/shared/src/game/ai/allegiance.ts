@@ -2,7 +2,7 @@ import type { Room } from "../Room.js";
 
 // Who a v2 bot fights versus protects.
 //
-// Level bots (solo/campaign/coop, spawned from level cells 11–16) keep the
+// Level bots (solo/campaign/coop, spawned from level cells 11–19) keep the
 // historical allegiance: enemies = the humans in `room.human_players`, and
 // every other bot is an ally (never shot through, never sacrificed to a mine).
 // Lobby bots (host-added free-for-all combatants, tracked in `room.lobby_bots`)

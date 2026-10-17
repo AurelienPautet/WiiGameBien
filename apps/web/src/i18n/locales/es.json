@@ -350,12 +350,15 @@
       "platform": "Plataforma",
       "hole": "Hoyo",
       "spawn": "Punto de Salida",
-      "botBlue": "Bot Azul",
-      "botGreen": "Bot Verde",
-      "botOrange": "Bot Naranja",
-      "botRed": "Bot Rojo",
+      "botBrown": "Bot Marrón (Torreta)",
+      "botGrey": "Bot Gris (Soldado)",
+      "botTeal": "Bot Turquesa (Misiles)",
+      "botGreen": "Bot Verde (Francotirador)",
       "botYellow": "Bot Amarillo (Minador)",
-      "botPurple": "Bot Morado (Cazador)"
+      "botPurple": "Bot Morado (Guerrero)",
+      "botMagenta": "Bot Magenta (Embestidor)",
+      "botWhite": "Bot Blanco (Sigiloso)",
+      "botBlack": "Bot Negro (Élite)"
     },
     "toast": {
       "title": "Nivel",

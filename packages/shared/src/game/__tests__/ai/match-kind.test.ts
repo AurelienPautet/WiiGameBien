@@ -4,7 +4,7 @@ import { SIM_STEP_S } from "../../loop.js";
 import { ARCHETYPES } from "../../ai/index.js";
 import { makeGrid, GRID_COLS, GRID_ROWS } from "../fixtures/levels.js";
 
-// The player-equal kind bot7: no level cell, spawned only via
+// The player-equal "match" kind: no level cell, spawned only via
 // Room.spawn_lobby_bot, exactly a human's chassis, driven by the v2 brain.
 
 beforeEach(() => {
@@ -26,10 +26,10 @@ const withBorder = (cells: Cell[]): number[] => {
   return makeGrid([...ring, ...cells] as never);
 };
 
-describe("bot7 archetype", () => {
+describe("match archetype", () => {
   it("has no level spawn cell wired anywhere", async () => {
     // Every known bot cell code fills its kind's spawn list; none maps to
-    // bot7, so a level can never author a lobby bot.
+    // "match", so a level can never author a lobby bot.
     const room = new Room("arena", 1, [10], "creator", null);
     await loadlevel(
       makeGrid([
@@ -39,19 +39,23 @@ describe("bot7 archetype", () => {
         [3, 12, 14],
         [5, 3, 15],
         [5, 6, 16],
+        [5, 9, 17],
+        [5, 12, 18],
+        [7, 3, 19],
       ] as never),
       room
     );
     room.bot_system = "v2";
     room.spawn_all_bots();
+    expect(Object.keys(room.players).length).toBe(9);
     for (const id in room.players) {
-      expect((room.players[id] as { kind?: string }).kind).not.toBe("bot7");
+      expect((room.players[id] as { kind?: string }).kind).not.toBe("match");
     }
   });
 
   it("keeps the quality ceiling reachable for all 5 bullets", () => {
-    const ai = ARCHETYPES.bot7.ai;
-    const chassis = ARCHETYPES.bot7.chassis;
+    const ai = ARCHETYPES.match.ai;
+    const chassis = ARCHETYPES.match.chassis;
     // The fire gate is minQuality + qualityPerBullet * bulletcount; with the
     // last bullet in flight the bar must stay under the ~1.15 quality ceiling.
     expect(
@@ -61,7 +65,7 @@ describe("bot7 archetype", () => {
   });
 });
 
-describe("bot7 duel sim", () => {
+describe("match duel sim", () => {
   it("hunts an idle human: closes in and pressures with real shots", async () => {
     const arena = withBorder([
       [8, 4, 3],
@@ -74,7 +78,7 @@ describe("bot7 duel sim", () => {
     // lobby bot takes the remaining (8,18).
     room.spawn_new_player("Human", "orange", "blue", "h1");
     const bot = room.spawn_lobby_bot()!;
-    expect(bot.kind).toBe("bot7");
+    expect(bot.kind).toBe("match");
 
     const spawnX = bot.position.x;
     const spawnY = bot.position.y;

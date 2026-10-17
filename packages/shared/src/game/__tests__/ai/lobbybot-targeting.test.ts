@@ -5,7 +5,6 @@ import { targetIds, isProtectedBot } from "../../ai/allegiance.js";
 import { pickTarget } from "../../ai/perception.js";
 import { getAIRoomState, refreshPerTick } from "../../ai/room_state.js";
 import { makeGrid, GRID_COLS, GRID_ROWS } from "../fixtures/levels.js";
-import type { AIBot } from "../../ai/index.js";
 
 // Allegiance: lobby bots are enemies of everyone and allies of nobody, while
 // level bots keep the historical humans-only target set — byte-identical
@@ -88,7 +87,7 @@ describe("pickTarget with lobby bots", () => {
 });
 
 describe("lobby bot duel sim", () => {
-  it("two bot7s fight to a kill (FFA, no mutual protection)", async () => {
+  it("two match bots fight to a kill (FFA, no mutual protection)", async () => {
     const room = new Room("arena", 1, [10], "creator", null);
     room.bot_seed = 7;
     await loadlevel([...duelGrid], room);

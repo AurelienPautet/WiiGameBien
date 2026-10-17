@@ -352,12 +352,15 @@
       "platform": "Plateforme",
       "hole": "Trou",
       "spawn": "Point d'apparition",
-      "botBlue": "Bot bleu",
-      "botGreen": "Bot vert",
-      "botOrange": "Bot orange",
-      "botRed": "Bot rouge",
+      "botBrown": "Bot brun (Tourelle)",
+      "botGrey": "Bot gris (Soldat)",
+      "botTeal": "Bot turquoise (Missiles)",
+      "botGreen": "Bot vert (Sniper)",
       "botYellow": "Bot jaune (Mineur)",
-      "botPurple": "Bot violet (Chasseur)"
+      "botPurple": "Bot violet (Guerrier)",
+      "botMagenta": "Bot magenta (Fonceur)",
+      "botWhite": "Bot blanc (Furtif)",
+      "botBlack": "Bot noir (Élite)"
     },
     "toast": {
       "title": "Niveau",

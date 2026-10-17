@@ -19,9 +19,9 @@ function withBorder(cells: Cell[] = []): number[] {
   return makeGrid([...ring, ...cells] as never);
 }
 
-// Open field: border only, one human spawn, one spawn per mobile bot kind.
+// Open field: border only, one human spawn, one mining bot kind (purple).
 export const openArena = withBorder([
-  [8, 4, 12], // bot2
+  [8, 4, 16], // bot6
   [8, 18, 3], // human
 ]);
 
@@ -77,11 +77,11 @@ export const mazeArena = withBorder([
   [3, 18, 3], // human on the right
 ]);
 
-// bot3 (breach-enabled) sealed inside a pocket of type-2 (mine-destructible)
-// walls; the human is outside — flow distance is INF until a wall is blown.
-// The pocket interior is 5x3 cells (rows 6-8, cols 5-9) so the bot has room
-// to clear its own 90px blast: the breach safety gate requires a reachable
-// cell ≥105px from the blast centre.
+// bot5 (mine-greedy, breach-enabled) sealed inside a pocket of type-2
+// (mine-destructible) walls; the human is outside — flow distance is INF until
+// a wall is blown. The pocket interior is 5x3 cells (rows 6-8, cols 5-9) so
+// the bot has room to clear its own 90px blast: the breach safety gate
+// requires a reachable cell ≥105px from the blast centre.
 export const breachArena = withBorder([
   // ring rows 5 and 9, cols 4..10
   [5, 4, 2],
@@ -105,7 +105,7 @@ export const breachArena = withBorder([
   [6, 10, 2],
   [7, 10, 2],
   [8, 10, 2],
-  [6, 5, 13], // bot3 in the pocket's NW corner (wall within blast range)
+  [6, 5, 15], // bot5 in the pocket's NW corner (wall within blast range)
   [7, 16, 3], // human outside
 ]);
 
@@ -120,6 +120,6 @@ export const sealedArena = withBorder([
   [8, 5, 1],
   [8, 6, 1],
   [8, 7, 1],
-  [7, 6, 13],
+  [7, 6, 15],
   [7, 16, 3],
 ]);
