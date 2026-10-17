@@ -4,9 +4,9 @@ import { AIBot } from "../ai/index.js";
 import { loadlevel } from "../level_loader.js";
 import { makeGrid, makeRecordingIo } from "./fixtures/levels.js";
 
-// Host-added lobby bots: player-equal chassis (kind bot7), player spawn slots,
-// lobbybot_<n> ids that are never reused, and a quiet removal that does not
-// toast a disconnect.
+// Host-added lobby bots: player-equal chassis (kind "match"), player spawn
+// slots, lobbybot_<n> ids that are never reused, and a quiet removal that does
+// not toast a disconnect.
 
 beforeEach(() => {
   vi.spyOn(Math, "random").mockReturnValue(0);
@@ -37,7 +37,7 @@ describe("spawn_lobby_bot", () => {
 
     const bot = room.spawn_lobby_bot();
     expect(bot).toBeInstanceOf(AIBot);
-    expect(bot!.kind).toBe("bot7");
+    expect(bot!.kind).toBe("match");
     expect(bot!.is_bot).toBe(true);
     expect(bot!.socketid).toBe("lobbybot_0");
     expect(bot!.name).toBe("Bot 1");
@@ -55,7 +55,7 @@ describe("spawn_lobby_bot", () => {
 
   it("drives exactly the tank a human gets, field for field", () => {
     const human = new Player({ x: 0, y: 0 }, "h", "H", "orange", "blue");
-    const bot = new AIBot({ x: 0, y: 0 }, "b", "B", "a", "a", "bot7", 1);
+    const bot = new AIBot({ x: 0, y: 0 }, "b", "B", "a", "a", "match", 1);
     expect(bot.mvtspeed).toBe(human.mvtspeed);
     expect(bot.shoot_speed).toBe(human.shoot_speed);
     expect(bot.shoot_max_bounce).toBe(human.shoot_max_bounce);

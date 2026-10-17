@@ -1,5 +1,5 @@
 // validateCoopLevels against the real database: every playlist entry must be
-// a solo-type level carrying at least one bot spawn cell (codes 11–16).
+// a solo-type level carrying at least one bot spawn cell (codes 11–19).
 import { cleanDb, createPlayer, createLevel } from "../helpers/db";
 import { validateCoopLevels } from "../../services/levels.service";
 

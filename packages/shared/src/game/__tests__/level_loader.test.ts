@@ -14,7 +14,7 @@ import {
 
 // Characterization tests for level parsing + collision-box merging. The grid is
 // 23 cols × 16 rows; cell codes: 1 solid, 2 destructible, 3 spawn, 4 hole,
-// 11–16 bot spawns. (The historical c<=23 over-read quirk was deliberately
+// 11–19 bot spawns. (The historical c<=23 over-read quirk was deliberately
 // FIXED — strict loop bounds — when cells 15/16 joined the format; the test
 // below now pins the fix instead of the quirk.)
 
@@ -121,7 +121,7 @@ describe("generateBcollision — merging adjacent blocks", () => {
 });
 
 describe("countBotSpawnCells", () => {
-  it("counts exactly the bot cells (codes 11-16)", () => {
+  it("counts exactly the bot cells (codes 11-19)", () => {
     const grid = makeGrid([
       [3, 3, 11],
       [3, 6, 12],
@@ -129,13 +129,16 @@ describe("countBotSpawnCells", () => {
       [3, 12, 14],
       [5, 3, 15],
       [5, 6, 16],
-      [7, 3, 1], // wall
-      [7, 6, 2], // destructible
-      [7, 9, 3], // player spawn
-      [7, 12, 4], // hole
+      [5, 9, 17],
+      [5, 12, 18],
+      [7, 3, 19],
+      [7, 6, 1], // wall
+      [7, 9, 2], // destructible
+      [7, 12, 3], // player spawn
+      [7, 15, 4], // hole
     ]);
     grid[8 * 23 + 5] = 10; // destroyed-wall floor
-    expect(countBotSpawnCells(grid)).toBe(6);
+    expect(countBotSpawnCells(grid)).toBe(9);
   });
 
   it("returns 0 for a bot-less grid", () => {

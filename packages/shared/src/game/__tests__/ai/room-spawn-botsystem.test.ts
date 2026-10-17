@@ -48,10 +48,10 @@ describe("Room.bot_system = v2", () => {
 
     expect(Object.keys(room.players)).toEqual(["bot0", "bot1", "bot2", "bot3"]);
     const expected = [
-      { id: "bot0", kind: "bot1", name: "Bot1_ 0", color: "blue" },
-      { id: "bot1", kind: "bot2", name: "Bot2_ 0", color: "green" },
-      { id: "bot2", kind: "bot3", name: "Bot3_ 0", color: "orange" },
-      { id: "bot3", kind: "bot4", name: "Bot4_ 0", color: "red" },
+      { id: "bot0", kind: "bot1", name: "Bot1_ 0", color: "brown" },
+      { id: "bot1", kind: "bot2", name: "Bot2_ 0", color: "grey" },
+      { id: "bot2", kind: "bot3", name: "Bot3_ 0", color: "teal" },
+      { id: "bot3", kind: "bot4", name: "Bot4_ 0", color: "green" },
     ] as const;
     for (const e of expected) {
       const bot = room.players[e.id];
@@ -85,10 +85,11 @@ describe("Room.bot_system = v2", () => {
     // bot4: fast heavy bullets.
     expect(b4.shoot_speed).toBe(600);
     expect(b4.bullet_size).toEqual({ w: 20, h: 20 });
-    // Mines only on the mobile kinds; stationary kinds can't escape a blast.
+    // None of the first four Wii kinds carry mines (brown/grey/teal/green);
+    // the mine budget lives with yellow/purple/black (see newkinds.test.ts).
     expect(b1.max_minecount).toBe(0);
-    expect(b2.max_minecount).toBe(2);
-    expect(b3.max_minecount).toBe(2);
+    expect(b2.max_minecount).toBe(0);
+    expect(b3.max_minecount).toBe(0);
     expect(b4.max_minecount).toBe(0);
     for (const b of [b1, b2, b3, b4]) {
       expect(b.max_bulletcount).toBe(3);

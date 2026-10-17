@@ -119,7 +119,7 @@ async function rateLevel(playerId: number, levelId: number, stars: number) {
 }
 
 // Coop playlist gate: every level must exist, be a solo-type level, and carry
-// at least one bot spawn cell (codes 11–16) — a botless level would read as
+// at least one bot spawn cell (codes 11–19) — a botless level would read as
 // an instant team win every round. The reason string travels to the client
 // verbatim via room_create_failed.
 async function validateCoopLevels(

@@ -43,16 +43,19 @@ export type RoomMode = "ffa" | "coop";
 
 export class Room {
   static next_id = 1;
-  // Keyed by AIBotKind (a superset of the legacy BotKind): bot5/bot6 exist
-  // only in the v2 system, but their colors live here with the others.
+  // Keyed by AIBotKind. The nine Wii tank kinds carry their tank-colour names
+  // (brown, grey, teal, …); "match" is the host-added FFA combatant.
   static bot_colors: Record<AIBotKind, [string, string]> = {
-    bot1: ["blue", "blue"],
-    bot2: ["green", "green"],
-    bot3: ["orange", "orange"],
-    bot4: ["red", "red"],
+    bot1: ["brown", "brown"],
+    bot2: ["grey", "grey"],
+    bot3: ["teal", "teal"],
+    bot4: ["green", "green"],
     bot5: ["yellow", "yellow"],
     bot6: ["purple", "purple"],
-    bot7: ["dimgray", "dimgray"],
+    bot7: ["magenta", "magenta"],
+    bot8: ["white", "white"],
+    bot9: ["black", "black"],
+    match: ["dimgray", "dimgray"],
   };
 
   static getNextId(): number {
@@ -95,6 +98,9 @@ export class Room {
   bot4_spawns: Vec2[];
   bot5_spawns: Vec2[];
   bot6_spawns: Vec2[];
+  bot7_spawns: Vec2[];
+  bot8_spawns: Vec2[];
+  bot9_spawns: Vec2[];
   countdownActive: boolean;
   countdownDuration: number;
   // v2 bot AI opt-in (see BotSystem above) + the seed its per-bot RNGs derive
@@ -172,6 +178,9 @@ export class Room {
     this.bot4_spawns = [];
     this.bot5_spawns = [];
     this.bot6_spawns = [];
+    this.bot7_spawns = [];
+    this.bot8_spawns = [];
+    this.bot9_spawns = [];
     this.blocklist = [];
 
     // Countdown state - when true, render but skip player input/actions
@@ -288,10 +297,21 @@ export class Room {
     // sourced from Room.bot_colors. Preserves the exact socketid numbering: a
     // single bot_index across all kinds, spawn key === the bot's socketid
     // (bot1's old `bot${i}` key already equalled `bot${bot_index}`).
-    // bot7 has NO level cell — it is only ever added via spawn_lobby_bot — so
-    // it stays out of the `kinds` iteration; its Record entries below are the
-    // compile-forced (exhaustive-Record) placeholders.
-    const kinds: AIBotKind[] = ["bot1", "bot2", "bot3", "bot4", "bot5", "bot6"];
+    // The nine Wii tank kinds each own a level cell (bot1…bot9 ↔ cells
+    // 11…19); "match" has NO level cell — it is only ever added via
+    // spawn_lobby_bot — so it stays out of the `kinds` iteration and its
+    // Record entries below are compile-forced placeholders.
+    const kinds: AIBotKind[] = [
+      "bot1",
+      "bot2",
+      "bot3",
+      "bot4",
+      "bot5",
+      "bot6",
+      "bot7",
+      "bot8",
+      "bot9",
+    ];
     const labels: Record<AIBotKind, string> = {
       bot1: "Bot1",
       bot2: "Bot2",
@@ -300,6 +320,9 @@ export class Room {
       bot5: "Bot5",
       bot6: "Bot6",
       bot7: "Bot7",
+      bot8: "Bot8",
+      bot9: "Bot9",
+      match: "Match",
     };
     const spawnLists: Record<AIBotKind, Vec2[]> = {
       bot1: this.bot1_spawns,
@@ -308,7 +331,10 @@ export class Room {
       bot4: this.bot4_spawns,
       bot5: this.bot5_spawns,
       bot6: this.bot6_spawns,
-      bot7: [],
+      bot7: this.bot7_spawns,
+      bot8: this.bot8_spawns,
+      bot9: this.bot9_spawns,
+      match: [],
     };
     let bot_index = 0;
     for (const kind of kinds) {
@@ -340,18 +366,21 @@ export class Room {
             this.bot_seed
           );
         } else {
-          // bot5/bot6 have no legacy brain. Skipping them entirely would make
-          // a Miner/Hunter-only level UNWINNABLE under the ?bots=legacy escape
-          // hatch (the solo win check requires at least one initial enemy), so
-          // spawn a legacy stand-in driven by the mobile bot2 config — keeping
-          // the authored name/colour and the positional id (bot_index already
-          // advanced, so ids match the v2 layout for campaign skipIds).
-          // bot7 can't actually occur here (it is not in the kinds array);
-          // the arm only satisfies the AIBotKind→BotKind narrowing.
+          // The v2-only kinds (bot5…bot9) have no legacy brain. Skipping them
+          // entirely would make a Miner-only level UNWINNABLE under the
+          // ?bots=legacy escape hatch (the solo win check requires at least one
+          // initial enemy), so spawn a legacy stand-in driven by the mobile
+          // bot2 config — keeping the authored name/colour and the positional
+          // id (bot_index already advanced, so ids match the v2 layout for
+          // campaign skipIds). "match" can't occur here (not in the kinds
+          // array); it falls into the same arm to satisfy the narrowing.
           const legacyKind: BotKind =
-            kind === "bot5" || kind === "bot6" || kind === "bot7"
-              ? "bot2"
-              : kind;
+            kind === "bot1" ||
+            kind === "bot2" ||
+            kind === "bot3" ||
+            kind === "bot4"
+              ? kind
+              : "bot2";
           bot = new Bot(
             { x: 0, y: 0 },
             botId,
@@ -366,7 +395,7 @@ export class Room {
     }
   }
 
-  // Host "Add bot": one player-equal v2 combatant (kind bot7) on a PLAYER
+  // Host "Add bot": one player-equal v2 combatant (kind "match") on a PLAYER
   // spawn slot, exactly like a human joiner. Returns null when no player spawn
   // is free (the join gate normally prevents that). The id is disjoint from
   // both level-bot ids (bot<N>) and socket ids, never reused after a removal,
@@ -377,14 +406,14 @@ export class Room {
     const botId = `lobbybot_${this.lobby_bot_counter}`;
     const name = `Bot ${this.lobby_bot_counter + 1}`;
     this.lobby_bot_counter++;
-    const colors = Room.bot_colors.bot7;
+    const colors = Room.bot_colors.match;
     const bot = new AIBot(
       { x: 0, y: 0 },
       botId,
       name,
       colors[0],
       colors[1],
-      "bot7",
+      "match",
       this.bot_seed
     );
     this.spawn_new(bot, botId, this.spawns);

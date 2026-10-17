@@ -348,12 +348,15 @@
       "platform": "Piattaforma",
       "hole": "Buco",
       "spawn": "Spawnpoint",
-      "botBlue": "Bot Blu",
-      "botGreen": "Bot Verde",
-      "botOrange": "Bot Arancione",
-      "botRed": "Bot Rosso",
+      "botBrown": "Bot Marrone (Torretta)",
+      "botGrey": "Bot Grigio (Soldato)",
+      "botTeal": "Bot Turchese (Missili)",
+      "botGreen": "Bot Verde (Cecchino)",
       "botYellow": "Bot Giallo (Minatore)",
-      "botPurple": "Bot Viola (Cacciatore)"
+      "botPurple": "Bot Viola (Guerriero)",
+      "botMagenta": "Bot Magenta (Assaltatore)",
+      "botWhite": "Bot Bianco (Furtivo)",
+      "botBlack": "Bot Nero (Élite)"
     },
     "toast": {
       "title": "Livello",

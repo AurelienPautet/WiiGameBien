@@ -3,14 +3,17 @@
  * Helpers for parsing level data and extracting bot information
  */
 
-// Bot color mapping (mirrors Room.bot_colors; 5/6 are the v2-only kinds)
+// Bot color mapping (mirrors Room.bot_colors; one entry per Wii tank kind)
 const BOT_COLORS: Record<number, string> = {
-  1: "blue",
-  2: "green",
-  3: "orange",
-  4: "red",
+  1: "brown",
+  2: "grey",
+  3: "teal",
+  4: "green",
   5: "yellow",
   6: "purple",
+  7: "magenta",
+  8: "white",
+  9: "black",
 };
 
 /**
@@ -36,7 +39,7 @@ export function extractBotCounts(
 }
 
 /**
- * Whether a level grid contains at least one bot spawn cell (codes 11-16).
+ * Whether a level grid contains at least one bot spawn cell (codes 11-19).
  * The coop room creator filters its level list with this — a botless level
  * can't host a humans-vs-bots round.
  */
@@ -46,11 +49,11 @@ export function hasBotSpawns(levelJson: number[] | null | undefined): boolean {
 
 /**
  * Get color name for a bot type
- * @param {number} botType - Bot type (1-4)
+ * @param {number} botType - Bot type (1-9, one per Wii tank kind)
  * @returns {string} Color name
  */
 export function getBotColor(botType: number): string {
-  return BOT_COLORS[botType] || "blue";
+  return BOT_COLORS[botType] || "grey";
 }
 
 /**

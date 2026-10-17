@@ -40,7 +40,7 @@ interface LevelSelectorProps {
   pickedIds?: number[]; // already-picked ids, shown as "Added" (pick mode)
   // Coop room creation browses SOLO levels in room (multi-select) mode:
   levelTypeOverride?: "solo" | "online"; // wins over the mode-derived type
-  requireBotSpawns?: boolean; // keep only levels with bot cells (11-16)
+  requireBotSpawns?: boolean; // keep only levels with bot cells (11-19)
 }
 
 export function LevelSelector({

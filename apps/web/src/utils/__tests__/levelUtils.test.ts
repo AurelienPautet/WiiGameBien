@@ -21,14 +21,19 @@ describe("extractBotCounts", () => {
 
 describe("getBotColor", () => {
   it("maps known bot types to colours", () => {
-    expect(getBotColor(1)).toBe("blue");
-    expect(getBotColor(2)).toBe("green");
-    expect(getBotColor(3)).toBe("orange");
-    expect(getBotColor(4)).toBe("red");
+    expect(getBotColor(1)).toBe("brown");
+    expect(getBotColor(2)).toBe("grey");
+    expect(getBotColor(3)).toBe("teal");
+    expect(getBotColor(4)).toBe("green");
+    expect(getBotColor(5)).toBe("yellow");
+    expect(getBotColor(6)).toBe("purple");
+    expect(getBotColor(7)).toBe("magenta");
+    expect(getBotColor(8)).toBe("white");
+    expect(getBotColor(9)).toBe("black");
   });
-  it("falls back to blue for unknown types", () => {
-    expect(getBotColor(0)).toBe("blue");
-    expect(getBotColor(99)).toBe("blue");
+  it("falls back to grey for unknown types", () => {
+    expect(getBotColor(0)).toBe("grey");
+    expect(getBotColor(99)).toBe("grey");
   });
 });
 
@@ -43,9 +48,10 @@ describe("hexToDataUrl", () => {
 });
 
 describe("hasBotSpawns", () => {
-  it("is true when any bot cell (11-16) is present", () => {
+  it("is true when any bot cell (11-19) is present", () => {
     expect(hasBotSpawns([0, 0, 11, 0])).toBe(true);
     expect(hasBotSpawns([0, 16])).toBe(true);
+    expect(hasBotSpawns([0, 19])).toBe(true);
   });
 
   it("is false for walls, spawns, holes and empty grids", () => {

@@ -70,8 +70,9 @@ campaign is the **v2** brain (`packages/shared/src/game/ai/` — leading, ricoch
 planning, context steering, mines; see its README). The legacy AI (`Bot.ts` +
 `possible_moves.ts` + `possible_shots_balls.ts`) is frozen by golden tests and
 reachable via `?bots=legacy` (or localStorage `bot_system`) — never edit the
-legacy files or import them from `ai/`. Bot kinds map to level cells 11–16;
-15/16 (Miner/Hunter) exist only under v2.
+legacy files or import them from `ai/`. Bot kinds map to level cells 11–19
+(one per Wii tank: brown, grey, teal, green, yellow, purple, magenta, white,
+black); the "match" kind is the player-equal FFA lobby bot (no level cell).
 
 **Client = React UI + a separate imperative engine.** React owns menus/modals/HUD;
 the game itself runs in `apps/web/src/engine/` driven by `requestAnimationFrame`,

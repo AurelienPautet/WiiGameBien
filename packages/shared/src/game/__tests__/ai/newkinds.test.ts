@@ -5,9 +5,9 @@ import { SIM_STEP_S } from "../../loop.js";
 import { AIBot } from "../../ai/index.js";
 import { makeGrid, GRID_COLS, GRID_ROWS } from "../fixtures/levels.js";
 
-// The two v2-only kinds: bot5 yellow Miner (level cell 15) and bot6 purple
-// Hunter (cell 16). Legacy rooms skip their spawn slots but keep the global
-// bot_index numbering, so campaign skipIds stay stable across systems.
+// The kinds beyond the legacy four: bot5 yellow Miner (level cell 15) through
+// bot9 black Elite (cell 19). Legacy rooms skip their spawn slots but keep the
+// global bot_index numbering, so campaign skipIds stay stable across systems.
 
 beforeEach(() => {
   vi.spyOn(Math, "random").mockReturnValue(0);
@@ -28,8 +28,8 @@ const withBorder = (cells: Cell[]): number[] => {
   return makeGrid([...ring, ...cells] as never);
 };
 
-describe("level loader cells 15/16", () => {
-  it("fills bot5_spawns and bot6_spawns without disturbing 11-14", async () => {
+describe("level loader cells 15-19", () => {
+  it("fills bot5-bot9 spawns without disturbing 11-14", async () => {
     const room = new Room("arena", 1, [10], "creator", null);
     await loadlevel(
       makeGrid([
@@ -40,6 +40,9 @@ describe("level loader cells 15/16", () => {
         [5, 3, 15],
         [5, 6, 15],
         [5, 9, 16],
+        [5, 12, 17],
+        [7, 3, 18],
+        [7, 6, 19],
       ] as never),
       room
     );
@@ -52,6 +55,9 @@ describe("level loader cells 15/16", () => {
       { x: 300, y: 250 },
     ]);
     expect(room.bot6_spawns).toEqual([{ x: 450, y: 250 }]);
+    expect(room.bot7_spawns).toEqual([{ x: 600, y: 250 }]);
+    expect(room.bot8_spawns).toEqual([{ x: 150, y: 350 }]);
+    expect(room.bot9_spawns).toEqual([{ x: 300, y: 350 }]);
   });
 });
 
@@ -61,6 +67,9 @@ describe("spawning the new kinds", () => {
     room.bot1_spawns = [{ x: 50, y: 50 }];
     room.bot5_spawns = [{ x: 100, y: 50 }];
     room.bot6_spawns = [{ x: 150, y: 50 }];
+    room.bot7_spawns = [{ x: 200, y: 50 }];
+    room.bot8_spawns = [{ x: 250, y: 50 }];
+    room.bot9_spawns = [{ x: 300, y: 50 }];
     return room;
   };
 
@@ -69,18 +78,53 @@ describe("spawning the new kinds", () => {
     room.bot_system = "v2";
     room.spawn_all_bots();
 
-    expect(Object.keys(room.players)).toEqual(["bot0", "bot1", "bot2"]);
+    expect(Object.keys(room.players)).toEqual([
+      "bot0",
+      "bot1",
+      "bot2",
+      "bot3",
+      "bot4",
+      "bot5",
+    ]);
+    const brown = room.players.bot0 as AIBot;
     const miner = room.players.bot1 as AIBot;
     const hunter = room.players.bot2 as AIBot;
+    const rover = room.players.bot3 as AIBot;
+    const stealth = room.players.bot4 as AIBot;
+    const elite = room.players.bot5 as AIBot;
+
+    expect(brown.kind).toBe("bot1");
+    expect(brown.turretc).toBe("brown");
+    expect(brown.max_minecount).toBe(0);
+
     expect(miner.kind).toBe("bot5");
     expect(miner.name).toBe("Bot5_ 0");
     expect(miner.turretc).toBe("yellow");
-    expect(miner.max_bulletcount).toBe(0); // no gun
+    expect(miner.max_bulletcount).toBe(3); // it has a gun now (occasional shells)
     expect(miner.max_minecount).toBe(4);
+
     expect(hunter.kind).toBe("bot6");
     expect(hunter.turretc).toBe("purple");
     expect(hunter.max_bulletcount).toBe(5);
-    expect(room.nbliving).toBe(3);
+
+    expect(rover.kind).toBe("bot7");
+    expect(rover.turretc).toBe("magenta");
+    expect(rover.max_bulletcount).toBe(5);
+    expect(rover.max_minecount).toBe(0);
+    expect(rover.mvtspeed).toBe(195);
+
+    expect(stealth.kind).toBe("bot8");
+    expect(stealth.turretc).toBe("white");
+    expect(stealth.max_bulletcount).toBe(5);
+
+    expect(elite.kind).toBe("bot9");
+    expect(elite.turretc).toBe("black");
+    expect(elite.bullet_type).toBe(2);
+    expect(elite.shoot_max_bounce).toBe(1); // rockets never rebound
+    expect(elite.mvtspeed).toBe(240); // fastest of the nine
+    expect(elite.max_minecount).toBe(2);
+
+    expect(room.nbliving).toBe(6);
   });
 
   it("legacy spawns bot2-driven stand-ins for the new kinds (levels stay winnable)", () => {
@@ -88,13 +132,23 @@ describe("spawning the new kinds", () => {
     // default bot_system === "legacy"
     room.spawn_all_bots();
 
-    // A Miner/Hunter-only level must not be UNWINNABLE under ?bots=legacy
-    // (the solo win check needs at least one initial enemy), so legacy gets
-    // a Bot driven by the mobile bot2 config — keeping the authored
-    // name/colour and the positional ids (parity with the v2 layout).
-    expect(Object.keys(room.players)).toEqual(["bot0", "bot1", "bot2"]);
+    // A Miner-only level must not be UNWINNABLE under ?bots=legacy (the solo
+    // win check needs at least one initial enemy), so legacy gets a Bot driven
+    // by the mobile bot2 config — keeping the authored name/colour and the
+    // positional ids (parity with the v2 layout).
+    expect(Object.keys(room.players)).toEqual([
+      "bot0",
+      "bot1",
+      "bot2",
+      "bot3",
+      "bot4",
+      "bot5",
+    ]);
     const standInMiner = room.players.bot1 as Bot;
     const standInHunter = room.players.bot2 as Bot;
+    const standInRover = room.players.bot3 as Bot;
+    const standInStealth = room.players.bot4 as Bot;
+    const standInElite = room.players.bot5 as Bot;
     expect(standInMiner).toBeInstanceOf(Bot);
     expect(standInMiner).not.toBeInstanceOf(AIBot);
     expect(standInMiner.name).toBe("Bot5_ 0");
@@ -103,15 +157,27 @@ describe("spawning the new kinds", () => {
     expect(standInMiner.can.move).toBe(true);
     expect(standInHunter.name).toBe("Bot6_ 0");
     expect(standInHunter.turretc).toBe("purple");
-    expect(room.nbliving).toBe(3);
+    expect(standInRover.name).toBe("Bot7_ 0");
+    expect(standInRover.turretc).toBe("magenta");
+    expect(standInStealth.name).toBe("Bot8_ 0");
+    expect(standInStealth.turretc).toBe("white");
+    expect(standInElite.name).toBe("Bot9_ 0");
+    expect(standInElite.turretc).toBe("black");
+    expect(room.nbliving).toBe(6);
   });
 
   it("skipIds keep working across the new slots", () => {
     const room = mkRoom();
     room.bot_system = "v2";
-    room.spawn_all_bots(new Set(["bot1"])); // the miner was defeated
-    expect(Object.keys(room.players)).toEqual(["bot0", "bot2"]);
-    expect((room.players.bot2 as AIBot).kind).toBe("bot6");
+    room.spawn_all_bots(new Set(["bot2"])); // the hunter was defeated
+    expect(Object.keys(room.players)).toEqual([
+      "bot0",
+      "bot1",
+      "bot3",
+      "bot4",
+      "bot5",
+    ]);
+    expect((room.players.bot3 as AIBot).kind).toBe("bot7");
   });
 });
 
@@ -135,8 +201,9 @@ describe("new-kind behavior sims", () => {
     return room;
   }
 
-  it("the miner plants mines, never shoots, and survives its own field", async () => {
-    // Human chases the miner to provoke flee-drops.
+  it("the miner plants mines, survives its own field, and rarely shoots", async () => {
+    // Human chases the miner to provoke flee-drops; the miner's magazine is
+    // pinned full so the dummy stays alive long enough to be pursued.
     const arena = withBorder([
       [8, 4, 15],
       [8, 18, 3],
@@ -145,6 +212,7 @@ describe("new-kind behavior sims", () => {
       const bot = r.players.bot0;
       const human = r.players.h1;
       if (!bot?.alive || !human?.alive) return;
+      bot.bulletcount = bot.max_bulletcount; // the dummy must stay alive
       human.direction.x = Math.sign(
         bot.position.x + 22.5 - (human.position.x + 22.5)
       );
@@ -154,27 +222,80 @@ describe("new-kind behavior sims", () => {
     });
     const miner = room.players.bot0 as AIBot;
     expect(miner.round_stats.stats.plants).toBeGreaterThanOrEqual(2);
-    expect(miner.round_stats.stats.shots).toBe(0);
+    // Shells are an afterthought, but the gun is wired: whatever the brain
+    // decides, the fire gate must never allow a burst.
+    expect(miner.max_bulletcount).toBe(3);
     expect(miner.alive).toBe(true);
   });
 
-  it("the hunter closes to knife range and pressures with its 5-shot magazine", async () => {
+  it("the miner eventually takes a shot at an idle human", async () => {
     const arena = withBorder([
-      [8, 4, 16],
+      [8, 4, 15],
+      [8, 18, 3],
+    ]);
+    const room = await runArena(arena, 41, 2400);
+    const miner = room.players.bot0 as AIBot;
+    // Long cooldown + picky gate mean it is slow, but 40 s is plenty.
+    expect(
+      miner.round_stats.stats.shots + miner.round_stats.stats.kills * 5
+    ).toBeGreaterThanOrEqual(1);
+  });
+
+  it("the rover rushes the player and fires rapidly", async () => {
+    const arena = withBorder([
+      [8, 4, 17],
       [8, 18, 3],
     ]);
     const room = await runArena(arena, 88, 1200);
-    const hunter = room.players.bot0 as AIBot;
+    const rover = room.players.bot0 as AIBot;
     const human = room.players.h1!;
-    // Against an idle target the hunter must have closed in and fired plenty
-    // (or already won the round).
     expect(
-      hunter.round_stats.stats.shots + hunter.round_stats.stats.kills * 5
+      rover.round_stats.stats.shots + rover.round_stats.stats.kills * 5
     ).toBeGreaterThanOrEqual(3);
     if (human.alive) {
       const d = Math.hypot(
-        human.position.x - hunter.position.x,
-        human.position.y - hunter.position.y
+        human.position.x - rover.position.x,
+        human.position.y - rover.position.y
+      );
+      expect(d).toBeLessThan(400);
+    }
+  });
+
+  it("the stealth-fighter seeks and sprays but dodges poorly", async () => {
+    const arena = withBorder([
+      [8, 4, 18],
+      [8, 18, 3],
+    ]);
+    const room = await runArena(arena, 52, 1500);
+    const stealth = room.players.bot0 as AIBot;
+    const human = room.players.h1!;
+    expect(
+      stealth.round_stats.stats.shots + stealth.round_stats.stats.kills * 5
+    ).toBeGreaterThanOrEqual(1);
+    if (human.alive) {
+      const d = Math.hypot(
+        human.position.x - stealth.position.x,
+        human.position.y - stealth.position.y
+      );
+      expect(d).toBeLessThan(450);
+    }
+  });
+
+  it("the elite closes fast and fires its rocket pairs", async () => {
+    const arena = withBorder([
+      [8, 4, 19],
+      [8, 18, 3],
+    ]);
+    const room = await runArena(arena, 63, 1500);
+    const elite = room.players.bot0 as AIBot;
+    const human = room.players.h1!;
+    expect(
+      elite.round_stats.stats.shots + elite.round_stats.stats.kills * 5
+    ).toBeGreaterThanOrEqual(2);
+    if (human.alive) {
+      const d = Math.hypot(
+        human.position.x - elite.position.x,
+        human.position.y - elite.position.y
       );
       expect(d).toBeLessThan(450);
     }

@@ -52,17 +52,25 @@ AIBot.update(room, dt, ctx?, dbg?)             every fixed 60 Hz tick
 
 ## Archetypes (archetypes.ts — tuning lives HERE, not in code)
 
-| kind        | cell | role                                                           |
-| ----------- | ---- | -------------------------------------------------------------- |
-| bot1 blue   | 11   | stationary ricochet sentry, forgiving                          |
-| bot2 green  | 12   | aggressive presser, light mines                                |
-| bot3 orange | 13   | kiting sniper (600 px/s direct), strong dodge, breaches        |
-| bot4 red    | 14   | stationary ricochet master, full lead, deadly                  |
-| bot5 yellow | 15   | **Miner** — no gun, fast, mine-obsessed (v2 only)              |
-| bot6 purple | 16   | **Hunter** — fastest, 5-bullet magazine, corners you (v2 only) |
+The roster is exactly the nine Wii Play "Tanks!" enemy types (bot1…bot9 ↔
+cells 11…19), plus `match`: the host-added FFA combatant on an exactly-human
+chassis (no level cell, spawned via `Room.spawn_lobby_bot`).
 
-Under `legacy`, cells 15/16 spawn nothing but still advance the bot id counter
-(campaign `skipIds` parity across systems).
+| kind         | cell | role                                                           |
+| ------------ | ---- | -------------------------------------------------------------- |
+| bot1 brown   | 11   | Brown — stationary turret, ordinary shells (bounce once)       |
+| bot2 grey    | 12   | Grey — basic mobile soldier, ordinary shells                   |
+| bot3 teal    | 13   | Teal — no-rebound rockets aimed directly, dodges direct fire   |
+| bot4 green   | 14   | Green — stationary sniper, rockets rebound twice, picky        |
+| bot5 yellow  | 15   | Yellow — mine-obsessed; occasional shells                      |
+| bot6 purple  | 16   | Purple — fast, rapid-fire shells + light mines                 |
+| bot7 magenta | 17   | Red/Magenta — rapid-fire rusher that never dodges              |
+| bot8 white   | 18   | White — rapid fire, mildly seeking, near-blind evasion         |
+| bot9 black   | 19   | Black — fastest; rapid no-rebound rockets + mines, evades well |
+
+Under `legacy`, cells 15–19 spawn bot2-config stand-ins but keep the authored
+names/colours and still advance the bot id counter (campaign `skipIds` parity
+across systems).
 
 ## Constraints to respect when changing anything here
 

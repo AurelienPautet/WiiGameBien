@@ -348,12 +348,15 @@
       "platform": "Plattform",
       "hole": "Loch",
       "spawn": "Spawn",
-      "botBlue": "Blauer Bot",
-      "botGreen": "Grüner Bot",
-      "botOrange": "Oranger Bot",
-      "botRed": "Roter Bot",
+      "botBrown": "Brauner Bot (Turm)",
+      "botGrey": "Grauer Bot (Soldat)",
+      "botTeal": "Türkiser Bot (Raketen)",
+      "botGreen": "Grüner Bot (Schütze)",
       "botYellow": "Gelber Bot (Minenleger)",
-      "botPurple": "Lila Bot (Jäger)"
+      "botPurple": "Lila Bot (Krieger)",
+      "botMagenta": "Magenta Bot (Stürmer)",
+      "botWhite": "Weißer Bot (Tarnung)",
+      "botBlack": "Schwarzer Bot (Elite)"
     },
     "toast": {
       "title": "Level",
