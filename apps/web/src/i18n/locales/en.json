@@ -285,7 +285,8 @@
     "go": "GO!"
   },
   "orientation": {
-    "rotate": "Rotate your device to landscape"
+    "rotate": "Rotate your device to landscape",
+    "continueAnyway": "Continue anyway"
   },
   "pause": {
     "title": "Paused",

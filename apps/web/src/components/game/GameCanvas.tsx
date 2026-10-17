@@ -24,7 +24,6 @@ import { SettingsModal } from "../modals/SettingsModal";
 import { GameCursor } from "./GameCursor";
 import { TouchControls } from "./TouchControls";
 import { FixedUiLayer } from "./FixedUiLayer";
-import { OrientationHint } from "./OrientationHint";
 import { useTouchControlsEnabled } from "../../lib/touch";
 import { tankColors as resolveTankColors, palette } from "../../theme/palette";
 
@@ -761,9 +760,6 @@ export const GameCanvas = () => {
             onQuit={requestQuit}
           />
         )}
-
-        {/* Rotate-to-landscape prompt (touch + portrait only) */}
-        <OrientationHint />
       </FixedUiLayer>
     </>
   );

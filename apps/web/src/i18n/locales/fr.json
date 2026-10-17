@@ -285,7 +285,8 @@
     "go": "GO!"
   },
   "orientation": {
-    "rotate": "Tournez votre appareil en mode paysage"
+    "rotate": "Tournez votre appareil en mode paysage",
+    "continueAnyway": "Continuer quand même"
   },
   "pause": {
     "title": "En pause",
