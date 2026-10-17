@@ -283,7 +283,8 @@
     "go": "GO!"
   },
   "orientation": {
-    "rotate": "Ruota il dispositivo in orizzontale"
+    "rotate": "Ruota il dispositivo in orizzontale",
+    "continueAnyway": "Continua comunque"
   },
   "pause": {
     "title": "In Pausa",

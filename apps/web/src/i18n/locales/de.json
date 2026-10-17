@@ -283,7 +283,8 @@
     "go": "GO!"
   },
   "orientation": {
-    "rotate": "Drehe dein Gerät ins Querformat"
+    "rotate": "Drehe dein Gerät ins Querformat",
+    "continueAnyway": "Trotzdem fortfahren"
   },
   "pause": {
     "title": "Pausiert",
