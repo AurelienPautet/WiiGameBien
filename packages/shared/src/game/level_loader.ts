@@ -144,6 +144,17 @@ export function generateBcollision(room: Room): void {
   }
 }
 
+// Bot spawn cells (codes 11–19, one per Wii tank kind) in a flat level grid.
+// The coop room creation gate uses this: a coop playlist may only contain solo
+// levels with at least one enemy on them.
+export function countBotSpawnCells(level_json: number[]): number {
+  let n = 0;
+  for (const cell of level_json) {
+    if (cell >= 11 && cell <= 19) n++;
+  }
+  return n;
+}
+
 export async function loadlevel(
   level_json: number[],
   room: Room
@@ -156,9 +167,18 @@ export async function loadlevel(
   room.bot2_spawns = [];
   room.bot3_spawns = [];
   room.bot4_spawns = [];
+  room.bot5_spawns = [];
+  room.bot6_spawns = [];
+  room.bot7_spawns = [];
+  room.bot8_spawns = [];
+  room.bot9_spawns = [];
 
-  for (let l = 0; l <= 16; l++) {
-    for (let c = 0; c <= 23; c++) {
+  // Strict bounds (l < 16, c < 23): the historical `<=` over-read made the
+  // loop visit index l*23+23 — which aliases the NEXT row's column 0 — so any
+  // marker in column 0 was parsed twice (a phantom spawn/block at x=1150,
+  // off the playfield). Fixed when cells 15/16 joined the format.
+  for (let l = 0; l < 16; l++) {
+    for (let c = 0; c < 23; c++) {
       if (room.blocklist[l * 23 + c] == 1) {
         room.blocks.push(new Block({ x: c * 50, y: l * 50 }, 1));
       } else if (room.blocklist[l * 23 + c] == 2) {
@@ -175,6 +195,16 @@ export async function loadlevel(
         room.bot3_spawns.push({ x: c * 50, y: l * 50 });
       } else if (room.blocklist[l * 23 + c] == 14) {
         room.bot4_spawns.push({ x: c * 50, y: l * 50 });
+      } else if (room.blocklist[l * 23 + c] == 15) {
+        room.bot5_spawns.push({ x: c * 50, y: l * 50 });
+      } else if (room.blocklist[l * 23 + c] == 16) {
+        room.bot6_spawns.push({ x: c * 50, y: l * 50 });
+      } else if (room.blocklist[l * 23 + c] == 17) {
+        room.bot7_spawns.push({ x: c * 50, y: l * 50 });
+      } else if (room.blocklist[l * 23 + c] == 18) {
+        room.bot8_spawns.push({ x: c * 50, y: l * 50 });
+      } else if (room.blocklist[l * 23 + c] == 19) {
+        room.bot9_spawns.push({ x: c * 50, y: l * 50 });
       }
     }
   }

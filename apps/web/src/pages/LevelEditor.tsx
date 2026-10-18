@@ -7,10 +7,12 @@ import {
   useModal,
   useToast,
   useSettings,
+  useGame,
   MODALS,
 } from "../contexts";
 import { useSaveLevel, useLevel } from "../hooks/api";
-import { Save, X, Trash2 } from "lucide-react";
+import { Save, X, Trash2, Play } from "lucide-react";
+import { GameCanvas } from "../components/game";
 import {
   IoTitle,
   Input,
@@ -53,18 +55,28 @@ const BLOCKS = {
   PLATFORM: 2,
   FLAG: 3,
   HOLE: 4,
-  BOT_BLUE: 11,
-  BOT_GREEN: 12,
-  BOT_ORANGE: 13,
-  BOT_RED: 14,
+  BOT_BROWN: 11, // Brown — stationary turret
+  BOT_GREY: 12, // Grey — basic mobile soldier
+  BOT_TEAL: 13, // Teal — no-rebound rockets
+  BOT_GREEN: 14, // Green — stationary ricochet sniper
+  BOT_YELLOW: 15, // Yellow — miner
+  BOT_PURPLE: 16, // Purple — fast rapid-fire warrior
+  BOT_MAGENTA: 17, // Magenta — rapid-fire rover, never dodges
+  BOT_WHITE: 18, // White — rapid fire, near-blind
+  BOT_BLACK: 19, // Black — elite: fast rockets + mines
 };
 
 // Bot block id → tank colour name (shared with the game palette).
 const BOT_COLOR: Record<number, string> = {
-  [BLOCKS.BOT_BLUE]: "blue",
+  [BLOCKS.BOT_BROWN]: "brown",
+  [BLOCKS.BOT_GREY]: "grey",
+  [BLOCKS.BOT_TEAL]: "teal",
   [BLOCKS.BOT_GREEN]: "green",
-  [BLOCKS.BOT_ORANGE]: "orange",
-  [BLOCKS.BOT_RED]: "red",
+  [BLOCKS.BOT_YELLOW]: "yellow",
+  [BLOCKS.BOT_PURPLE]: "purple",
+  [BLOCKS.BOT_MAGENTA]: "magenta",
+  [BLOCKS.BOT_WHITE]: "white",
+  [BLOCKS.BOT_BLACK]: "black",
 };
 
 // Draw a single editor cell via the SHARED arcade primitives (engine/shapes) —
@@ -227,6 +239,9 @@ export const LevelEditor = () => {
   const { openModal } = useModal();
   const { addToast, TOAST_TYPES } = useToast();
   const { settings } = useSettings();
+  // `isPlaying` flips true while a test run is overlaid on the editor; quitting
+  // the run flips it back, revealing the editor with its layout still intact.
+  const { isPlaying, startTestGame } = useGame();
 
   // Interaction surface (mouse → grid), the 2D overlay (flags/bots/ghost, and
   // the full scene in the no-WebGL fallback), the WebGL output, and the shared
@@ -316,6 +331,9 @@ export const LevelEditor = () => {
   // animated field/walls/holes and composites the overlay over them — the exact
   // same rendering path as the live game.
   useEffect(() => {
+    // While a test run is overlaid (isPlaying), the editor preview is fully
+    // occluded — don't burn a second GL render loop behind it.
+    if (isPlaying) return;
     const overlay = overlayRef.current;
     if (!overlay) return;
     const ctx = overlay.getContext("2d");
@@ -360,7 +378,7 @@ export const LevelEditor = () => {
     return () => {
       if (animationId) cancelAnimationFrame(animationId);
     };
-  }, [layout, onCanvas, mouseGridPos, selectedBlock, postActive]);
+  }, [layout, onCanvas, mouseGridPos, selectedBlock, postActive, isPlaying]);
 
   // Handle mouse actions
   const handleMouseAction = useCallback(
@@ -457,6 +475,29 @@ export const LevelEditor = () => {
     }
   };
 
+  // Test the current (possibly unsaved) layout: play it in a throwaway solo run
+  // overlaid on the editor. No login or save required — only a valid spawn count.
+  const handleTest = () => {
+    const spawnCount = layout.filter((b) => b === BLOCKS.FLAG).length;
+    if (spawnCount === 0) {
+      addToast(
+        TOAST_TYPES.ERROR,
+        t("levelEditor.toast.title"),
+        t("levelEditor.toast.needSpawn")
+      );
+      return;
+    }
+    if (spawnCount > 8) {
+      addToast(
+        TOAST_TYPES.ERROR,
+        t("levelEditor.toast.title"),
+        t("levelEditor.toast.tooManySpawns")
+      );
+      return;
+    }
+    startTestGame(layout);
+  };
+
   // Save level
   const handleSave = () => {
     if (!user) {
@@ -547,14 +588,19 @@ export const LevelEditor = () => {
   ];
 
   const botBlocks = [
-    { id: BLOCKS.BOT_BLUE, label: t("levelEditor.blocks.botBlue") },
+    { id: BLOCKS.BOT_BROWN, label: t("levelEditor.blocks.botBrown") },
+    { id: BLOCKS.BOT_GREY, label: t("levelEditor.blocks.botGrey") },
+    { id: BLOCKS.BOT_TEAL, label: t("levelEditor.blocks.botTeal") },
     { id: BLOCKS.BOT_GREEN, label: t("levelEditor.blocks.botGreen") },
-    { id: BLOCKS.BOT_ORANGE, label: t("levelEditor.blocks.botOrange") },
-    { id: BLOCKS.BOT_RED, label: t("levelEditor.blocks.botRed") },
+    { id: BLOCKS.BOT_YELLOW, label: t("levelEditor.blocks.botYellow") },
+    { id: BLOCKS.BOT_PURPLE, label: t("levelEditor.blocks.botPurple") },
+    { id: BLOCKS.BOT_MAGENTA, label: t("levelEditor.blocks.botMagenta") },
+    { id: BLOCKS.BOT_WHITE, label: t("levelEditor.blocks.botWhite") },
+    { id: BLOCKS.BOT_BLACK, label: t("levelEditor.blocks.botBlack") },
   ];
 
   return (
-    <div className="w-full h-full graph-paper text-ink flex flex-col">
+    <div className="relative w-full h-full graph-paper text-ink flex flex-col">
       {/* Header */}
       <div className="h-24 bg-white border-b-4 border-ink flex items-center justify-between gap-4 px-8">
         <IoTitle className="text-2xl shrink-0">
@@ -585,6 +631,9 @@ export const LevelEditor = () => {
         <div className="flex items-center gap-2 shrink-0">
           <IconButton onClick={handleClear} title={t("levelEditor.clearLevel")}>
             <Trash2 size={20} />
+          </IconButton>
+          <IconButton onClick={handleTest} title={t("levelEditor.testLevel")}>
+            <Play size={20} className="text-blue-d" />
           </IconButton>
           <IconButton
             onClick={handleSave}
@@ -666,6 +715,14 @@ export const LevelEditor = () => {
 
       {/* Footer */}
       <div className="h-16 bg-white border-t-4 border-ink" />
+
+      {/* Test run: the full game overlaid on the editor (which stays mounted, so
+          the layout survives). Quitting the run flips isPlaying back to false. */}
+      {isPlaying && (
+        <div className="absolute inset-0 z-50">
+          <GameCanvas />
+        </div>
+      )}
     </div>
   );
 };

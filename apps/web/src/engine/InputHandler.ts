@@ -31,6 +31,10 @@ export interface GameInputState {
   click: boolean;
   // Held auto-fire flag from the touch aim-stick (vs the one-shot `click`).
   firing: boolean;
+  // One-shot tap-to-fire from the touch fire button: fire at the nearest enemy.
+  // The target is resolved by whichever side owns the true positions (the
+  // local room in solo, the server online), so this is just the request.
+  autoAimFire: boolean;
   plant: boolean;
   escapePressed: boolean;
   mvtSpeed: number;
@@ -44,6 +48,7 @@ export interface InputSnapshot {
   aimVector: { x: number; y: number } | null;
   click: boolean;
   firing: boolean;
+  autoAimFire: boolean;
   plant: boolean;
   escapePressed: boolean;
 }
@@ -103,6 +108,7 @@ if (typeof window !== "undefined") {
       aimVector: null,
       click: false,
       firing: false,
+      autoAimFire: false,
       plant: false,
       escapePressed: false,
       // Only the SIGN of `direction` is consumed (Player.update / the server's
@@ -235,6 +241,7 @@ export class InputHandler {
     input.direction = { x: 0, y: 0 };
     input.click = false;
     input.firing = false;
+    input.autoAimFire = false;
     input.plant = false;
     input.escapePressed = false;
   }
@@ -262,12 +269,14 @@ export class InputHandler {
       aimVector: input.aimVector ? { ...input.aimVector } : null,
       click: input.click,
       firing: input.firing,
+      autoAimFire: input.autoAimFire,
       plant: input.plant,
       escapePressed: input.escapePressed,
     };
 
     // Reset one-shot actions
     input.click = false;
+    input.autoAimFire = false;
     input.plant = false;
     input.escapePressed = false;
 

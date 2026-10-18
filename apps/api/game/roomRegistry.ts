@@ -3,10 +3,18 @@
 // the HTTP layer via setRoomsRef — so it is only ever MUTATED in place
 // (rooms[id] = … / delete rooms[id]), never reassigned.
 import { loadlevel, Room } from "@ouigame/shared/game";
+import type { RoomMode } from "@ouigame/shared/game";
+import type { LobbyState } from "@ouigame/shared/types";
 import * as levelsService from "../services/levels.service";
 import * as levelsRepo from "../repositories/levels.repo";
 import { setRoomsRef } from "../routes/rooms.routes";
 import type { AppServer, AppSocket } from "../socket/types";
+
+// Grace period before an emptied room is actually removed (see deleteRoomIfEmpty).
+const EMPTY_ROOM_GRACE_MS = 3000;
+
+// Coop rooms host up to this many humans against the level's bots.
+const COOP_MAX_HUMANS = 4;
 
 function createRoomRegistry({
   io,
@@ -39,7 +47,8 @@ function createRoomRegistry({
     for (const room of Object.values(rooms)) {
       room_ids.push(room.id);
       room_names.push(room.name);
-      room_players.push(Object.keys(room.players).length);
+      // seat_count owns the capacity rule (coop: humans; ffa: combatants).
+      room_players.push(room.seat_count());
       room_players_max.push(room.maxplayernb);
       room_creator_name.push(room.creator);
     }
@@ -64,15 +73,48 @@ function createRoomRegistry({
     }
   }
 
+  // `mode` doubles as the lobby opt-in: when present (every new web client
+  // sends it) the room is born held in a pre-game lobby — countdownActive
+  // freezes input/sim exactly like the between-rounds wait — until the host's
+  // lobby_start. Absent (old clients), the room keeps the historical
+  // immediate-play behaviour. Returns the new room id, or { error } when the
+  // request is rejected (the handler relays it as room_create_failed).
   async function create_room(
     name: string,
     rounds: number,
     list_id: number[],
-    creator: string
-  ) {
+    creator: string,
+    mode?: RoomMode,
+    creator_socket_id?: string
+  ): Promise<number | { error: string }> {
+    if (mode === "coop") {
+      // Every playlist entry must be a solo-type level with at least one bot
+      // spawn cell AND a player spawn — validated BEFORE anything registers.
+      const verdict = await levelsService.validateCoopLevels(list_id);
+      if (!verdict.ok) return { error: verdict.reason };
+    }
     const room = new Room(name, rounds, list_id, creator, io);
-    room.maxplayernb = (await levelsRepo.getMinMaxPlayers(list_id))
-      .min as number;
+    if (mode !== undefined) {
+      room.mode = mode;
+      room.status = "lobby";
+      room.countdownActive = true; // the indefinite pre-start hold
+      // Pre-assign the host so the room is never listed hostless: between
+      // registration and the creator's own `play` (one RTT + a render away),
+      // a faster joiner would otherwise claim the lobby controls.
+      if (creator_socket_id !== undefined) {
+        room.hostid = creator_socket_id;
+      }
+    }
+    if (mode === "coop") {
+      // Humans vs the level's bots, with the v2 brain (the solo default).
+      // Capacity is the human cap — level bots don't take seats — so the
+      // playlist's (solo) maxPlayers values are irrelevant here.
+      room.bot_system = "v2";
+      room.maxplayernb = COOP_MAX_HUMANS;
+    } else {
+      room.maxplayernb = (await levelsRepo.getMinMaxPlayers(list_id))
+        .min as number;
+    }
     // room.levels is the list_id passed above; the entry at levelid (0 on a
     // fresh room) is present whenever the room was created with levels.
     const levelId = room.levels[room.levelid];
@@ -89,6 +131,33 @@ function createRoomRegistry({
     return room.id;
   }
 
+  // One lobby_state snapshot to everyone in the room — on join/leave, host
+  // change, bot add/remove and start. Never per tick.
+  function broadcast_lobby_state(room: Room) {
+    const members: LobbyState["members"] = [];
+    for (const socketid of room.ids) {
+      const player = room.players[socketid];
+      if (!player) continue;
+      members.push({
+        socketid,
+        name: player.name,
+        turretc: player.turretc,
+        bodyc: player.bodyc,
+        is_bot: player.is_bot,
+        is_host: socketid === room.hostid,
+      });
+    }
+    const state: LobbyState = {
+      room_id: room.id,
+      name: room.name,
+      status: room.status,
+      mode: room.mode,
+      max_players: room.maxplayernb,
+      members,
+    };
+    io.to(String(room.id)).emit("lobby_state", state);
+  }
+
   // Clear (and forget) any pending respawn/countdown timers for a room.
   function clearRoomTimers(roomId: number) {
     const t = roomTimers.get(roomId);
@@ -103,11 +172,27 @@ function createRoomRegistry({
   // empty rooms used to linger forever and the tick loop kept iterating them).
   // Only ever called from the leave/disconnect path — NEVER right after
   // create_room — so a freshly created (still empty) room is not deleted.
+  //
+  // Deletion is deferred by a short grace period and re-checks emptiness when it
+  // fires, so a player who re-joins in the meantime keeps the room. This covers
+  // React StrictMode double-mounting the game view in dev (mount → quit →
+  // re-mount would otherwise delete the freshly-created room mid-join, making
+  // the re-join id-fail and leaving online play unjoinable) and brief reconnects
+  // in prod.
   function deleteRoomIfEmpty(room: Room) {
-    if (Object.keys(room.players).length === 0) {
-      clearRoomTimers(room.id);
-      delete rooms[room.id];
-    }
+    // HUMAN-empty, not players-empty: lobby bots stay registered in
+    // room.players, so a bots-only room would otherwise survive its last
+    // human forever (ticking, listed, undeletable).
+    if (room.human_count() !== 0) return;
+    setTimeout(() => {
+      // Same room object (id not reused) and still human-empty when the timer
+      // fires?
+      if (rooms[room.id] === room && room.human_count() === 0) {
+        clearRoomTimers(room.id);
+        delete rooms[room.id];
+        room_list(0);
+      }
+    }, EMPTY_ROOM_GRACE_MS);
   }
 
   return {
@@ -115,6 +200,7 @@ function createRoomRegistry({
     roomTimers,
     room_list,
     create_room,
+    broadcast_lobby_state,
     clearRoomTimers,
     deleteRoomIfEmpty,
   };

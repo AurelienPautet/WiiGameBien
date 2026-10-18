@@ -6,6 +6,7 @@ import {
   useGame,
   useAuth,
   useToast,
+  TOAST_TYPES,
 } from "../../contexts";
 import { storage } from "../../lib/storage";
 import { LevelSelector } from "../ui";
@@ -15,7 +16,10 @@ import {
   DialogTitle,
   Button,
   Input,
+  SegmentedControl,
 } from "../ui/primitives";
+
+type RoomMode = "ffa" | "coop";
 
 export const CreateRoomModal = () => {
   const { t } = useTranslation();
@@ -23,14 +27,16 @@ export const CreateRoomModal = () => {
   const { socket } = useSocket();
   const { startOnlineGame } = useGame();
   const { user } = useAuth();
-  const { addToast, TOAST_TYPES } = useToast();
+  const { addToast } = useToast();
   const [selectedLevels, setSelectedLevels] = useState<number[]>([]);
   const [roomName, setRoomName] = useState("");
   const [rounds, setRounds] = useState(10);
+  const [roomMode, setRoomMode] = useState<RoomMode>("ffa");
   const [isCreating, setIsCreating] = useState(false);
-  // The server acknowledges room creation with a `room_created` event but emits
-  // nothing on failure, so a stuck "Creating…" button is the only symptom of a
-  // dropped request. This timeout gives up after a while and tells the user.
+  // The server acknowledges room creation with `room_created` and rejects with
+  // `room_create_failed`, but a dropped request produces neither, so a stuck
+  // "Creating…" button is the only symptom. This timeout gives up and tells the
+  // user rather than leaving the form frozen.
   const createTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearCreateTimeout = () => {
@@ -44,6 +50,17 @@ export const CreateRoomModal = () => {
     setSelectedLevels(levelIds);
   }, []);
 
+  // Classic browses online levels, coop browses solo levels — a selection
+  // never survives the switch (the ids would be from the wrong list).
+  const handleModeChange = useCallback(
+    (next: RoomMode) => {
+      if (isCreating) return;
+      setRoomMode(next);
+      setSelectedLevels([]);
+    },
+    [isCreating]
+  );
+
   // Listen for room creation success to auto-join
   useEffect(() => {
     if (!socket) return;
@@ -53,21 +70,40 @@ export const CreateRoomModal = () => {
       startOnlineGame(roomId);
       closeModal();
     };
+    const handleRoomCreateFailed = (reason: string) => {
+      clearCreateTimeout();
+      setIsCreating(false);
+      addToast(
+        TOAST_TYPES.ERROR,
+        t("createRoom.failed"),
+        t(`createRoom.failReason.${reason}`, t("common.unknownError"))
+      );
+    };
     socket.on("room_created", handleRoomCreated);
+    socket.on("room_create_failed", handleRoomCreateFailed);
     return () => {
       socket.off("room_created", handleRoomCreated);
+      socket.off("room_create_failed", handleRoomCreateFailed);
       clearCreateTimeout();
     };
-  }, [socket, startOnlineGame, closeModal]);
+  }, [socket, startOnlineGame, closeModal, addToast, t]);
 
   const handleCreateRoom = () => {
     if (!roomName || selectedLevels.length === 0) return;
     if (!socket) return;
     setIsCreating(true);
     // Guests can create rooms too; fall back to their chosen player name (or a
-    // default) when not logged in. Server expects (name, rounds, list_id, creator).
+    // default) when not logged in. The trailing mode arg opts the room into
+    // the pre-game lobby (old clients omit it and play immediately).
     const creator = user?.username ?? storage.getPlayerName() ?? "Player";
-    socket.emit("new-room", roomName, rounds, selectedLevels, creator);
+    socket.emit(
+      "new-room",
+      roomName,
+      rounds,
+      selectedLevels,
+      creator,
+      roomMode
+    );
     // Fail open: if no `room_created` arrives, re-enable the form and surface a
     // localized error rather than leaving the button stuck on "Creating…".
     clearCreateTimeout();
@@ -76,8 +112,8 @@ export const CreateRoomModal = () => {
       setIsCreating(false);
       addToast(
         TOAST_TYPES.ERROR,
-        t("common.error"),
-        t("createRoom.failedCreate")
+        t("createRoom.failed"),
+        t("createRoom.failReason.timeout")
       );
     }, 10000);
   };
@@ -98,12 +134,21 @@ export const CreateRoomModal = () => {
           {t("createRoom.title")}
         </DialogTitle>
 
-        <div className="flex flex-wrap gap-3 mb-4">
+        <div className="flex flex-wrap gap-3 mb-4 items-center">
           <Input
             className="flex-1 min-w-[200px]"
             placeholder={t("createRoom.roomNamePlaceholder")}
             value={roomName}
             onChange={(e) => setRoomName(e.target.value)}
+          />
+          <SegmentedControl<RoomMode>
+            aria-label={t("createRoom.mode")}
+            value={roomMode}
+            onValueChange={handleModeChange}
+            options={[
+              { value: "ffa", label: t("createRoom.modeClassic") },
+              { value: "coop", label: t("createRoom.modeCoop") },
+            ]}
           />
           <label className="flex items-center gap-2 font-semibold text-ink">
             {t("createRoom.rounds")}
@@ -118,8 +163,20 @@ export const CreateRoomModal = () => {
           </label>
         </div>
 
+        {roomMode === "coop" && (
+          <p className="mb-3 text-sm font-semibold text-ink-soft">
+            {t("createRoom.coopHint")}
+          </p>
+        )}
+
         <div className="flex-1 min-h-0">
-          <LevelSelector mode="room" onMultiSelect={handleMultiSelect} />
+          <LevelSelector
+            key={roomMode}
+            mode="room"
+            onMultiSelect={handleMultiSelect}
+            levelTypeOverride={roomMode === "coop" ? "solo" : "online"}
+            requireBotSpawns={roomMode === "coop"}
+          />
         </div>
 
         <div className="flex justify-end gap-3 pt-4">

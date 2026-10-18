@@ -29,20 +29,31 @@ function setup({ token }: { token?: string } = {}) {
   const rooms: Record<number, any> = {};
   const room_list = jest.fn();
   const create_room = jest.fn().mockResolvedValue(99);
+  const broadcast_lobby_state = jest.fn();
   const deleteRoomIfEmpty = jest.fn();
 
   registerSocketHandlers({
     io: io as never,
     serverid: SERVER_ID,
     rooms,
+    roomTimers: new Map(),
     room_list,
     create_room,
+    broadcast_lobby_state,
     deleteRoomIfEmpty,
   });
 
   const socket = makeSocket("s1", token ? { token } : {});
   connectHandler!(socket);
-  return { io, rooms, room_list, create_room, deleteRoomIfEmpty, socket };
+  return {
+    io,
+    rooms,
+    room_list,
+    create_room,
+    broadcast_lobby_state,
+    deleteRoomIfEmpty,
+    socket,
+  };
 }
 
 function roomStub(overrides: Record<string, unknown> = {}) {
@@ -50,14 +61,27 @@ function roomStub(overrides: Record<string, unknown> = {}) {
     id: 1,
     ids: [] as string[],
     players: {} as Record<string, any>,
+    human_players: [] as string[],
+    lobby_bots: [] as string[],
     maxplayernb: 2,
     levels: [101],
     levelid: 0,
     blocks: [],
     Bcollision: [],
     countdownActive: false,
+    status: "playing",
+    mode: "ffa",
+    hostid: "",
+    countdownDuration: 3000,
+    io: makeIo(),
     spawn_new_player: jest.fn(),
     delete_player: jest.fn(),
+    spawn_lobby_bot: jest.fn(),
+    remove_player_quiet: jest.fn(),
+    // Mirrors Room.seat_count (coop: humans; ffa: every combatant).
+    seat_count(this: { players: Record<string, unknown> }) {
+      return Object.keys(this.players).length;
+    },
     ...overrides,
   };
 }
@@ -65,9 +89,14 @@ function roomStub(overrides: Record<string, unknown> = {}) {
 function playerStub() {
   return {
     position: { x: 0, y: 0 },
+    size: { w: 45, h: 45 },
+    alive: true,
+    pending_spawn: false,
+    is_bot: false,
     mytick: 0,
     direction: { x: 0, y: 0 },
     aim: { x: 0, y: 0 },
+    CalculateAngle: jest.fn(),
     shoot: jest.fn(),
     plant: jest.fn(),
   };
@@ -173,8 +202,85 @@ describe("tock — input handling", () => {
     });
     expect(player.direction).toEqual({ x: 1, y: 0 });
     expect(player.aim).toEqual({ x: 0, y: 0 }); // unchanged
+    // The barrel angle is refreshed BEFORE the shot so it leaves along `aim`.
+    expect(player.CalculateAngle.mock.invocationCallOrder[0]).toBeLessThan(
+      player.shoot.mock.invocationCallOrder[0]!
+    );
     expect(player.shoot).toHaveBeenCalledWith(rooms[1]);
     expect(player.plant).toHaveBeenCalledWith(rooms[1]);
+  });
+
+  test("does not shoot when the packet only carries movement", () => {
+    const { socket, rooms } = setup();
+    const player = playerStub();
+    rooms[1] = roomStub({ players: { s1: player } });
+    socket.__emit("tock", {
+      serverid: SERVER_ID,
+      room_id: 1,
+      direction: { x: 0, y: -1 },
+    });
+    expect(player.direction).toEqual({ x: 0, y: -1 });
+    expect(player.CalculateAngle).not.toHaveBeenCalled();
+    expect(player.shoot).not.toHaveBeenCalled();
+  });
+
+  test("autoAim aims at the nearest enemy and fires, ignoring the sent aim", () => {
+    const { socket, rooms } = setup();
+    const player = playerStub();
+    // Enemy box centre = position + size / 2 (45-wide box) = (197.5, 97.5).
+    const enemy = { ...playerStub(), position: { x: 175, y: 75 } };
+    rooms[1] = roomStub({ players: { s1: player, s2: enemy } });
+    socket.__emit("tock", {
+      serverid: SERVER_ID,
+      room_id: 1,
+      aim: { x: 999, y: 999 },
+      autoAim: true,
+    });
+    expect(player.aim).toEqual({ x: 197.5, y: 97.5 });
+    expect(player.CalculateAngle).toHaveBeenCalled();
+    expect(player.shoot).toHaveBeenCalledWith(rooms[1]);
+  });
+
+  test("autoAim in coop skips human teammates and locks onto the bot", () => {
+    const { socket, rooms } = setup();
+    const player = playerStub();
+    const teammate = { ...playerStub(), position: { x: 20, y: 20 } }; // nearer
+    const bot = {
+      ...playerStub(),
+      is_bot: true,
+      position: { x: 275, y: 75 },
+    };
+    rooms[1] = roomStub({
+      mode: "coop",
+      players: { s1: player, s2: teammate, s3: bot },
+    });
+    socket.__emit("tock", {
+      serverid: SERVER_ID,
+      room_id: 1,
+      autoAim: true,
+    });
+    // The bot's box centre: position (275, 75) + half the 45-wide box.
+    expect(player.aim).toEqual({ x: 297.5, y: 97.5 });
+    expect(player.shoot).toHaveBeenCalledWith(rooms[1]);
+  });
+
+  test("autoAim falls back to the sent aim when nothing is alive to target", () => {
+    const { socket, rooms } = setup();
+    const player = playerStub();
+    const corpse = {
+      ...playerStub(),
+      alive: false,
+      position: { x: 100, y: 100 },
+    };
+    rooms[1] = roomStub({ players: { s1: player, s2: corpse } });
+    socket.__emit("tock", {
+      serverid: SERVER_ID,
+      room_id: 1,
+      aim: { x: 10, y: 20 },
+      autoAim: true,
+    });
+    expect(player.aim).toEqual({ x: 10, y: 20 });
+    expect(player.shoot).toHaveBeenCalledWith(rooms[1]);
   });
 
   test("rejects a mismatched server id", () => {
@@ -307,7 +413,36 @@ describe("get_json_from_id / new-room", () => {
   test("new-room creates the room (rounds forced to 10) and echoes the id", async () => {
     const { socket, create_room } = setup();
     await socket.__emit("new-room", "Arena", 3, [101], "alice");
-    expect(create_room).toHaveBeenCalledWith("Arena", 10, [101], "alice");
+    expect(create_room).toHaveBeenCalledWith(
+      "Arena",
+      10,
+      [101],
+      "alice",
+      undefined,
+      "s1" // the creator's socket pre-assigns the lobby host
+    );
     expect(socket.emit).toHaveBeenCalledWith("room_created", 99);
+  });
+
+  test("new-room forwards the mode arg and relays a creation failure", async () => {
+    const { socket, create_room } = setup();
+    (create_room as jest.Mock).mockResolvedValue({ error: "coop_unavailable" });
+    await socket.__emit("new-room", "Arena", 3, [101], "alice", "coop");
+    expect(create_room).toHaveBeenCalledWith(
+      "Arena",
+      10,
+      [101],
+      "alice",
+      "coop",
+      "s1"
+    );
+    expect(socket.emit).toHaveBeenCalledWith(
+      "room_create_failed",
+      "coop_unavailable"
+    );
+    expect(socket.emit).not.toHaveBeenCalledWith(
+      "room_created",
+      expect.anything()
+    );
   });
 });

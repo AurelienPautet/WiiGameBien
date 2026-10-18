@@ -17,6 +17,7 @@ import type {
   WinnerPayload,
   PlayerKillPayload,
   CountdownStartPayload,
+  LobbyState,
 } from "../types";
 // The level DTOs double as the "level_change_info" / "recieve_json_from_id"
 // socket payloads, so they live in api/ (the plan's home for response DTOs).
@@ -28,12 +29,23 @@ export interface ClientToServerEvents {
   authenticate: (token: string) => void;
   deauthenticate: () => void;
   get_json_from_id: (level_id: number | string) => void;
+  // The appended optional 5th arg is BOTH the game mode and the lobby opt-in:
+  // when present the server holds the new room in a pre-game lobby until the
+  // creator starts it; absent (old clients) the room keeps the historical
+  // immediate-play behaviour. New clients always send it ("ffa" or "coop").
   "new-room": (
     name: string,
     rounds: number,
     list_id: number[],
-    creator: string
+    creator: string,
+    mode?: "ffa" | "coop"
   ) => void;
+  // Lobby controls — host-only (the server verifies against room.hostid) and
+  // only while the room status is "lobby". Adding bots is "ffa" rooms only
+  // (coop rooms get their bots from the level on start).
+  lobby_add_bot: (room_id: number | string) => void;
+  lobby_remove_bot: (room_id: number | string, bot_socketid: string) => void;
+  lobby_start: (room_id: number | string) => void;
   // room_id is whatever id the client holds; the server indexes rooms[room_id],
   // which accepts a numeric id or its string form (rooms are also joined as
   // String(room.id)). The web GameContext likewise types roomId as number|string.
@@ -45,10 +57,15 @@ export interface ClientToServerEvents {
   ) => void;
   quit: () => void;
   // "tock" — the ~60fps player input. Keys verbatim: serverid, mysocketid,
-  // playerid, direction, plant, click, aim, room_id, mytick. serverid/mysocketid/
-  // playerid are nullable on the wire (the solo-derived engine may not have set
-  // them yet); the server only meaningfully reads serverid, room_id, mytick,
-  // direction, aim, click, plant.
+  // playerid, direction, plant, click, aim, autoAim, room_id, mytick.
+  // serverid/mysocketid/playerid are nullable on the wire (the solo-derived
+  // engine may not have set them yet); the server only meaningfully reads
+  // serverid, room_id, mytick, direction, aim, click, plant, autoAim.
+  //
+  // `autoAim` (additive, optional) is the touch fire button's quick tap: fire
+  // once at the nearest enemy, which the server resolves itself (it holds the
+  // authoritative positions, and the coop ally rule). Absent/undefined means
+  // the client's `aim` is used as-is, so older clients stay valid.
   tock: (input: {
     serverid: string | null;
     mysocketid: string | null;
@@ -57,6 +74,7 @@ export interface ClientToServerEvents {
     plant: boolean;
     click: boolean;
     aim: { x: number; y: number };
+    autoAim?: boolean;
     room_id: number | string | null;
     mytick: number;
   }) => void;
@@ -80,6 +98,13 @@ export interface ServerToClientEvents {
   recieve_json_from_id: (level: ReceiveJsonFromId | null) => void;
   error_getting_json: (message: string) => void;
   room_created: (room_id: number) => void;
+  // Room creation rejected (today: coop playlist validation — non-solo level
+  // or no bot spawns). Only mode-sending clients can trigger it.
+  room_create_failed: (reason: string) => void;
+  // Pre-game lobby snapshot: broadcast to the room on every membership/host/
+  // status change while status is "lobby" (and once with status "playing" on
+  // start, so clients drop the lobby panel). Never emitted per tick.
+  lobby_state: (state: LobbyState) => void;
   // POSITIONAL: (room_id, playerIndex, socketid)
   id: (room_id: number, playerIndex: number, socketid: string) => void;
   "id-fail": () => void;
@@ -106,6 +131,10 @@ export interface ServerToClientEvents {
   "player-disconnection": (name: string) => void;
   winner: (data: WinnerPayload) => void;
   countdown_start: (data: CountdownStartPayload) => void;
+  // Achievement keys the authenticated player just unlocked from the online
+  // round that ended this tick (catalog keys; the client resolves names via
+  // i18n). Emitted only to that player's socket — see apps/api/game/tickLoop.ts.
+  achievements_unlocked: (keys: string[]) => void;
   wrongserver: () => void;
   // POSITIONAL parallel arrays: (room_ids, room_names, room_creator_name,
   // room_players, room_players_max)

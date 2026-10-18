@@ -57,13 +57,18 @@ describe("PauseOverlay controls reference", () => {
     expect(screen.getByText("Left stick")).toBeTruthy();
     expect(screen.getByText("Right stick")).toBeTruthy();
     expect(screen.getByText("Hold to aim")).toBeTruthy();
+    // The fire button works the same in both modes.
+    expect(screen.getByText("Tap: nearest")).toBeTruthy();
+    expect(screen.getByText("Drag: aim")).toBeTruthy();
     // No keyboard/mouse caps in the touch layout.
     expect(screen.queryByText("Mouse")).toBeNull();
   });
 
-  it("shows a dedicated fire button when touch auto-fire is off", () => {
+  it("keeps the fire button caps when touch auto-fire is off", () => {
     renderPause({ touchControls: "on", autoFire: false });
-    expect(screen.getByText("Fire button")).toBeTruthy();
+    expect(screen.getByText("Tap: nearest")).toBeTruthy();
+    expect(screen.getByText("Drag: aim")).toBeTruthy();
+    // "Hold to aim" only applies to the auto-fire aim stick.
     expect(screen.queryByText("Hold to aim")).toBeNull();
   });
 });

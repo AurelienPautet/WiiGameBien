@@ -8,11 +8,17 @@ jest.mock("../../services/levels.service", () => ({
 }));
 jest.mock("../../repositories/ratings.repo", () => ({ getRating: jest.fn() }));
 jest.mock("../../repositories/stats.repo", () => ({ insertRound: jest.fn() }));
+// Achievement evaluation is exercised in achievements.service.test.ts; here it's
+// a no-op so the loop's round-recording mechanics stay the unit under test.
+jest.mock("../../services/achievements.service", () => ({
+  evaluateOnlineRound: jest.fn().mockResolvedValue([]),
+}));
 
 import { createTickLoop } from "../../game/tickLoop";
 import * as levelsService from "../../services/levels.service";
 import * as ratingsRepo from "../../repositories/ratings.repo";
 import * as statsRepo from "../../repositories/stats.repo";
+import * as achievementsService from "../../services/achievements.service";
 import { users } from "../../shared_state";
 import { makeIo } from "../helpers/socketDoubles";
 
@@ -122,6 +128,35 @@ test("on round end, records each player's round then schedules a respawn", async
   expect(roomTimers.get(2)?.respawn).toBeDefined();
 });
 
+test("skips bots and waiting joiners when recording rounds", async () => {
+  const human = mkPlayer();
+  const bot = { ...mkPlayer(), is_bot: true };
+  const waiting = { ...mkPlayer(), pending_spawn: true };
+  const room = makeRoom(8, true);
+  room.players = { anon: human, lobbybot_0: bot, late: waiting };
+  const loop = createTickLoop({
+    io: makeIo() as never,
+    rooms: { 8: room } as never,
+    roomTimers: new Map(),
+  });
+
+  perfSpy.mockReturnValue(1100);
+  loop.start();
+  await jest.advanceTimersByTimeAsync(20);
+
+  // Only the real, fielded human produced a row — but EVERYONE's stats reset
+  // (a persistent FFA lobby bot would otherwise accumulate kills/wins across
+  // rounds on every scoreboard).
+  expect(statsRepo.insertRound).toHaveBeenCalledTimes(1);
+  expect(statsRepo.insertRound).toHaveBeenCalledWith(
+    null,
+    101,
+    human.round_stats.stats
+  );
+  expect(bot.round_stats.reset).toHaveBeenCalledTimes(1);
+  expect(waiting.round_stats.reset).toHaveBeenCalledTimes(1);
+});
+
 test("records a null playerId for a socket with no logged-in user", async () => {
   const player = mkPlayer();
   const room = makeRoom(3, true);
@@ -141,6 +176,38 @@ test("records a null playerId for a socket with no logged-in user", async () => 
     null,
     101,
     player.round_stats.stats
+  );
+  // Anonymous round → achievements are never evaluated.
+  expect(achievementsService.evaluateOnlineRound).not.toHaveBeenCalled();
+});
+
+test("evaluates achievements for a logged-in player's round with a pre-reset snapshot", async () => {
+  users["p1"] = { playerId: 42, username: "p1", email: "p1@e.com" };
+  const player = mkPlayer();
+  // Capture the round's final values, then make reset() actually zero the live
+  // stats object. This proves the loop passes a SNAPSHOT, not the live
+  // reference — if it passed the live object, the assertion below would see
+  // zeros and fail.
+  const expected = { ...player.round_stats.stats };
+  player.round_stats.reset = jest.fn(() => {
+    const live = player.round_stats.stats as Record<string, number>;
+    for (const k of Object.keys(live)) live[k] = 0;
+  });
+  const room = makeRoom(7, true);
+  room.players = { p1: player };
+  const loop = createTickLoop({
+    io: makeIo() as never,
+    rooms: { 7: room } as never,
+    roomTimers: new Map(),
+  });
+
+  perfSpy.mockReturnValue(1100);
+  loop.start();
+  await jest.advanceTimersByTimeAsync(20);
+
+  expect(achievementsService.evaluateOnlineRound).toHaveBeenCalledWith(
+    42,
+    expected
   );
 });
 
@@ -182,9 +249,64 @@ test("after the wait, reloads + respawns the room and runs the countdown", async
 
   expect(room.respawn_the_room).toHaveBeenCalledTimes(1);
   expect(room.countdownActive).toBe(true);
+  // Socket.io rooms are string-keyed: both post-respawn broadcasts must
+  // target String(id) (the numeric id is a different, empty channel — the
+  // historical bug silently dropped them).
+  const cd = room.io.__emits.find((e) => e.event === "countdown_start");
+  expect(cd?.target).toBe("5");
+  const info = room.io.__emits.find((e) => e.event === "level_change_info");
+  expect(info?.target).toBe("5");
 
   await jest.advanceTimersByTimeAsync(3100); // countdownDuration = 3000
   expect(room.countdownActive).toBe(false);
+});
+
+test("a coop respawn cycles bots out, grows spawns, respawns, then re-spawns bots", async () => {
+  const order: string[] = [];
+  const room = makeRoom(9, true);
+  Object.assign(room, {
+    mode: "coop",
+    ids: ["h1", "bot0", "bot1"],
+    players: {
+      h1: mkPlayer(),
+      bot0: { ...mkPlayer(), is_bot: true },
+      bot1: { ...mkPlayer(), is_bot: true },
+    },
+    human_count: jest.fn(() => 1),
+    remove_player_quiet: jest.fn((id: string, returnSpawn: boolean) => {
+      order.push(`remove:${id}:${returnSpawn}`);
+      delete (room.players as Record<string, unknown>)[id];
+      room.ids.splice(room.ids.indexOf(id), 1);
+    }),
+    ensure_spawn_capacity: jest.fn((n: number, reserve: boolean) =>
+      order.push(`ensure:${n}:${reserve}`)
+    ),
+    spawn_all_bots: jest.fn(() => order.push("spawn_all_bots")),
+  });
+  room.respawn_the_room = jest.fn(() => order.push("respawn"));
+  const roomTimers: RoomTimers = new Map();
+  const loop = createTickLoop({
+    io: makeIo() as never,
+    rooms: { 9: room } as never,
+    roomTimers,
+  });
+
+  perfSpy.mockReturnValue(1100);
+  loop.start();
+  await jest.advanceTimersByTimeAsync(20); // round end arms the respawn
+  await jest.advanceTimersByTimeAsync(5100); // respawn fires
+
+  // Dead-bot cleanup (slots NOT returned to the player pool) → pool top-up
+  // for the humans WITHOUT reserving previous-level spawnpos cells → human
+  // respawn → fresh level bots → countdown.
+  expect(order).toEqual([
+    "remove:bot0:false",
+    "remove:bot1:false",
+    "ensure:1:false",
+    "respawn",
+    "spawn_all_bots",
+  ]);
+  expect(room.countdownActive).toBe(true);
 });
 
 test("aborts the respawn if the room was deleted during the wait", async () => {

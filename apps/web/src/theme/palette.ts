@@ -48,10 +48,23 @@ const TANK_PALETTE: Record<string, TankColors> = {
   red: { fill: palette.red, stroke: palette.redD },
   green: { fill: palette.green, stroke: palette.greenD },
   violet: { fill: palette.purple, stroke: palette.purpleD },
+  // The bot6 Warrior's colour name (Room.bot_colors) — same hues as violet.
+  purple: { fill: palette.purple, stroke: palette.purpleD },
   yellow: { fill: palette.yellow, stroke: palette.yellowD },
   turquoise: { fill: palette.teal, stroke: palette.tealD },
+  // The bot7 "match bot" colour name (host-added lobby bots, Room.bot_colors).
+  dimgray: { fill: "#8e959e", stroke: palette.inkSoft },
   blueF: { fill: "#5ec9ee", stroke: palette.blueD },
   violetF: { fill: "#d2a6fb", stroke: palette.purpleD },
+  // The nine Wii tank kinds (Room.bot_colors): one name per enemy behaviour.
+  // Hues nod to the originals where they fit the arcade look (teal is the same
+  // hues as turquoise; white/black are tuned so their outlines still read).
+  brown: { fill: "#b87333", stroke: "#8a5424" },
+  grey: { fill: "#98a1ab", stroke: "#6d7681" },
+  teal: { fill: palette.teal, stroke: palette.tealD },
+  magenta: { fill: "#ef6bc0", stroke: "#b8459a" },
+  white: { fill: palette.white, stroke: "#8e959e" },
+  black: { fill: "#333941", stroke: "#12151a" },
   // `none` = invisible tank (spectator / empty slot); renderer skips drawing it.
   none: { fill: "transparent", stroke: "transparent" },
 };

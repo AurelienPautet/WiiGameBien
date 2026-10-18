@@ -8,6 +8,7 @@ import {
   getImgFromLevelId,
   formatLevels,
 } from "../repositories/shared/format";
+import { countBotSpawnCells } from "@ouigame/shared/game";
 import type { SaveLevelRequest } from "@ouigame/shared/api";
 
 // GET /api/levels — formatted list of public levels. The route always supplies
@@ -117,6 +118,36 @@ async function rateLevel(playerId: number, levelId: number, stars: number) {
   await ratingsRepo.upsertRating(levelId, playerId, stars);
 }
 
+// Coop playlist gate: every level must exist, be a solo-type level, and carry
+// at least one bot spawn cell (codes 11–19) — a botless level would read as
+// an instant team win every round. The reason string travels to the client
+// verbatim via room_create_failed.
+async function validateCoopLevels(
+  levelIds: number[]
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  if (levelIds.length === 0) return { ok: false, reason: "level_not_found" };
+  const rows = await levelsRepo.getTypesAndContents(levelIds);
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  for (const id of levelIds) {
+    const row = byId.get(id);
+    if (!row) return { ok: false, reason: "level_not_found" };
+    if (row.type !== "solo") return { ok: false, reason: "not_solo" };
+    // `content` is the `{ data }` envelope of a Drizzle json column.
+    const grid = (row.content as { data?: unknown } | null)?.data;
+    if (!Array.isArray(grid) || countBotSpawnCells(grid as number[]) === 0) {
+      return { ok: false, reason: "no_bot_spawns" };
+    }
+    // The editor enforces a player spawn client-side, but level content is
+    // never validated at save (levelData is unknown on the wire), so the coop
+    // gate is the only server-side line of defense: without a code-3 cell the
+    // spawn pool starts empty and the capacity BFS has no anchor to grow from.
+    if (!(grid as number[]).includes(3)) {
+      return { ok: false, reason: "no_player_spawn" };
+    }
+  }
+  return { ok: true };
+}
+
 export {
   listLevels,
   listMyLevels,
@@ -126,4 +157,5 @@ export {
   updateLevel,
   deleteLevel,
   rateLevel,
+  validateCoopLevels,
 };

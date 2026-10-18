@@ -44,8 +44,14 @@ declare global {
   };
 }
 
+// The OAuth client ID must match the one whose "Authorized JavaScript origins"
+// list the site's origins AND the backend's GOOGLE_CLIENT_ID (the token's
+// audience is checked server-side) — otherwise GSI reports "origin not allowed"
+// and /api/auth/google rejects the token. Overridable per build via
+// VITE_GOOGLE_CLIENT_ID; the fallback is the live "Client Web 1" credential.
 const GOOGLE_CLIENT_ID =
-  "403445313450-kvueoci8r29rcpqk2p8jle1escfn6cc9.apps.googleusercontent.com";
+  import.meta.env.VITE_GOOGLE_CLIENT_ID ??
+  "687983751036-9kgnu6hi5k8n3r9q0hf8ui8safd0pdr7.apps.googleusercontent.com";
 
 const Label = ({ children }: { children: React.ReactNode }) => (
   <span className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
@@ -80,6 +86,7 @@ export const AuthModal = () => {
   // of only when the user happens to toggle the Login/Register tab.
   const [gsiReady, setGsiReady] = useState(() => typeof google !== "undefined");
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
+  const gsiInitialized = useRef(false);
 
   useEffect(() => {
     if (user) closeModal();
@@ -109,23 +116,65 @@ export const AuthModal = () => {
     credentialHandlerRef.current = handleCredentialResponse;
   });
 
+  // Initialize GSI exactly once. Calling initialize() again on every tab/locale
+  // change (the old behaviour) logs "called multiple times" and orphans the
+  // already-rendered button — "only the last initialized instance will be
+  // used" — which is why the button only appeared after toggling the tab.
   useEffect(() => {
-    if (!gsiReady || !googleButtonRef.current) return;
+    if (!gsiReady || gsiInitialized.current) return;
     google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: (response) => credentialHandlerRef.current(response),
       auto_select: false,
     });
-    // Clear any previously rendered button before re-rendering on tab/locale
-    // change so GSI never stacks duplicate buttons into the same node.
-    googleButtonRef.current.innerHTML = "";
-    google.accounts.id.renderButton(googleButtonRef.current, {
-      theme: "outline",
-      size: "large",
-      text: isLogin ? "signin_with" : "signup_with",
-      locale: i18n.language,
-      width: "100%",
-    });
+    gsiInitialized.current = true;
+  }, [gsiReady]);
+
+  // (Re)render the button once GSI is ready and on tab/locale change. This runs
+  // after the initialize effect above on the same commit, so it never renders
+  // against an uninitialized instance.
+  useEffect(() => {
+    if (!gsiReady || !gsiInitialized.current || !googleButtonRef.current)
+      return;
+    const node = googleButtonRef.current;
+    let cancelled = false;
+    let timer = 0;
+    let attempts = 0;
+
+    // On the modal's first open — while it's still animating in and GSI is
+    // freshly initialized — renderButton() often injects only an empty
+    // placeholder that never fills on its own. That's why the button used to
+    // appear only after the user toggled the Login/Register tab, which forces a
+    // fresh render once GSI is ready. We reproduce that automatically with a
+    // few GENTLE re-renders: the interval is much longer than GSI's own async
+    // render (~0.5s) so we never clear one mid-flight, the empty-check runs
+    // BEFORE re-rendering so a painted button is never wiped, and we stop as
+    // soon as the real [role=button] appears.
+    const render = () => {
+      if (cancelled || !node.isConnected) return;
+      node.innerHTML = "";
+      google.accounts.id.renderButton(node, {
+        theme: "outline",
+        size: "large",
+        text: isLogin ? "signin_with" : "signup_with",
+        locale: i18n.language,
+        // GSI wants a pixel width (max 400), not "100%", which it rejects with
+        // "Provided button width is invalid" and then fails to render.
+        width: "360",
+      });
+      attempts += 1;
+      if (attempts < 6) {
+        timer = window.setTimeout(() => {
+          if (!cancelled && !node.querySelector('[role="button"]')) render();
+        }, 1800);
+      }
+    };
+    render();
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [gsiReady, isLogin, i18n.language]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -151,7 +200,7 @@ export const AuthModal = () => {
     cn("mt-1", fieldError(name) && "border-red focus:ring-red/30");
 
   // Errors not tied to a specific input (network failure, validation, Google
-  // sign-in problems) surface in a banner above the actions instead of silently
+  // sign-in problems) surface in a banner above the form instead of silently
   // vanishing.
   const generalError =
     authError && authError.field === "general" ? t(authError.messageKey) : null;
@@ -163,7 +212,10 @@ export const AuthModal = () => {
   if (needsGoogleUsername) {
     return (
       <Dialog open onOpenChange={close}>
-        <DialogContent widthClassName="w-[min(94vw,420px)]">
+        <DialogContent
+          widthClassName="w-[min(94vw,420px)]"
+          aria-describedby={undefined}
+        >
           <DialogTitle className="text-xl font-bold mb-2">
             {t("auth.chooseUsername")}
           </DialogTitle>
@@ -204,7 +256,10 @@ export const AuthModal = () => {
 
   return (
     <Dialog open onOpenChange={close}>
-      <DialogContent widthClassName="w-[min(94vw,440px)]">
+      <DialogContent
+        widthClassName="w-[min(94vw,440px)]"
+        aria-describedby={undefined}
+      >
         <Tabs
           value={isLogin ? "login" : "register"}
           onValueChange={(v) => {
@@ -220,6 +275,15 @@ export const AuthModal = () => {
             <TabsTrigger value="register">{t("auth.registerTab")}</TabsTrigger>
           </TabsList>
         </Tabs>
+
+        {generalError && (
+          <p
+            role="alert"
+            className="mb-4 rounded-lg border-2 border-red bg-red/10 px-3 py-2 text-sm font-semibold text-red"
+          >
+            {generalError}
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
@@ -270,15 +334,6 @@ export const AuthModal = () => {
               <span className="text-red text-sm">{fieldError("password")}</span>
             )}
           </label>
-
-          {generalError && (
-            <p
-              role="alert"
-              className="rounded-lg border-2 border-red bg-red/10 px-3 py-2 text-sm font-semibold text-red"
-            >
-              {generalError}
-            </p>
-          )}
 
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="ghost" onClick={closeModal}>

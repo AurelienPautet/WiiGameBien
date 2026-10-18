@@ -12,7 +12,7 @@ import {
 } from "./contexts";
 import { QueryProvider } from "./providers/QueryProvider";
 import { LandingPage } from "./components/landing";
-import { MenuLayout, ScaledStage } from "./components/layout";
+import { MenuLayout, OrientationHint, ScaledStage } from "./components/layout";
 import { GameCanvas } from "./components/game";
 import { MusicController } from "./components/MusicController";
 import {
@@ -20,7 +20,9 @@ import {
   CampaignEditor,
   LevelsScreen,
   RankingsScreen,
+  AdminDashboard,
 } from "./pages";
+import { ProtectedAdminRoute } from "./components/admin/ProtectedAdminRoute";
 
 // In-game stage: also owns the theme-cycle (T) shortcut.
 const GameView = () => {
@@ -76,6 +78,16 @@ const AppRouter = () => {
         }
       />
       <Route
+        path="/admin"
+        element={
+          <MenuLayout>
+            <ProtectedAdminRoute>
+              <AdminDashboard />
+            </ProtectedAdminRoute>
+          </MenuLayout>
+        }
+      />
+      <Route
         path="/editor"
         element={
           <ScaledStage>
@@ -108,6 +120,10 @@ function App() {
                     <GameProvider>
                       <MusicController />
                       <AppRouter />
+                      {/* App-wide: rotate-to-landscape prompt on portrait touch
+                          devices — hard blocker on the stage routes (game and
+                          editors), tap-through on the responsive pages. */}
+                      <OrientationHint />
                     </GameProvider>
                   </SettingsProvider>
                 </ModalProvider>

@@ -1,8 +1,10 @@
-import { rectRect, distance, rectanglesSeTouchent } from "./check_collision.js";
+import { distance, circlesOverlap } from "./check_collision.js";
 import { SIM_STEP_S } from "./loop.js";
 import { generateBcollision } from "./level_loader.js";
+import { MINE_EXPLOSION_RADIUS, MINE_FUSE_TICKS } from "./game_constants.js";
 import { Player } from "./Player.js";
 import { Bot, type BotKind } from "./Bot.js";
+import { AIBot, type AIBotKind } from "./ai/index.js";
 import type {
   Vec2,
   RoomIo,
@@ -25,13 +27,35 @@ interface SoundFlags {
   explose: boolean;
 }
 
+// Which bot AI a room spawns. "legacy" is the constructor default FOREVER so
+// every existing host/test keeps its behaviour; hosts opt into "v2" by setting
+// the field before spawn_all_bots (same pattern as room.maxplayernb).
+export type BotSystem = "legacy" | "v2";
+
+// Online room lifecycle. "playing" is the constructor default so solo rooms
+// and every existing test are untouched; the server holds freshly created
+// rooms in "lobby" (countdownActive frozen) until the host starts the match.
+export type RoomStatus = "lobby" | "playing";
+
+// "ffa" is the historical every-tank-for-itself online mode; "coop" pits the
+// humans against the level's bots (solo-style levels, server-hosted).
+export type RoomMode = "ffa" | "coop";
+
 export class Room {
   static next_id = 1;
-  static bot_colors: Record<BotKind, [string, string]> = {
-    bot1: ["blue", "blue"],
-    bot2: ["green", "green"],
-    bot3: ["orange", "orange"],
-    bot4: ["red", "red"],
+  // Keyed by AIBotKind. The nine Wii tank kinds carry their tank-colour names
+  // (brown, grey, teal, …); "match" is the host-added FFA combatant.
+  static bot_colors: Record<AIBotKind, [string, string]> = {
+    bot1: ["brown", "brown"],
+    bot2: ["grey", "grey"],
+    bot3: ["teal", "teal"],
+    bot4: ["green", "green"],
+    bot5: ["yellow", "yellow"],
+    bot6: ["purple", "purple"],
+    bot7: ["magenta", "magenta"],
+    bot8: ["white", "white"],
+    bot9: ["black", "black"],
+    match: ["dimgray", "dimgray"],
   };
 
   static getNextId(): number {
@@ -72,8 +96,31 @@ export class Room {
   bot2_spawns: Vec2[];
   bot3_spawns: Vec2[];
   bot4_spawns: Vec2[];
+  bot5_spawns: Vec2[];
+  bot6_spawns: Vec2[];
+  bot7_spawns: Vec2[];
+  bot8_spawns: Vec2[];
+  bot9_spawns: Vec2[];
   countdownActive: boolean;
   countdownDuration: number;
+  // v2 bot AI opt-in (see BotSystem above) + the seed its per-bot RNGs derive
+  // from. Both are plain Room fields, never part of the `tick` broadcast.
+  bot_system: BotSystem;
+  bot_seed: number;
+  // Online lobby/mode state (see RoomStatus/RoomMode above). All defaults keep
+  // solo and legacy-online behaviour byte-identical; only the server's
+  // create_room/lobby handlers move them.
+  status: RoomStatus;
+  mode: RoomMode;
+  // Socketid of the lobby host (first human to join; server-transferred when
+  // they leave). "" until someone joins — meaningful only on server rooms.
+  hostid: string;
+  // Socketids of host-added FFA bots, in add order. Read by the v2 brain's
+  // allegiance helpers: members are enemies of everyone, allies of nobody.
+  lobby_bots: string[];
+  // Monotonic id counter for lobby bots; NEVER reset (an id is never reused,
+  // even after the bot it named was removed).
+  lobby_bot_counter: number;
   // Populated by loadlevel(): the flat level grid the collision pass reads.
   blocklist: number[];
   // Legacy field read by the web solo end-screen; never set by the runtime
@@ -121,19 +168,46 @@ export class Room {
     this.spawns = [];
     this.nbliving = 0;
     this.tick = 0;
-    this.timetoeplode = 300;
-    this.mines_explsion_radius = 90;
+    this.timetoeplode = MINE_FUSE_TICKS;
+    this.mines_explsion_radius = MINE_EXPLOSION_RADIUS;
     this.waitingtime = 5000;
     this.dt = SIM_STEP_S;
     this.bot1_spawns = [];
     this.bot2_spawns = [];
     this.bot3_spawns = [];
     this.bot4_spawns = [];
+    this.bot5_spawns = [];
+    this.bot6_spawns = [];
+    this.bot7_spawns = [];
+    this.bot8_spawns = [];
+    this.bot9_spawns = [];
     this.blocklist = [];
 
     // Countdown state - when true, render but skip player input/actions
     this.countdownActive = false;
     this.countdownDuration = 3000; // 3 seconds
+
+    this.bot_system = "legacy";
+    // Random by default (games should vary); tests pin it for reproducible
+    // bot behaviour. Per-bot streams are derived per socketid, see AIBot.
+    this.bot_seed = (Math.random() * 0x7fffffff) | 0;
+
+    this.status = "playing";
+    this.mode = "ffa";
+    this.hostid = "";
+    this.lobby_bots = [];
+    this.lobby_bot_counter = 0;
+  }
+
+  // Humans still present in the room. human_players historically accumulated
+  // stale ids (delete_player never pruned it — fixed now, but count defensively
+  // anyway): only ids that still resolve in `players` count.
+  human_count(): number {
+    let n = 0;
+    for (const id of this.human_players) {
+      if (this.players[id]) n++;
+    }
+    return n;
   }
 
   spawn_new_player(
@@ -168,13 +242,43 @@ export class Room {
   }
 
   spawn_player(player: Player, spawns: Vec2[]): void {
-    const spawnid = Math.floor(Math.random() * spawns.length);
-    //console.log("caca:", this.spawns, "at spawn id:", this.spawns[spawnid]);
-
     this.nbliving += 1;
+    // Never hand spawn() an empty slot: an alive player without a position is
+    // a "ghost" — its own update guards, but every OTHER entity's collision
+    // pass dereferences its position and the uncaught TypeError takes the
+    // whole tick loop (i.e. the server) down. Degenerate pools fall back to
+    // the first walkable cell instead.
+    if (spawns.length === 0) {
+      player.spawn(this.fallback_spawn());
+      return;
+    }
+    const spawnid = Math.floor(Math.random() * spawns.length);
     player.spawn(spawns[spawnid]!);
-
     spawns.splice(spawnid, 1);
+  }
+
+  // Last-resort spawn for an exhausted pool / degenerate level: the first
+  // walkable interior floor cell (row-major), else the arena centre.
+  fallback_spawn(): Vec2 {
+    for (let row = 1; row <= 14; row++) {
+      for (let col = 1; col <= 21; col++) {
+        const code = this.blocklist[row * 23 + col];
+        if (code === 0 || code === 10) {
+          return { x: col * 50, y: row * 50 };
+        }
+      }
+    }
+    return { x: 550, y: 400 };
+  }
+
+  // Seats taken toward maxplayernb — THE capacity rule, in one place: coop
+  // counts humans (level bots never occupy seats), ffa counts every combatant
+  // (a lobby bot holds a real spawn slot). Join gates and both room lists
+  // (socket + HTTP) all read this.
+  seat_count(): number {
+    return this.mode === "coop"
+      ? this.human_count()
+      : Object.keys(this.players).length;
   }
 
   // `skipIds` lets a caller suppress specific bots by socketid while keeping the
@@ -189,22 +293,48 @@ export class Room {
       this.bot1_spawns.length
     );
     // One config-driven loop replacing the former Bot1-4 subclasses. Per-kind
-    // tuning lives in BOT_CONFIGS (Bot.js); colours stay sourced from
-    // Room.bot_colors. Preserves the exact socketid numbering: a single
-    // bot_index across all kinds, spawn key === the bot's socketid (bot1's old
-    // `bot${i}` key already equalled `bot${bot_index}` since bot1 is first).
-    const kinds: BotKind[] = ["bot1", "bot2", "bot3", "bot4"];
-    const labels: Record<BotKind, string> = {
+    // tuning lives in BOT_CONFIGS (Bot.js) / ai/archetypes.ts; colours stay
+    // sourced from Room.bot_colors. Preserves the exact socketid numbering: a
+    // single bot_index across all kinds, spawn key === the bot's socketid
+    // (bot1's old `bot${i}` key already equalled `bot${bot_index}`).
+    // The nine Wii tank kinds each own a level cell (bot1…bot9 ↔ cells
+    // 11…19); "match" has NO level cell — it is only ever added via
+    // spawn_lobby_bot — so it stays out of the `kinds` iteration and its
+    // Record entries below are compile-forced placeholders.
+    const kinds: AIBotKind[] = [
+      "bot1",
+      "bot2",
+      "bot3",
+      "bot4",
+      "bot5",
+      "bot6",
+      "bot7",
+      "bot8",
+      "bot9",
+    ];
+    const labels: Record<AIBotKind, string> = {
       bot1: "Bot1",
       bot2: "Bot2",
       bot3: "Bot3",
       bot4: "Bot4",
+      bot5: "Bot5",
+      bot6: "Bot6",
+      bot7: "Bot7",
+      bot8: "Bot8",
+      bot9: "Bot9",
+      match: "Match",
     };
-    const spawnLists: Record<BotKind, Vec2[]> = {
+    const spawnLists: Record<AIBotKind, Vec2[]> = {
       bot1: this.bot1_spawns,
       bot2: this.bot2_spawns,
       bot3: this.bot3_spawns,
       bot4: this.bot4_spawns,
+      bot5: this.bot5_spawns,
+      bot6: this.bot6_spawns,
+      bot7: this.bot7_spawns,
+      bot8: this.bot8_spawns,
+      bot9: this.bot9_spawns,
+      match: [],
     };
     let bot_index = 0;
     for (const kind of kinds) {
@@ -220,15 +350,202 @@ export class Room {
         // Already defeated this run: don't respawn it (but a spawn slot is left
         // unused, which is harmless — surviving bots still pick a random spawn).
         if (skipIds.has(botId)) continue;
-        const bot = new Bot(
-          { x: 0, y: 0 },
-          botId,
-          `${labels[kind]}_ ${i}`,
-          colors[0],
-          colors[1],
-          kind
-        );
+        // Identical ids/names/colors/spawn flow for both systems — only the
+        // class (i.e. the brain) differs, so campaign skipIds, the renderer's
+        // `socketId.includes("bot")` check and the kill feed see no change.
+        const label = `${labels[kind]}_ ${i}`;
+        let bot: Player;
+        if (this.bot_system === "v2") {
+          bot = new AIBot(
+            { x: 0, y: 0 },
+            botId,
+            label,
+            colors[0],
+            colors[1],
+            kind,
+            this.bot_seed
+          );
+        } else {
+          // The v2-only kinds (bot5…bot9) have no legacy brain. Skipping them
+          // entirely would make a Miner-only level UNWINNABLE under the
+          // ?bots=legacy escape hatch (the solo win check requires at least one
+          // initial enemy), so spawn a legacy stand-in driven by the mobile
+          // bot2 config — keeping the authored name/colour and the positional
+          // id (bot_index already advanced, so ids match the v2 layout for
+          // campaign skipIds). "match" can't occur here (not in the kinds
+          // array); it falls into the same arm to satisfy the narrowing.
+          const legacyKind: BotKind =
+            kind === "bot1" ||
+            kind === "bot2" ||
+            kind === "bot3" ||
+            kind === "bot4"
+              ? kind
+              : "bot2";
+          bot = new Bot(
+            { x: 0, y: 0 },
+            botId,
+            label,
+            colors[0],
+            colors[1],
+            legacyKind
+          );
+        }
         this.spawn_new(bot, botId, spawns);
+      }
+    }
+  }
+
+  // Host "Add bot": one player-equal v2 combatant (kind "match") on a PLAYER
+  // spawn slot, exactly like a human joiner. Returns null when no player spawn
+  // is free (the join gate normally prevents that). The id is disjoint from
+  // both level-bot ids (bot<N>) and socket ids, never reused after a removal,
+  // and still contains "bot" so the deployed renderer's `includes("bot")`
+  // styling applies unchanged.
+  spawn_lobby_bot(): AIBot | null {
+    if (this.spawns.length === 0) return null;
+    const botId = `lobbybot_${this.lobby_bot_counter}`;
+    const name = `Bot ${this.lobby_bot_counter + 1}`;
+    this.lobby_bot_counter++;
+    const colors = Room.bot_colors.match;
+    const bot = new AIBot(
+      { x: 0, y: 0 },
+      botId,
+      name,
+      colors[0],
+      colors[1],
+      "match",
+      this.bot_seed
+    );
+    this.spawn_new(bot, botId, this.spawns);
+    this.lobby_bots.push(botId);
+    return bot;
+  }
+
+  // delete_player minus the side effects that are wrong for bookkeeping
+  // removals: no "player-disconnection" broadcast (a removed bot is not a
+  // disconnect toast) and no nbliving<=0 auto-respawn (callers run inside
+  // their own respawn sequencing). `return_spawn` gives the slot back to the
+  // player pool — true for a host removing a lobby bot, false for the coop
+  // round-end cleanup (a level bot's spawnpos came from botN_spawns; pushing
+  // it into `spawns` would leak a bot cell into the human pool).
+  remove_player_quiet(socketid: string, return_spawn: boolean): void {
+    const player = this.players[socketid];
+    if (!player) return;
+    delete this.players[socketid];
+    const idIdx = this.ids.indexOf(socketid);
+    if (idIdx !== -1) this.ids.splice(idIdx, 1);
+    delete this.ids_to_names[socketid];
+    const lobbyIdx = this.lobby_bots.indexOf(socketid);
+    if (lobbyIdx !== -1) this.lobby_bots.splice(lobbyIdx, 1);
+    const humanIdx = this.human_players.indexOf(socketid);
+    if (humanIdx !== -1) this.human_players.splice(humanIdx, 1);
+    if (return_spawn && !player.pending_spawn) {
+      this.spawns.push(player.spawnpos);
+    }
+    if (player.alive) {
+      this.nbliving--;
+    }
+  }
+
+  // A human joining a coop room MID-ROUND: registered everywhere (so the
+  // scoreboard, lobby panel and tick snapshot know them) but kept off the
+  // field — alive=false, no spawn slot consumed, nbliving untouched. The next
+  // respawn_the_room() spawns them like everyone else (spawn() clears
+  // pending_spawn). Parked off-canvas so clients drawing dead tanks render
+  // nothing visible.
+  add_waiting_player(
+    playerName: string,
+    turretc: string,
+    bodyc: string,
+    socketid: string
+  ): void {
+    const player = new Player(
+      { x: -100, y: -100 },
+      socketid,
+      playerName,
+      turretc,
+      bodyc
+    );
+    player.alive = false;
+    player.pending_spawn = true;
+    this.players[socketid] = player;
+    this.ids.push(socketid);
+    this.ids_to_names[socketid] = playerName;
+    this.human_players.push(socketid);
+  }
+
+  // Top up `spawns` to `needed` slots from walkable floor cells, for coop
+  // rooms playing solo levels (typically authored with ONE player spawn).
+  // Deterministic — no RNG: multi-source BFS from every code-3 anchor cell in
+  // row-major order, fixed N/E/S/W neighbour order, so teammates spawn
+  // clustered ring-by-ring around the level's intended start. Walkable floor =
+  // codes 0 (empty) and 10 (destroyed wall); traversal additionally passes
+  // through code-3 cells (the anchors themselves are floor). Cells already
+  // promised — a pooled spawn or any player's spawnpos — are skipped.
+  // Exhausting the search (pathological sealed level) returns silently with
+  // however many slots were found (spawn_player's fallback covers the rest).
+  //
+  // `reservePlayerSpawnpos` keeps cells already held by spawned players out of
+  // the pool — right at JOIN time (everyone else keeps their slot), wrong at
+  // the coop round-end respawn (every human is about to be re-dealt from the
+  // fresh pool, and their spawnpos still aliases PREVIOUS-level cells): that
+  // call site passes false.
+  ensure_spawn_capacity(needed: number, reservePlayerSpawnpos = true): void {
+    let missing = needed - this.spawns.length;
+    if (missing <= 0) return;
+
+    const COLS = 23;
+    const ROWS = 16;
+    const cellOf = (v: Vec2): number => (v.y / 50) * COLS + v.x / 50;
+
+    const occupied = new Set<number>();
+    for (const s of this.spawns) occupied.add(cellOf(s));
+    if (reservePlayerSpawnpos) {
+      for (const socketid in this.players) {
+        const p = this.players[socketid];
+        if (p && p.spawnpos) occupied.add(cellOf(p.spawnpos));
+      }
+    }
+
+    const queue: number[] = [];
+    const seen = new Set<number>();
+    for (let i = 0; i < this.blocklist.length; i++) {
+      if (this.blocklist[i] === 3) {
+        queue.push(i);
+        seen.add(i);
+      }
+    }
+
+    let head = 0;
+    while (head < queue.length && missing > 0) {
+      const idx = queue[head]!;
+      head++;
+      const row = Math.floor(idx / COLS);
+      const col = idx % COLS;
+
+      const code = this.blocklist[idx];
+      if ((code === 0 || code === 10) && !occupied.has(idx)) {
+        this.spawns.push({ x: col * 50, y: row * 50 });
+        occupied.add(idx);
+        missing--;
+      }
+
+      // N, E, S, W — inside the border ring only (rows 1..14, cols 1..21,
+      // matching the chassis clamps), through floor/anchor cells only.
+      const neighbours = [
+        [row - 1, col],
+        [row, col + 1],
+        [row + 1, col],
+        [row, col - 1],
+      ] as const;
+      for (const [r, c] of neighbours) {
+        if (r < 1 || r > ROWS - 2 || c < 1 || c > COLS - 2) continue;
+        const nIdx = r * COLS + c;
+        if (seen.has(nIdx)) continue;
+        const nCode = this.blocklist[nIdx];
+        if (nCode !== 0 && nCode !== 10 && nCode !== 3) continue;
+        seen.add(nIdx);
+        queue.push(nIdx);
       }
     }
   }
@@ -274,13 +591,71 @@ export class Room {
     ...args: Parameters<ServerToClientEvents[E]>
   ): void {
     if (this.io != null) {
-      this.io.to(this.id).emit(event, ...args);
+      // Socket.io rooms are string-keyed and players join via
+      // `socket.join(String(room.id))`, so broadcast to the string id too —
+      // `io.to(<number>)` would target a different (empty) room and silently
+      // drop every tick / explosion / sound, leaving clients with no tanks.
+      this.io.to(String(this.id)).emit(event, ...args);
     } else {
       //console.error("No io instance available to emit to this:", this.name);
     }
   }
 
   check_for_winns_and_load_next_level(): boolean {
+    // A held lobby can never end a round: nobody can act while frozen, ≥2
+    // players idling pre-start must not trip the FFA winner, and a coop room
+    // has no bots before Start (an empty bot set would read as instant win).
+    if (this.status === "lobby") return false;
+
+    if (this.mode === "coop") {
+      if (this.waitingrespawn) return false;
+      let alive_humans = 0;
+      let alive_bots = 0;
+      for (const socketid in this.players) {
+        const p = this.players[socketid];
+        if (!p || !p.alive) continue;
+        if (p.is_bot) alive_bots++;
+        else alive_humans++;
+      }
+      // Humans first: a mutual wipe-out (last human and last bot dying on the
+      // same tick) counts as a LOSS. No ≥2-players requirement — one human vs
+      // the level's bots is a legal coop round.
+      if (alive_humans === 0) {
+        this.emit_to_room("winner", {
+          socketid: -1,
+          waitingtime: this.waitingtime,
+          player_scores: this.get_all_player_stats(),
+          ids_to_name: this.ids_to_names,
+          coop: "loss",
+        });
+        this.waitingrespawn = true;
+        return true;
+      }
+      if (alive_bots === 0) {
+        // Every surviving human wins. The payload's single socketid carries
+        // the first of them so old clients still render a sensible "X wins";
+        // new clients read the additive `coop` verdict instead.
+        let first_alive: string | number = -1;
+        for (const socketid in this.players) {
+          const p = this.players[socketid];
+          if (p && p.alive && !p.is_bot) {
+            p.round_stats.stats.wins++;
+            if (first_alive === -1) first_alive = socketid;
+          }
+        }
+        this.emit_to_room("winner", {
+          socketid: first_alive,
+          waitingtime: this.waitingtime,
+          player_scores: this.get_all_player_stats(),
+          ids_to_name: this.ids_to_names,
+          coop: "win",
+        });
+        this.waitingrespawn = true;
+        return true;
+      }
+      return false;
+    }
+
     if (this.waitingrespawn == false && this.nbliving <= 1) {
       if (Object.keys(this.players).length >= 2) {
         if (this.nbliving == 1) {
@@ -318,11 +693,24 @@ export class Room {
       delete this.players[socketid];
       this.ids.splice(this.ids.indexOf(socketid), 1);
       delete this.ids_to_names[socketid];
-      this.spawns.push(player.spawnpos);
+      // Keep the membership lists honest (human_players historically
+      // accumulated stale ids forever) so human_count()/host transfer work.
+      const humanIdx = this.human_players.indexOf(socketid);
+      if (humanIdx !== -1) this.human_players.splice(humanIdx, 1);
+      const lobbyIdx = this.lobby_bots.indexOf(socketid);
+      if (lobbyIdx !== -1) this.lobby_bots.splice(lobbyIdx, 1);
+      // A waiting coop joiner never owned a spawn slot — returning their
+      // parked {-100,-100} spawnpos would poison the pool.
+      if (!player.pending_spawn) {
+        this.spawns.push(player.spawnpos);
+      }
       if (player.alive) {
         this.nbliving--;
       }
-      if (this.nbliving <= 0) {
+      // Skip the auto-respawn while a round-end respawn is already pending:
+      // the last alive player quitting during the 5s scoreboard wait used to
+      // trigger a second, immediate respawn racing the scheduled one.
+      if (this.nbliving <= 0 && !this.waitingrespawn) {
         this.respawn_the_room();
       }
     }
@@ -377,16 +765,16 @@ export class Room {
         continue bulleting;
       }
       for (let e = 0; e < this.mines.length; e++) {
+        // mine.position is the mine's centre; the bullet's circle is taken about
+        // its box centre (position + size/2) with its inscribed radius.
         if (
-          rectanglesSeTouchent(
-            this.mines[e]!.position.x - this.mines[e]!.radius,
-            this.mines[e]!.position.y - this.mines[e]!.radius,
-            this.mines[e]!.radius * 2,
-            this.mines[e]!.radius * 2,
-            this.bullets[i]!.position.x,
-            this.bullets[i]!.position.y,
-            this.bullets[i]!.size.w,
-            this.bullets[i]!.size.h
+          circlesOverlap(
+            this.mines[e]!.position.x,
+            this.mines[e]!.position.y,
+            this.mines[e]!.radius,
+            this.bullets[i]!.position.x + this.bullets[i]!.size.w / 2,
+            this.bullets[i]!.position.y + this.bullets[i]!.size.h / 2,
+            Math.min(this.bullets[i]!.size.w, this.bullets[i]!.size.h) / 2
           )
         ) {
           this.mines[e]!.timealive = this.timetoeplode;
@@ -398,18 +786,18 @@ export class Room {
         }
       }
       for (let e = 0; e < this.bullets.length; e++) {
+        // Two bullets collide as their on-screen discs (centre = box centre,
+        // radius = inscribed half-size).
         if (
-          rectRect(
-            this.bullets[i]!.position.x,
-            this.bullets[i]!.position.y,
-            this.bullets[i]!.size.w,
-            this.bullets[i]!.size.h,
-            this.bullets[e]!.position.x,
-            this.bullets[e]!.position.y,
-            this.bullets[e]!.size.w,
-            this.bullets[e]!.size.h
-          ) &&
-          i != e
+          i != e &&
+          circlesOverlap(
+            this.bullets[i]!.position.x + this.bullets[i]!.size.w / 2,
+            this.bullets[i]!.position.y + this.bullets[i]!.size.h / 2,
+            Math.min(this.bullets[i]!.size.w, this.bullets[i]!.size.h) / 2,
+            this.bullets[e]!.position.x + this.bullets[e]!.size.w / 2,
+            this.bullets[e]!.position.y + this.bullets[e]!.size.h / 2,
+            Math.min(this.bullets[e]!.size.w, this.bullets[e]!.size.h) / 2
+          )
         ) {
           this.bullets[i]!.emitter.bulletcount--;
           this.bullets[i]!.emitter.round_stats.stats.hits++;

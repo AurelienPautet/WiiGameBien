@@ -25,7 +25,8 @@
     "playSolo": "Gioca Solo",
     "rankings": "Classifiche",
     "editor": "Editor",
-    "campaigns": "Campagne"
+    "campaigns": "Campagne",
+    "admin": "Admin"
   },
   "topbar": {
     "online": "online",
@@ -120,7 +121,10 @@
     "noRooms": "Nessuna stanza disponibile",
     "createToStart": "Creane una per iniziare!",
     "full": "PIENA",
-    "passwordProtected": "Protetta da password"
+    "passwordProtected": "Protetta da password",
+    "inLobby": "In lobby",
+    "inGame": "In gioco",
+    "coop": "Coop"
   },
   "createRoom": {
     "title": "Crea Stanza",
@@ -129,7 +133,18 @@
     "creating": "Creazione…",
     "createWithCount": "Crea Stanza ({{count}} livelli)",
     "mustLogin": "Devi essere connesso per creare una stanza.",
-    "failedCreate": "Impossibile creare la stanza. Riprova."
+    "mode": "Modalità di gioco",
+    "modeClassic": "Classica",
+    "modeCoop": "Coop",
+    "coopHint": "Coop: fino a 4 giocatori si alleano contro i bot del livello. Solo livelli singolo giocatore con nemici.",
+    "failed": "Impossibile creare la stanza",
+    "failReason": {
+      "level_not_found": "Un livello selezionato non esiste più.",
+      "not_solo": "Le stanze coop giocano solo livelli singolo giocatore.",
+      "no_bot_spawns": "Ogni livello coop deve avere almeno un nemico.",
+      "no_player_spawn": "Ogni livello coop deve avere un punto di spawn del giocatore.",
+      "timeout": "Il server non ha risposto. Riprova."
+    }
   },
   "levelSelector": {
     "searchPlaceholder": "Cerca il nome del livello…",
@@ -258,7 +273,9 @@
     "needLoginRate": "Devi essere connesso per valutare un livello",
     "noLevelRate": "Nessun livello da valutare",
     "playAgain": "Gioca di Nuovo",
-    "quit": "Esci"
+    "quit": "Esci",
+    "coopVictory": "Vittoria — tutti i bot distrutti!",
+    "coopDefeat": "Sconfitta — la tua squadra è stata eliminata"
   },
   "campaignEnd": {
     "complete": "Campagna Completata!",
@@ -283,7 +300,8 @@
     "go": "GO!"
   },
   "orientation": {
-    "rotate": "Ruota il dispositivo in orizzontale"
+    "rotate": "Ruota il dispositivo in orizzontale",
+    "continueAnyway": "Continua comunque"
   },
   "pause": {
     "title": "In Pausa",
@@ -303,8 +321,9 @@
       "esc": "Esc",
       "moveStick": "Stick sinistro",
       "aimStick": "Stick destro",
-      "fireButton": "Pulsante fuoco",
       "holdAim": "Tieni premuto per mirare",
+      "tapNearest": "Tocca: più vicino",
+      "dragAim": "Trascina: mira",
       "mineButton": "Pulsante mina"
     }
   },
@@ -341,6 +360,7 @@
     "levelNamePlaceholder": "Inserisci il nome del livello",
     "clearLevel": "Cancella Livello",
     "saveLevel": "Salva Livello",
+    "testLevel": "Prova livello",
     "selectBlock": "Seleziona un blocco",
     "confirmClear": "Sei sicuro di voler cancellare l'intero livello?",
     "blocks": {
@@ -348,10 +368,15 @@
       "platform": "Piattaforma",
       "hole": "Buco",
       "spawn": "Spawnpoint",
-      "botBlue": "Bot Blu",
-      "botGreen": "Bot Verde",
-      "botOrange": "Bot Arancione",
-      "botRed": "Bot Rosso"
+      "botBrown": "Bot Marrone (Torretta)",
+      "botGrey": "Bot Grigio (Soldato)",
+      "botTeal": "Bot Turchese (Missili)",
+      "botGreen": "Bot Verde (Cecchino)",
+      "botYellow": "Bot Giallo (Minatore)",
+      "botPurple": "Bot Viola (Guerriero)",
+      "botMagenta": "Bot Magenta (Assaltatore)",
+      "botWhite": "Bot Bianco (Furtivo)",
+      "botBlack": "Bot Nero (Élite)"
     },
     "toast": {
       "title": "Livello",
@@ -401,5 +426,16 @@
     "title": "Qualcosa è andato storto",
     "message": "Il gioco ha riscontrato un errore imprevisto. Di solito ricaricarlo lo risolve.",
     "reload": "Ricarica"
+  },
+  "lobby": {
+    "classic": "Classica",
+    "coop": "Coop",
+    "addBot": "Aggiungi bot",
+    "removeBot": "Rimuovi bot",
+    "start": "Avvia partita",
+    "leave": "Esci",
+    "bot": "Bot",
+    "host": "Host",
+    "waitingForHost": "In attesa che l'host avvii…"
   }
 }

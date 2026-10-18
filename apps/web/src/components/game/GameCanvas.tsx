@@ -12,12 +12,13 @@ import { GameEngine } from "../../engine/GameEngine";
 import { EndGameScreen } from "./EndGameScreen";
 import type { SoloGameResult } from "./EndGameScreen";
 import { CountdownOverlay } from "./CountdownOverlay";
+import { LobbyOverlay } from "./LobbyOverlay";
 import { LivesHud } from "./LivesHud";
 import { RunTimer } from "./RunTimer";
 import { CampaignEndScreen } from "./CampaignEndScreen";
 import { CampaignInterstitial } from "./CampaignInterstitial";
 import type { InterstitialData, LevelStats } from "./CampaignInterstitial";
-import type { WinnerPayload } from "@ouigame/shared/types";
+import type { WinnerPayload, LobbyState } from "@ouigame/shared/types";
 import { useSubmitSoloRound, useSubmitCampaignRun } from "../../hooks/api";
 import { LIFE_EVERY } from "../../constants/campaign";
 import { PauseOverlay } from "./PauseOverlay";
@@ -25,7 +26,6 @@ import { SettingsModal } from "../modals/SettingsModal";
 import { GameCursor } from "./GameCursor";
 import { TouchControls } from "./TouchControls";
 import { FixedUiLayer } from "./FixedUiLayer";
-import { OrientationHint } from "./OrientationHint";
 import { useTouchControlsEnabled } from "../../lib/touch";
 import { tankColors as resolveTankColors, palette } from "../../theme/palette";
 
@@ -37,6 +37,16 @@ const isInGameHistoryEntry = () =>
   Boolean(
     (window.history.state as { ouigameInGame?: boolean } | null)?.ouigameInGame
   );
+
+// Dev-only introspection handle: lets browser automation (and a curious
+// console user) read live room state objectively — e.g. bot positions/mine
+// counts during AI verification. Stripped from production builds.
+const exposeEngineForDev = (engine: GameEngine) => {
+  if (import.meta.env.DEV) {
+    (window as unknown as { __ouitankEngine?: GameEngine }).__ouitankEngine =
+      engine;
+  }
+};
 
 export const GameCanvas = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -57,6 +67,9 @@ export const GameCanvas = () => {
   const [isEndGameVisible, setIsEndGameVisible] = useState(false);
   const [soloResult, setSoloResult] = useState<SoloGameResult | null>(null);
   const [showCountdown, setShowCountdown] = useState(false);
+  // Latest lobby_state for the joined online room. Non-null with status
+  // "lobby" ⇒ the room is pre-game (frozen arena) and the lobby panel shows.
+  const [lobby, setLobby] = useState<LobbyState | null>(null);
   // Between-level screen for campaigns.
   const [interstitial, setInterstitial] = useState<InterstitialData | null>(
     null
@@ -81,10 +94,14 @@ export const GameCanvas = () => {
     lives,
     runStartTime,
     campaignRunResult,
+    testLayout,
     startCampaign,
     campaignAdvance,
     campaignLoseLife,
   } = useGame();
+  // True for the editor "test" run: a throwaway in-memory level with no id, so
+  // no stats are submitted and quitting returns to the editor (no modal).
+  const isTest = testLayout != null;
   const { socket, serverId } = useSocket()!;
   const { openModal } = useModal();
   const { settings } = useSettings();
@@ -122,6 +139,9 @@ export const GameCanvas = () => {
   const playerNameRef = useRef(playerName);
   const tankColorsRef = useRef(tankColors);
   const serverIdRef = useRef(serverId);
+  // In-memory grid for an editor test run (null otherwise). A ref so the engine
+  // start/replay effects can read it without depending on it.
+  const testLayoutRef = useRef(testLayout);
   // Latest settings, read when an engine is created without retriggering the
   // creation effect on every settings change (live changes flow through the
   // dedicated effect below).
@@ -132,7 +152,8 @@ export const GameCanvas = () => {
     tankColorsRef.current = tankColors;
     settingsRef.current = settings;
     serverIdRef.current = serverId;
-  }, [playerName, tankColors, settings, serverId]);
+    testLayoutRef.current = testLayout;
+  }, [playerName, tankColors, settings, serverId, testLayout]);
 
   // Push effect toggles to the running engine whenever they change (live).
   useEffect(() => {
@@ -157,16 +178,34 @@ export const GameCanvas = () => {
       // Kick off the parachute drop in step with the server countdown.
       engineRef.current?.startSpawnAnimation();
       // Server controls the timing, client just shows the UI
+      // The match-start countdown also ends the lobby — drop the panel even
+      // if the status-flip lobby_state broadcast got lost.
+      setLobby((prev) =>
+        prev && prev.status === "lobby" ? { ...prev, status: "playing" } : prev
+      );
+    };
+
+    // Pre-game lobby snapshots (membership/host/status changes).
+    const handleLobbyState = (state: LobbyState) => {
+      setLobby(state);
     };
 
     socket.on("winner", handleWinner);
     socket.on("countdown_start", handleCountdownStartServer);
+    socket.on("lobby_state", handleLobbyState);
 
     return () => {
       socket.off("winner", handleWinner);
       socket.off("countdown_start", handleCountdownStartServer);
+      socket.off("lobby_state", handleLobbyState);
     };
   }, [socket]);
+
+  // A stale lobby panel must never survive into another room (GameCanvas does
+  // not unmount between rooms — the engine-init effect just re-runs).
+  useEffect(() => {
+    setLobby(null);
+  }, [roomId]);
 
   // Handle countdown start callback from engine
   const handleCountdownStart = useCallback(() => {
@@ -195,8 +234,9 @@ export const GameCanvas = () => {
     (result: SoloGameResult) => {
       const isWin = result.result === "win";
 
-      // Per-level solo stats (works for both solo and campaign levels)
-      if (levelId) {
+      // Per-level solo stats (works for both solo and campaign levels). Skipped
+      // for an editor test run: the level has no id, so there's nothing to log.
+      if (levelId && !isTest) {
         submitSoloRoundMutation.mutate({
           levelId,
           success: isWin,
@@ -293,6 +333,7 @@ export const GameCanvas = () => {
     },
     [
       levelId,
+      isTest,
       mode,
       campaignId,
       campaignIndex,
@@ -355,10 +396,14 @@ export const GameCanvas = () => {
     setSoloResult(null);
     setIsEndGameVisible(false);
     setShowCountdown(false);
+    setLobby(null);
     setInterstitial(null);
     engineRef.current?.quit();
     quitGame();
 
+    // A test run exits straight back to the editor (rendered underneath); the
+    // browse-levels / browse-campaigns modals only make sense for real plays.
+    if (isTest) return;
     if (wasSolo) {
       openModal(MODALS.LEVEL_SELECTOR);
     } else if (wasCampaign) {
@@ -367,6 +412,7 @@ export const GameCanvas = () => {
   }, [
     quitGame,
     mode,
+    isTest,
     openModal,
     campaignRunResult,
     campaignIndex,
@@ -438,6 +484,7 @@ export const GameCanvas = () => {
         socket
       );
       engineRef.current = engine;
+      exposeEngineForDev(engine);
       setPostActive(engine.hasPostProcessing());
       engine.applyEffects(settingsRef.current.effects);
 
@@ -447,8 +494,15 @@ export const GameCanvas = () => {
       engine.onGameOver = handleGameOver;
       engine.onCountdownStart = handleCountdownStart;
 
-      // Start the game (countdown will be triggered by engine)
-      engine.startSolo(levelId, playerNameRef.current, tankColorsRef.current);
+      // Start the game (countdown will be triggered by engine). A test replay
+      // re-plays the same in-memory layout (no life cost, fresh enemies).
+      engine.startSolo(
+        levelId,
+        playerNameRef.current,
+        tankColorsRef.current,
+        [],
+        testLayoutRef.current ?? undefined
+      );
     }
   }, [
     levelId,
@@ -499,6 +553,7 @@ export const GameCanvas = () => {
       socket
     );
     engineRef.current = engine;
+    exposeEngineForDev(engine);
     setPostActive(engine.hasPostProcessing());
     engine.applyEffects(settingsRef.current.effects);
 
@@ -513,7 +568,9 @@ export const GameCanvas = () => {
             tankColorsRef.current,
             // Only campaigns carry defeated enemies across a retry; a solo
             // replay always starts the level fresh.
-            mode === "campaign" ? defeatedBotIdsRef.current : []
+            mode === "campaign" ? defeatedBotIdsRef.current : [],
+            // Editor test run plays this in-memory grid instead of fetching.
+            testLayoutRef.current ?? undefined
           );
         } else if (mode === "online" && roomId) {
           await engine.startOnline(
@@ -579,8 +636,14 @@ export const GameCanvas = () => {
   // Show the custom reticle (and hide the OS cursor) only during live play —
   // when an overlay is up we hand the native pointer back so its buttons are
   // clickable. The reticle is tinted with the player's turret colour.
+  const lobbyUp =
+    mode === "online" && roomId != null && lobby?.status === "lobby";
   const overlayUp =
-    isPaused || isEndGameVisible || !!interstitial || !!campaignRunResult;
+    isPaused ||
+    isEndGameVisible ||
+    !!interstitial ||
+    !!campaignRunResult ||
+    lobbyUp;
   const showCursor = !overlayUp;
   const turretFill = resolveTankColors(tankColors.turret).fill;
   const cursorColor = turretFill === "transparent" ? palette.red : turretFill;
@@ -664,6 +727,12 @@ export const GameCanvas = () => {
           <RunTimer getElapsedMs={getElapsedMs} />
         )}
 
+        {/* Pre-game lobby panel over the live (frozen) arena. Below the
+            countdown overlay so the 3-2-1 paints on top during the handoff. */}
+        {lobbyUp && lobby && roomId != null && (
+          <LobbyOverlay state={lobby} roomId={roomId} onLeave={requestQuit} />
+        )}
+
         {/* Countdown overlay (freezes while paused) */}
         <CountdownOverlay
           isActive={showCountdown}
@@ -696,7 +765,8 @@ export const GameCanvas = () => {
             externalResult={soloResult}
             onReplay={handleReplay}
             onQuit={requestQuit}
-            levelId={levelId}
+            // A test level has no real id — suppress leaderboard / rating.
+            levelId={isTest ? null : levelId}
           />
         )}
 
@@ -717,9 +787,6 @@ export const GameCanvas = () => {
             onQuit={requestQuit}
           />
         )}
-
-        {/* Rotate-to-landscape prompt (touch + portrait only) */}
-        <OrientationHint />
       </FixedUiLayer>
     </>
   );

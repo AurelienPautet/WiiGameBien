@@ -25,7 +25,8 @@
     "playSolo": "Solo",
     "rankings": "Classements",
     "editor": "Éditeur",
-    "campaigns": "Campagnes"
+    "campaigns": "Campagnes",
+    "admin": "Admin"
   },
   "topbar": {
     "online": "en ligne",
@@ -106,7 +107,9 @@
     "hits": "Coups au but",
     "accuracy": "Précision",
     "minesPlanted": "Mines plantées",
-    "blocksBroken": "Blocs cassés"
+    "blocksBroken": "Blocs cassés",
+    "achievements": "Succès",
+    "achievementsProgress": "{{unlocked}} sur {{total}} débloqués"
   },
   "rooms": {
     "playOnline": "Multijoueur",
@@ -120,7 +123,10 @@
     "noRooms": "Aucune partie disponible",
     "createToStart": "Crée-en une pour commencer !",
     "full": "PLEIN",
-    "passwordProtected": "Protégée par mot de passe"
+    "passwordProtected": "Protégée par mot de passe",
+    "inLobby": "Dans le salon",
+    "inGame": "En jeu",
+    "coop": "Coop"
   },
   "createRoom": {
     "title": "Créer une partie",
@@ -129,7 +135,18 @@
     "creating": "Création…",
     "createWithCount": "Créer la partie ({{count}} niveaux)",
     "mustLogin": "Tu dois être connecté pour créer une partie.",
-    "failedCreate": "Impossible de créer le salon. Veuillez réessayer."
+    "mode": "Mode de jeu",
+    "modeClassic": "Classique",
+    "modeCoop": "Coop",
+    "coopHint": "Coop : jusqu'à 4 joueurs s'allient contre les bots du niveau. Uniquement des niveaux solo avec des ennemis.",
+    "failed": "Impossible de créer le salon",
+    "failReason": {
+      "level_not_found": "Un niveau sélectionné n'existe plus.",
+      "not_solo": "Les salons coop ne jouent que des niveaux solo.",
+      "no_bot_spawns": "Chaque niveau coop doit contenir au moins un ennemi.",
+      "no_player_spawn": "Chaque niveau coop doit contenir un point d'apparition de joueur.",
+      "timeout": "Le serveur n'a pas répondu. Veuillez réessayer."
+    }
   },
   "levelSelector": {
     "searchPlaceholder": "Cherche un niveau…",
@@ -258,7 +275,9 @@
     "needLoginRate": "Tu dois être connecté pour noter un niveau",
     "noLevelRate": "Pas de niveau à noter",
     "playAgain": "Rejouer",
-    "quit": "Quitter"
+    "quit": "Quitter",
+    "coopVictory": "Victoire — tous les bots détruits !",
+    "coopDefeat": "Défaite — votre équipe a été éliminée"
   },
   "campaignEnd": {
     "complete": "Campagne terminée !",
@@ -283,7 +302,8 @@
     "go": "GO!"
   },
   "orientation": {
-    "rotate": "Tournez votre appareil en mode paysage"
+    "rotate": "Tournez votre appareil en mode paysage",
+    "continueAnyway": "Continuer quand même"
   },
   "pause": {
     "title": "En pause",
@@ -303,8 +323,9 @@
       "esc": "Échap",
       "moveStick": "Joystick gauche",
       "aimStick": "Joystick droit",
-      "fireButton": "Bouton de tir",
       "holdAim": "Maintenir pour viser",
+      "tapNearest": "Toucher : le plus proche",
+      "dragAim": "Glisser : viser",
       "mineButton": "Bouton mine"
     }
   },
@@ -341,6 +362,7 @@
     "levelNamePlaceholder": "Saisis le nom du niveau",
     "clearLevel": "Effacer le niveau",
     "saveLevel": "Enregistrer le niveau",
+    "testLevel": "Tester le niveau",
     "selectBlock": "Sélectionne un bloc",
     "confirmClear": "Es-tu sûr de vouloir effacer entièrement le niveau ?",
     "blocks": {
@@ -348,10 +370,15 @@
       "platform": "Plateforme",
       "hole": "Trou",
       "spawn": "Point d'apparition",
-      "botBlue": "Bot bleu",
-      "botGreen": "Bot vert",
-      "botOrange": "Bot orange",
-      "botRed": "Bot rouge"
+      "botBrown": "Bot brun (Tourelle)",
+      "botGrey": "Bot gris (Soldat)",
+      "botTeal": "Bot turquoise (Missiles)",
+      "botGreen": "Bot vert (Sniper)",
+      "botYellow": "Bot jaune (Mineur)",
+      "botPurple": "Bot violet (Guerrier)",
+      "botMagenta": "Bot magenta (Fonceur)",
+      "botWhite": "Bot blanc (Furtif)",
+      "botBlack": "Bot noir (Élite)"
     },
     "toast": {
       "title": "Niveau",
@@ -395,11 +422,101 @@
     "connected": "{{name}} s'est connecté",
     "disconnected": "{{name}} s'est déconnecté",
     "killedBullet": "{{killer}} a éliminé {{victim}}",
-    "killedMine": "{{killer}} a explosé {{victim}}"
+    "killedMine": "{{killer}} a explosé {{victim}}",
+    "achievementUnlocked": "Succès débloqué !"
+  },
+  "achievements": {
+    "categories": {
+      "online": "Multijoueur",
+      "mines": "Mines & démolition",
+      "solo": "Solo",
+      "campaign": "Campagne"
+    },
+    "items": {
+      "triple_threat": {
+        "name": "Triplé",
+        "desc": "Réalise 3 éliminations dans une partie en ligne."
+      },
+      "rampage": {
+        "name": "Carnage",
+        "desc": "Réalise 5 éliminations dans une partie en ligne."
+      },
+      "untouchable": {
+        "name": "Intouchable",
+        "desc": "Gagne une partie en ligne sans mourir."
+      },
+      "pacifist": {
+        "name": "Pacifiste",
+        "desc": "Gagne une partie en ligne sans tirer."
+      },
+      "dead_eye": {
+        "name": "Œil de lynx",
+        "desc": "Termine une partie en ligne avec 90 % de précision."
+      },
+      "first_blood": {
+        "name": "Premier sang",
+        "desc": "Réalise ta première élimination."
+      },
+      "sharpshooter": {
+        "name": "Tireur d'élite",
+        "desc": "Atteins 100 éliminations au total."
+      },
+      "warlord": {
+        "name": "Seigneur de guerre",
+        "desc": "Atteins 500 éliminations au total."
+      },
+      "champion": {
+        "name": "Champion",
+        "desc": "Gagne 25 parties en ligne."
+      },
+      "veteran": {
+        "name": "Vétéran",
+        "desc": "Joue 50 parties en ligne."
+      },
+      "sapper": {
+        "name": "Sapeur",
+        "desc": "Pose ta première mine."
+      },
+      "demolition_expert": {
+        "name": "Expert en démolition",
+        "desc": "Détruis 50 blocs avec des mines."
+      },
+      "first_steps": {
+        "name": "Premiers pas",
+        "desc": "Termine ton premier niveau solo."
+      },
+      "level_master": {
+        "name": "Maître des niveaux",
+        "desc": "Termine 25 niveaux solo différents."
+      },
+      "flawless_solo": {
+        "name": "Sans faute",
+        "desc": "Termine un niveau solo sans mourir."
+      },
+      "campaigner": {
+        "name": "Aventurier",
+        "desc": "Termine une campagne."
+      },
+      "campaign_marathoner": {
+        "name": "Marathonien",
+        "desc": "Franchis 5 niveaux dans une seule campagne."
+      }
+    }
   },
   "errorBoundary": {
     "title": "Quelque chose s'est mal passé",
     "message": "Le jeu a rencontré une erreur inattendue. Recharger règle généralement le problème.",
     "reload": "Recharger"
+  },
+  "lobby": {
+    "classic": "Classique",
+    "coop": "Coop",
+    "addBot": "Ajouter un bot",
+    "removeBot": "Retirer le bot",
+    "start": "Lancer la partie",
+    "leave": "Quitter",
+    "bot": "Bot",
+    "host": "Hôte",
+    "waitingForHost": "En attente du lancement par l'hôte…"
   }
 }

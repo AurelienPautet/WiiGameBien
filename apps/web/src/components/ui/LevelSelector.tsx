@@ -4,13 +4,14 @@ import {
   Search,
   Gamepad2,
   Plus,
+  Play,
   Pencil,
   Trash2,
   ArrowUp,
   ArrowDown,
 } from "lucide-react";
 import { LevelCard } from "./LevelCard";
-import { hexToDataUrl } from "../../utils/levelUtils";
+import { hexToDataUrl, hasBotSpawns } from "../../utils/levelUtils";
 import { useLevels, useMyLevels } from "../../hooks/api";
 import { storage } from "../../lib/storage";
 import type { LevelDTO } from "@ouigame/shared/api";
@@ -31,22 +32,29 @@ interface LevelSelectorProps {
   mode?: "solo" | "room" | "myLevels" | "pick";
   onSelect?: (levelId: number) => void; // solo mode
   onMultiSelect?: (levelIds: number[]) => void; // room mode
+  onPlay?: (levelId: number) => void; // myLevels mode
   onEdit?: (levelId: number) => void; // myLevels mode
   onDelete?: (levelId: number) => void; // myLevels mode
   onCreate?: () => void; // "Create New" clicked (myLevels mode)
   onPick?: (level: LevelDTO) => void; // full level object picked (pick mode)
   pickedIds?: number[]; // already-picked ids, shown as "Added" (pick mode)
+  // Coop room creation browses SOLO levels in room (multi-select) mode:
+  levelTypeOverride?: "solo" | "online"; // wins over the mode-derived type
+  requireBotSpawns?: boolean; // keep only levels with bot cells (11-19)
 }
 
 export function LevelSelector({
   mode = "solo",
   onSelect,
   onMultiSelect,
+  onPlay,
   onEdit,
   onDelete,
   onCreate,
   onPick,
   pickedIds = [],
+  levelTypeOverride,
+  requireBotSpawns = false,
 }: LevelSelectorProps) {
   const { t } = useTranslation();
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -91,10 +99,13 @@ export function LevelSelector({
 
   // Determine API parameters based on mode
   const isPick = mode === "pick";
-  const showPlayerFilter = mode === "room" || mode === "myLevels";
+  // The max-players filter is meaningless over solo levels (1-player rows).
+  const showPlayerFilter =
+    (mode === "room" || mode === "myLevels") && !requireBotSpawns;
   const isMultiSelect = mode === "room";
   const showActions = mode === "myLevels";
-  const levelType = mode === "solo" || isPick ? "solo" : "online";
+  const levelType =
+    levelTypeOverride ?? (mode === "solo" || isPick ? "solo" : "online");
   const showSoloFilters = mode === "solo" || isPick;
 
   // Use appropriate hook based on mode
@@ -103,8 +114,16 @@ export function LevelSelector({
       ? useMyLevels({ name: searchName, players: maxPlayers })
       : useLevels({ name: searchName, players: maxPlayers, type: levelType });
 
-  const rawLevels = levelsQuery.data || [];
+  const fetchedLevels = levelsQuery.data || [];
   const isLoading = levelsQuery.isLoading;
+
+  // Coop rooms need an enemy on every level: keep only grids with bot cells.
+  const rawLevels = useMemo(() => {
+    if (!requireBotSpawns) return fetchedLevels;
+    return fetchedLevels.filter((level) =>
+      hasBotSpawns((level.level_json as { data?: number[] } | null)?.data)
+    );
+  }, [fetchedLevels, requireBotSpawns]);
 
   // Sort levels client-side for solo mode
   const levels = useMemo(() => {
@@ -191,6 +210,14 @@ export function LevelSelector({
   ) => {
     e.stopPropagation();
     onEdit?.(levelId);
+  };
+
+  const handlePlay = (
+    levelId: number,
+    e: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    e.stopPropagation();
+    onPlay?.(levelId);
   };
 
   const toggleSortOrder = () => {
@@ -352,6 +379,15 @@ export function LevelSelector({
               {/* Action buttons for myLevels mode */}
               {showActions && (
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {onPlay && (
+                    <Button
+                      variant="green"
+                      size="sm"
+                      onClick={(e) => handlePlay(level.level_id, e)}
+                    >
+                      <Play size={16} /> Play
+                    </Button>
+                  )}
                   <Button
                     variant="blue"
                     size="sm"

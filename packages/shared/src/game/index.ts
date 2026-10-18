@@ -5,8 +5,10 @@
 // shared/ tree and the browser <script> tags. All exports are named.
 export * from "./check_collision.js";
 export * from "./check_intersect.js";
+export * from "./game_constants.js";
 export * from "./loop.js";
 export * from "./commons.js";
+export * from "./auto_aim.js";
 export * from "./Stats.js";
 export * from "./Block.js";
 export * from "./Hole.js";
@@ -19,6 +21,7 @@ export * from "./possible_moves.js";
 export * from "./Bot.js";
 export * from "./level_loader.js";
 export * from "./Room.js";
+export * from "./ai/index.js";
 // The typed broadcast contract, so a consumer that hosts a Room (the web's solo
 // LocalIO) can implement the same RoomIo the server's real Socket.io satisfies.
 export type { RoomIo, RoomEmitter, RoomBroadcastEvent } from "./types.js";

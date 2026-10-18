@@ -3,13 +3,17 @@ import type { Request, Response } from "express";
 const router = express.Router();
 
 // Fields read off each room when listing. The full room objects live in the
-// socket layer; only this subset is surfaced over HTTP.
+// socket layer; only this subset is surfaced over HTTP. status/mode/
+// human_count are optional so legacy stubs (tests) without them still list.
 type RoomListEntry = {
   id: number;
   name: string;
   creator: string;
   players: Record<string, unknown>;
   maxplayernb: number;
+  status?: "lobby" | "playing";
+  mode?: "ffa" | "coop";
+  seat_count?: () => number;
 };
 
 let rooms: Record<number, unknown> = {};
@@ -24,8 +28,14 @@ router.get("/", (req: Request, res: Response) => {
     id: room.id,
     name: room.name,
     creator: room.creator,
-    players: Object.keys(room.players).length,
+    // seat_count owns the capacity rule (coop: humans; ffa: combatants);
+    // legacy stubs without the method fall back to the raw player count.
+    players: room.seat_count
+      ? room.seat_count()
+      : Object.keys(room.players).length,
     maxPlayers: room.maxplayernb,
+    ...(room.status !== undefined && { status: room.status }),
+    ...(room.mode !== undefined && { mode: room.mode }),
   }));
 
   res.json(roomList);

@@ -12,6 +12,7 @@
 import {
   Room,
   loadlevel,
+  nearestEnemyCentre,
   SIM_STEP_S,
   SIM_STEP_MS,
   MAX_SUBSTEPS,
@@ -44,6 +45,7 @@ import type {
 } from "@ouigame/shared/types";
 import type { ReceiveJsonFromId } from "@ouigame/shared/api";
 import { Renderer } from "./Renderer.js";
+import { resolveBotSystem } from "../lib/botSystem";
 import { InputHandler, type InputSnapshot } from "./InputHandler.js";
 import { ParticleSystem } from "./ParticleSystem.js";
 import { DebrisSystem } from "./Debris.js";
@@ -425,7 +427,10 @@ export class GameEngine {
     tankColors: TankColors,
     // Enemies already beaten on this level earlier in the run (campaign retry).
     // They are skipped at spawn so a lost life never resurrects them.
-    defeatedBotIds: string[] = []
+    defeatedBotIds: string[] = [],
+    // Level-editor "test" mode: an in-memory grid to play directly, skipping the
+    // server fetch. The level isn't saved, so there's no id to request.
+    localLayout?: number[]
   ): Promise<void> {
     this.mode = "solo";
     this.running = true;
@@ -436,6 +441,20 @@ export class GameEngine {
     this.mysocketid = "solo_player_" + Math.random().toString(36).substr(2, 9);
     this.startTime = performance.now();
     this.gameOverTriggered = false;
+
+    // Editor test: build the room straight from the in-memory layout. Synthesize
+    // the metadata the end screen reads (the level has no persisted name/owner).
+    if (localLayout) {
+      this.levelMetadata = {
+        data: localLayout,
+        level_name: "Test Level",
+        level_creator_name: playerName,
+        level_img: null,
+      };
+      await this._loadSoloRoom(levelId, localLayout, playerName, tankColors);
+      this._startLoops();
+      return;
+    }
 
     // Request level data from server
     return new Promise<void>((resolve, reject) => {
@@ -459,36 +478,12 @@ export class GameEngine {
           // Extract the actual level data array for loading
           const levelData = levelJson.data ?? levelJson; // Fallback for backward compat
 
-          // Create local room with LocalIO for particle/sound events
-          this.localRoom = new Room(
-            "Solo Room",
-            999,
-            [levelId],
+          await this._loadSoloRoom(
+            levelId,
+            levelData as number[],
             playerName,
-            new LocalIO(this.particles, this.sounds, this.post)
+            tankColors
           );
-          this.localRoom.maxplayernb = 100;
-
-          // Load level into the room. levelData is the flat number[] grid
-          // (pulled from the fetched level JSON, loosely typed here).
-          await loadlevel(levelData as number[], this.localRoom);
-
-          // Spawn player
-          this.localRoom.spawn_new_player(
-            playerName,
-            tankColors.turret,
-            tankColors.body,
-            this.mysocketid!
-          );
-
-          // Spawn bots, skipping any already defeated earlier in the run.
-          this.localRoom.spawn_all_bots(this.seededDefeatedBotIds);
-
-          // Count initial bots/enemies to determine win condition
-          // Players object uses socketid as key
-          this.initialBotCount = Object.entries(this.localRoom.players).filter(
-            ([socketid, _player]) => socketid !== this.mysocketid
-          ).length;
 
           // Start loops
           this._startLoops();
@@ -499,6 +494,48 @@ export class GameEngine {
         }
       });
     });
+  }
+
+  // Build the local authoritative room for solo/test play: load the grid, spawn
+  // the player and bots, and record the initial enemy count (the win condition).
+  // Shared by the server-fetched path and the editor's in-memory test path.
+  async _loadSoloRoom(
+    levelId: number,
+    levelData: number[],
+    playerName: string,
+    tankColors: TankColors
+  ): Promise<void> {
+    // Create local room with LocalIO for particle/sound events
+    this.localRoom = new Room(
+      "Solo Room",
+      999,
+      [levelId],
+      playerName,
+      new LocalIO(this.particles, this.sounds, this.post)
+    );
+    this.localRoom.maxplayernb = 100;
+    // Which bot AI this room spawns (?bots= param / localStorage dev toggle).
+    this.localRoom.bot_system = resolveBotSystem();
+
+    // Load level into the room. levelData is the flat number[] grid.
+    await loadlevel(levelData, this.localRoom);
+
+    // Spawn player
+    this.localRoom.spawn_new_player(
+      playerName,
+      tankColors.turret,
+      tankColors.body,
+      this.mysocketid!
+    );
+
+    // Spawn bots, skipping any already defeated earlier in the run.
+    this.localRoom.spawn_all_bots(this.seededDefeatedBotIds);
+
+    // Count initial bots/enemies to determine win condition.
+    // Players object uses socketid as key.
+    this.initialBotCount = Object.entries(this.localRoom.players).filter(
+      ([socketid, _player]) => socketid !== this.mysocketid
+    ).length;
   }
 
   // Socketids of every enemy defeated on this level so far, cumulative across
@@ -723,13 +760,32 @@ export class GameEngine {
     const player = room.players[this.mysocketid!]; // mysocketid is 999 for solo
     if (player) {
       player.direction = input.direction;
-      player.aim = resolveAim(input, this._localPlayerCenter());
+      // Tap-to-fire (touch fire button): resolve the nearest enemy right here —
+      // solo owns the true positions — and snap the aim onto it. The write-back
+      // keeps the on-screen reticle on the target. Without a target (or without
+      // the flag) the pointer / aim-vector aim is used as usual.
+      const autoAimTarget = input.autoAimFire
+        ? nearestEnemyCentre(room, this.mysocketid!)
+        : null;
+      if (autoAimTarget) {
+        player.aim = autoAimTarget;
+        if (typeof window !== "undefined" && window.gameInput) {
+          window.gameInput.aim = autoAimTarget;
+        }
+      } else {
+        player.aim = resolveAim(input, this._localPlayerCenter());
+      }
       if (input.plant) {
         player.plant(room);
       }
-      // `click` is a one-shot tap; `firing` is the held touch auto-fire. Both
-      // flow through Player.shoot(), which gates on alive + bullet count.
-      if (input.click || input.firing) {
+      // `click` is a one-shot tap; `firing` is the held touch auto-fire;
+      // `autoAimFire` is the fire button's tap-to-shoot. All flow through
+      // Player.shoot(), which gates on alive + bullet count.
+      if (input.click || input.firing || input.autoAimFire) {
+        // The aim may have just been re-pointed above (auto-aim); the barrel
+        // angle is otherwise only refreshed by the sim step, so recompute it
+        // here to make the shot leave along the fresh aim.
+        player.CalculateAngle();
         if (
           player.alive &&
           (player.bulletcount as number) < (player.max_bulletcount as number)
@@ -879,6 +935,9 @@ export class GameEngine {
       plant: input.plant,
       // Held touch auto-fire fires every step (server re-gates on bullet count).
       click: input.click || input.firing,
+      // Tap-to-fire: let the server aim at the nearest enemy itself — it holds
+      // the authoritative positions and the coop ally rule.
+      autoAim: input.autoAimFire,
       aim: resolveAim(input, this._localPlayerCenter()),
       room_id: this.roomId,
       mytick: this.tick,
