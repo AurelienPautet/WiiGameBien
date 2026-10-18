@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useModal, useAuth } from "../../contexts";
+import { useModal, useAuth, useToast } from "../../contexts";
 import { CampaignSelector } from "../ui";
 import { useDeleteCampaign } from "../../hooks/api";
 import { useStartCampaign } from "../../hooks/useStartCampaign";
@@ -11,6 +11,7 @@ export const MyCampaignsModal = () => {
   const navigate = useNavigate();
   const { closeModal } = useModal();
   const { user } = useAuth();
+  const { addToast, TOAST_TYPES } = useToast();
   const { start: startCampaignById } = useStartCampaign();
   const deleteCampaign = useDeleteCampaign();
 
@@ -25,7 +26,15 @@ export const MyCampaignsModal = () => {
 
   const handleDelete = (campaignId: number) => {
     if (window.confirm(t("myCampaigns.confirmDelete"))) {
-      deleteCampaign.mutate(campaignId);
+      deleteCampaign.mutate(campaignId, {
+        onError: () => {
+          addToast(
+            TOAST_TYPES.ERROR,
+            t("common.error"),
+            t("myCampaigns.failedDelete")
+          );
+        },
+      });
     }
   };
 

@@ -17,6 +17,7 @@
     "by": "by {{name}}",
     "unknown": "Unknown",
     "unknownError": "Unknown error",
+    "error": "Error",
     "guest": "Guest"
   },
   "nav": {
@@ -72,7 +73,16 @@
     "enterPassword": "Enter password",
     "loginButton": "Login",
     "registerButton": "Register",
-    "or": "OR"
+    "or": "OR",
+    "errors": {
+      "emailNotFound": "We couldn't find an account with that email.",
+      "invalidPassword": "Incorrect password. Please try again.",
+      "usernameTaken": "That username is already taken.",
+      "emailRegistered": "An account with that email already exists.",
+      "validation": "Please check your details and try again.",
+      "googleNoEmail": "Your Google account has no verified email.",
+      "generic": "Something went wrong. Please try again."
+    }
   },
   "profile": {
     "noEmail": "No email",
@@ -134,7 +144,8 @@
       "level_not_found": "A selected level no longer exists.",
       "not_solo": "Co-op rooms can only play solo levels.",
       "no_bot_spawns": "Every co-op level needs at least one enemy on it.",
-      "no_player_spawn": "Every co-op level needs a player spawn point."
+      "no_player_spawn": "Every co-op level needs a player spawn point.",
+      "timeout": "The server didn't respond. Please try again."
     }
   },
   "levelSelector": {
@@ -185,12 +196,14 @@
   "myLevels": {
     "title": "Your Levels",
     "loginToView": "Please log in to view your levels.",
-    "confirmDelete": "Are you sure you want to delete this level? This cannot be undone."
+    "confirmDelete": "Are you sure you want to delete this level? This cannot be undone.",
+    "failedDelete": "Couldn't delete the level. Please try again."
   },
   "myCampaigns": {
     "title": "Your Campaigns",
     "loginToManage": "Please log in to create and manage campaigns.",
-    "confirmDelete": "Are you sure you want to delete this campaign? This cannot be undone."
+    "confirmDelete": "Are you sure you want to delete this campaign? This cannot be undone.",
+    "failedDelete": "Couldn't delete the campaign. Please try again."
   },
   "tankSelect": {
     "title": "Your Tank",
@@ -243,6 +256,10 @@
     "bombs": "Bombs",
     "blocks": "Blocks"
   },
+  "game": {
+    "failedStart": "Couldn't start the game. Please try again.",
+    "failedJoin": "Couldn't join the room — it may be full or no longer available."
+  },
   "endGame": {
     "youWon": "You Won!",
     "youLost": "You Lost :(",
@@ -254,7 +271,7 @@
     "ratedToast": "You rated the level with {{count}} stars",
     "success": "Success",
     "error": "Error",
-    "cantRate": "Can't rate: {{error}}",
+    "cantRate": "Couldn't submit your rating. Please try again.",
     "needLoginRate": "You need to be logged in to rate a level",
     "noLevelRate": "No level to rate",
     "playAgain": "Play Again",
@@ -365,7 +382,7 @@
     },
     "toast": {
       "title": "Level",
-      "failedSave": "Failed to save level: {{error}}",
+      "failedSave": "Couldn't save the level. Please try again.",
       "loginToSave": "Please log in to save levels.",
       "needSpawn": "You need at least one spawn point (flag) for players!",
       "tooManySpawns": "You cannot have more than 8 spawn points!",

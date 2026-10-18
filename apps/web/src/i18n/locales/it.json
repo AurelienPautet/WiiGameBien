@@ -17,6 +17,7 @@
     "by": "di {{name}}",
     "unknown": "Sconosciuto",
     "unknownError": "Errore sconosciuto",
+    "error": "Errore",
     "guest": "Ospite"
   },
   "nav": {
@@ -72,7 +73,16 @@
     "enterPassword": "Inserisci password",
     "loginButton": "Accedi",
     "registerButton": "Registrati",
-    "or": "OPPURE"
+    "or": "OPPURE",
+    "errors": {
+      "emailNotFound": "Nessun account trovato con questa email.",
+      "invalidPassword": "Password errata. Riprova.",
+      "usernameTaken": "Questo nome utente è già in uso.",
+      "emailRegistered": "Esiste già un account con questa email.",
+      "validation": "Controlla i tuoi dati e riprova.",
+      "googleNoEmail": "Il tuo account Google non ha un'email verificata.",
+      "generic": "Qualcosa è andato storto. Riprova."
+    }
   },
   "profile": {
     "noEmail": "Nessuna email",
@@ -132,7 +142,8 @@
       "level_not_found": "Un livello selezionato non esiste più.",
       "not_solo": "Le stanze coop giocano solo livelli singolo giocatore.",
       "no_bot_spawns": "Ogni livello coop deve avere almeno un nemico.",
-      "no_player_spawn": "Ogni livello coop deve avere un punto di spawn del giocatore."
+      "no_player_spawn": "Ogni livello coop deve avere un punto di spawn del giocatore.",
+      "timeout": "Il server non ha risposto. Riprova."
     }
   },
   "levelSelector": {
@@ -183,12 +194,14 @@
   "myLevels": {
     "title": "I Tuoi Livelli",
     "loginToView": "Accedi per visualizzare i tuoi livelli.",
-    "confirmDelete": "Sei sicuro di voler eliminare questo livello? Non si può annullare."
+    "confirmDelete": "Sei sicuro di voler eliminare questo livello? Non si può annullare.",
+    "failedDelete": "Impossibile eliminare il livello. Riprova."
   },
   "myCampaigns": {
     "title": "Le Tue Campagne",
     "loginToManage": "Accedi per creare e gestire campagne.",
-    "confirmDelete": "Sei sicuro di voler eliminare questa campagna? Non si può annullare."
+    "confirmDelete": "Sei sicuro di voler eliminare questa campagna? Non si può annullare.",
+    "failedDelete": "Impossibile eliminare la campagna. Riprova."
   },
   "tankSelect": {
     "title": "Il Tuo Carro",
@@ -241,6 +254,10 @@
     "bombs": "Bombe",
     "blocks": "Blocchi"
   },
+  "game": {
+    "failedStart": "Impossibile avviare la partita. Riprova.",
+    "failedJoin": "Impossibile entrare nella stanza: potrebbe essere piena o non più disponibile."
+  },
   "endGame": {
     "youWon": "Hai Vinto!",
     "youLost": "Hai Perso :(",
@@ -252,7 +269,7 @@
     "ratedToast": "Hai valutato il livello con {{count}} stelle",
     "success": "Successo",
     "error": "Errore",
-    "cantRate": "Impossibile valutare: {{error}}",
+    "cantRate": "Impossibile inviare la tua valutazione. Riprova.",
     "needLoginRate": "Devi essere connesso per valutare un livello",
     "noLevelRate": "Nessun livello da valutare",
     "playAgain": "Gioca di Nuovo",
@@ -363,7 +380,7 @@
     },
     "toast": {
       "title": "Livello",
-      "failedSave": "Impossibile salvare il livello: {{error}}",
+      "failedSave": "Impossibile salvare il livello. Riprova.",
       "loginToSave": "Accedi per salvare i livelli.",
       "needSpawn": "Hai bisogno di almeno uno spawnpoint (bandiera) per i giocatori!",
       "tooManySpawns": "Non puoi avere più di 8 spawnpoint!",

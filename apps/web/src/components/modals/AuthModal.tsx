@@ -194,10 +194,16 @@ export const AuthModal = () => {
   };
 
   const fieldError = (name: string) =>
-    authError && authError.field === name ? authError.message : null;
+    authError && authError.field === name ? t(authError.messageKey) : null;
 
   const fieldClass = (name: string) =>
     cn("mt-1", fieldError(name) && "border-red focus:ring-red/30");
+
+  // Errors not tied to a specific input (network failure, validation, Google
+  // sign-in problems) surface in a banner above the form instead of silently
+  // vanishing.
+  const generalError =
+    authError && authError.field === "general" ? t(authError.messageKey) : null;
 
   const close = (o: boolean) => {
     if (!o) closeModal();
@@ -270,10 +276,13 @@ export const AuthModal = () => {
           </TabsList>
         </Tabs>
 
-        {authError?.field === "general" && (
-          <div className="mb-4 rounded-lg border-2 border-red bg-red/10 px-3 py-2 text-sm font-semibold text-red">
-            {authError.message}
-          </div>
+        {generalError && (
+          <p
+            role="alert"
+            className="mb-4 rounded-lg border-2 border-red bg-red/10 px-3 py-2 text-sm font-semibold text-red"
+          >
+            {generalError}
+          </p>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   useModal,
@@ -33,6 +33,18 @@ export const CreateRoomModal = () => {
   const [rounds, setRounds] = useState(10);
   const [roomMode, setRoomMode] = useState<RoomMode>("ffa");
   const [isCreating, setIsCreating] = useState(false);
+  // The server acknowledges room creation with `room_created` and rejects with
+  // `room_create_failed`, but a dropped request produces neither, so a stuck
+  // "Creating…" button is the only symptom. This timeout gives up and tells the
+  // user rather than leaving the form frozen.
+  const createTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearCreateTimeout = () => {
+    if (createTimeoutRef.current) {
+      clearTimeout(createTimeoutRef.current);
+      createTimeoutRef.current = null;
+    }
+  };
 
   const handleMultiSelect = useCallback((levelIds: number[]) => {
     setSelectedLevels(levelIds);
@@ -53,11 +65,13 @@ export const CreateRoomModal = () => {
   useEffect(() => {
     if (!socket) return;
     const handleRoomCreated = (roomId: number) => {
+      clearCreateTimeout();
       setIsCreating(false);
       startOnlineGame(roomId);
       closeModal();
     };
     const handleRoomCreateFailed = (reason: string) => {
+      clearCreateTimeout();
       setIsCreating(false);
       addToast(
         TOAST_TYPES.ERROR,
@@ -70,6 +84,7 @@ export const CreateRoomModal = () => {
     return () => {
       socket.off("room_created", handleRoomCreated);
       socket.off("room_create_failed", handleRoomCreateFailed);
+      clearCreateTimeout();
     };
   }, [socket, startOnlineGame, closeModal, addToast, t]);
 
@@ -89,6 +104,18 @@ export const CreateRoomModal = () => {
       creator,
       roomMode
     );
+    // Fail open: if no `room_created` arrives, re-enable the form and surface a
+    // localized error rather than leaving the button stuck on "Creating…".
+    clearCreateTimeout();
+    createTimeoutRef.current = setTimeout(() => {
+      createTimeoutRef.current = null;
+      setIsCreating(false);
+      addToast(
+        TOAST_TYPES.ERROR,
+        t("createRoom.failed"),
+        t("createRoom.failReason.timeout")
+      );
+    }, 10000);
   };
 
   return (
