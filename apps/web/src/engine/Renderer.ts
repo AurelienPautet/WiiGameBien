@@ -88,10 +88,11 @@ export function partitionPlayersByLife<T extends { alive: boolean }>(
 }
 
 /**
- * Whether the round-start parachute drop animates `socketId`'s tank. Solo
- * supplies no local socket id, so the whole field drops (player + bots);
- * matches supply the local socket id, so only your own tank parachutes while
- * everyone else renders standing on their spawn spot until GO.
+ * Whether the round-start parachute drop animates `socketId`'s tank. The drop
+ * is the local player's intro, solo and matches alike: only the local tank
+ * parachutes, so bots and opponents render standing on their spawn spot until
+ * GO. With no local socket id known (should not happen once a round starts)
+ * every tank drops rather than none.
  */
 export function usesSpawnDrop(
   socketId: string,
@@ -167,9 +168,8 @@ interface GameState {
   players?: Record<string, RenderPlayer>;
   // When present, tanks are parachuting onto their spawn flags (round start).
   // `progress` runs 0→1 over the countdown; once it reaches 1 (or is absent)
-  // tanks render normally. `mySocketId` restricts the drop to the local tank
-  // (matches): when set, opponents render standing on their spawn spot. Solo
-  // leaves it unset, so the whole field drops.
+  // tanks render normally. `mySocketId` restricts the drop to the local tank:
+  // bot and opponent tanks render standing on their spawn spot instead.
   spawnAnim?: { progress: number; mySocketId?: string | null };
 }
 
@@ -197,8 +197,9 @@ export class Renderer {
   // Spawn-animation progress (0→1) for the current frame, or null when no
   // round-start parachute drop is in flight. Set from GameState in draw().
   _spawnProgress: number | null;
-  // Local socket id while the drop is in flight (matches): only this tank
-  // parachutes. null (solo) drops the whole field. Set from GameState in draw().
+  // Local socket id while the drop is in flight: only this tank parachutes,
+  // everyone else stands on their spawn spot. null (no id known) drops the
+  // whole field. Set from GameState in draw().
   _spawnMySocketId: string | null;
 
   constructor(
@@ -412,8 +413,8 @@ export class Renderer {
         this._spawnProgress !== null &&
         usesSpawnDrop(socketId, this._spawnMySocketId)
       ) {
-        // Round start: parachute the tank onto its spawn flag. In matches this
-        // is the local tank only; opponents stand on their spawn spot.
+        // Round start: parachute the tank onto its spawn flag — the local
+        // tank only; bots and opponents stand on their spawn spot.
         this._drawSpawnTank(player, isBot, this._spawnProgress);
       } else {
         // Shape-based arcade tank: treads + barrel + circle hull + ink outline.

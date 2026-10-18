@@ -1161,14 +1161,14 @@ export class GameEngine {
     });
 
     // Round-start parachute drop: progress 0→1 over SPAWN_ANIM_MS, or undefined
-    // once finished / inactive so the renderer draws tanks normally. Matches
-    // (online) pass our socket id so only our tank parachutes in; solo passes
-    // null so the whole field drops.
+    // once finished / inactive so the renderer draws tanks normally. Pass our
+    // socket id so only our tank parachutes in — solo bots and match opponents
+    // stay standing on their spawn spot.
     const spawnAnim =
       this.spawnAnimElapsed !== null
         ? {
             progress: clamp(this.spawnAnimElapsed / SPAWN_ANIM_MS, 0, 1),
-            mySocketId: this.mode === "online" ? this.mysocketid : null,
+            mySocketId: this.mysocketid,
           }
         : undefined;
 
