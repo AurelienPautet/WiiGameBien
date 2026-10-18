@@ -20,15 +20,18 @@ interface TouchControlsProps {
 
 /**
  * On-screen twin-stick controls for touch play. It writes intent straight into
- * the global `window.gameInput` the engine already reads — left stick drives
- * `direction`, right stick drives `aimVector` (+ held `firing` when auto-fire is
- * on), the fire button drives `autoAimFire` / `aimVector` / `click`, and the
- * buttons set `plant` / pause. The simulation is untouched; the engine resolves
- * `aimVector` (and the fire button's auto-aim tap) into the absolute `aim` it
- * expects.
+ * the global `window.gameInput` the engine already reads — the move stick
+ * drives `direction`, the aim stick drives `aimVector` (+ held `firing` when
+ * auto-fire is on), the fire button drives `autoAimFire` / `aimVector` /
+ * `click`, and the buttons set `plant` / pause. The simulation is untouched;
+ * the engine resolves `aimVector` (and the fire button's auto-aim tap) into the
+ * absolute `aim` it expects.
  *
- * The fire button is Brawl-Stars-shaped: tap to shoot the nearest enemy, drag
- * to aim and release to shoot that way (see FireButton).
+ * Both sticks are Brawl-Stars-shaped. The fire button: tap to shoot the nearest
+ * enemy, drag to aim and release to shoot that way (see FireButton). The move
+ * stick: always drawn at a fixed resting spot, so it can be grabbed from there,
+ * while a press anywhere else in its zone still floats the base under the
+ * finger (see VirtualJoystick's `alwaysVisible`).
  */
 export const TouchControls = ({
   autoFire,
@@ -109,11 +112,14 @@ export const TouchControls = ({
 
   return (
     <div className="absolute inset-0 z-30" style={{ touchAction: "none" }}>
+      {/* Move — always visible at rest: press its ring to grab it from there,
+          press anywhere else in the zone to float the base under the finger */}
       <VirtualJoystick
         side="left"
         onChange={onMove}
         tint={color}
         ariaLabel="Move"
+        alwaysVisible
       />
       <VirtualJoystick
         side="right"

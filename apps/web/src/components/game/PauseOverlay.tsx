@@ -94,6 +94,7 @@ export const PauseOverlay = ({
                 <>
                   <ControlRow label={c("move")}>
                     <Cap>{c("moveStick")}</Cap>
+                    <Cap>{c("dragAnywhere")}</Cap>
                   </ControlRow>
                   <ControlRow label={c("aim")}>
                     <Cap>{c("aimStick")}</Cap>
