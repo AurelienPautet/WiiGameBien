@@ -32,7 +32,7 @@
     "dev:api": "sh scripts/ensure-postgres.sh && pnpm --filter @ouigame/api dev",
     "dev:web": "pnpm --filter @ouigame/web dev",
     "build": "turbo run build",
-    "start": "tsx apps/api/server.ts",
+    "start": "tsx apps/api/scripts/ensure-schema.ts && tsx apps/api/server.ts",
     "test": "pnpm --filter @ouigame/shared build && jest",
     "test:watch": "jest --watch",
     "test:unit": "vitest run",
@@ -46,6 +46,7 @@
     "format:check": "prettier --check .",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:ensure": "tsx apps/api/scripts/ensure-schema.ts",
     "db:migrate-data": "tsx apps/api/scripts/migrate_data.ts",
     "set-admin": "tsx apps/api/scripts/set-admin.ts",
     "prepare": "husky"

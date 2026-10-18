@@ -39,6 +39,7 @@ pnpm format            # prettier --write .   (format:check in CI)
 # DB (Drizzle)
 pnpm db:generate       # generate a migration from schema changes
 pnpm db:migrate
+pnpm db:ensure         # apply pending migrations without drizzle-kit (same runner the server boots with)
 pnpm db:migrate-data   # one-off data migration script
 ```
 
@@ -125,3 +126,17 @@ backend tests (with a Postgres service), and Vitest unit tests. After CI passes 
 `master`, `deploy-itch.yml` builds the itch.io bundle
 (`pnpm --filter @ouigame/web build:itch`, using `apps/web/.env.itch`) and pushes it
 with butler. The Heroku app is deployed separately.
+
+Migrations reach production two ways, both through
+`apps/api/scripts/ensure-schema.ts` (`pnpm db:ensure`): the **db-migrate**
+workflow runs it on every push to `master`, and the web dyno runs it before
+booting `server.ts` (the root `start` script chains it). A deploy therefore
+cannot serve code that is newer than the database schema, and a merge cannot
+land a migration that stays unapplied. Concurrent runs are serialised by a
+Postgres advisory lock, and a failure aborts the boot (non-zero exit) instead of
+starting a server whose queries would fail on a stale schema. Keep migrations
+compatible with the code that is still deployed (additive columns/tables;
+expand/contract rather than rename/drop) — the `master` run reaches production
+before the new code boots. `pnpm db:migrate` remains for manual/out-of-band
+runs, and the workflow's `workflow_dispatch` trigger is the escape hatch for a
+database that fell behind without a merge.
