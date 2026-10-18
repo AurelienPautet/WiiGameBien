@@ -1,0 +1,64 @@
+# Applies pending Drizzle migrations to PRODUCTION.
+#
+# Two triggers, one mechanism (`pnpm db:ensure` → apps/api/scripts/ensure-schema.ts):
+#   - push to master: merging a schema change applies it to production right
+#     away, with the run recorded in the Actions tab next to the merge.
+#   - workflow_dispatch: out-of-band repair for a database that fell behind
+#     without a merge (e.g. the 0005 admin-dashboard migration that was never
+#     applied and broke every auth endpoint with HTTP 500 on 2026-10-18), or to
+#     pre-flight a migration before opening the PR.
+#
+# Ordering note: the master run reaches production BEFORE the Heroku deploy
+# finishes building, so migrations must stay compatible with the code that is
+# still running — additive columns/tables, expand/contract rather than
+# rename/drop. The web dyno also migrates at boot (the root `start` script
+# chains the same ensure-schema script); both runs take the same Postgres
+# advisory lock, so they serialise instead of colliding.
+#
+# Required configuration (Settings → Secrets and variables → Actions):
+#   Secrets: PROD_DATABASE_URL
+name: db-migrate
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch: {}
+
+# Never let two migration runs overlap.
+concurrency:
+  group: db-migrate-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Fail with a readable error before tsx tries to reach a bogus URL.
+      - name: Check the production connection string is configured
+        run: test -n "$DATABASE_URL" || { echo "::error::PROD_DATABASE_URL secret is missing or empty"; exit 1; }
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+      - name: Apply pending migrations to production
+        run: pnpm db:ensure
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
