@@ -87,6 +87,20 @@ export function partitionPlayersByLife<T extends { alive: boolean }>(
   return { wrecks, liveTanks };
 }
 
+/**
+ * Whether the round-start parachute drop animates `socketId`'s tank. The drop
+ * is the local player's intro, solo and matches alike: only the local tank
+ * parachutes, so bots and opponents render standing on their spawn spot until
+ * GO. With no local socket id known (should not happen once a round starts)
+ * every tank drops rather than none.
+ */
+export function usesSpawnDrop(
+  socketId: string,
+  mySocketId: string | null | undefined
+): boolean {
+  return mySocketId == null || socketId === mySocketId;
+}
+
 interface Vec2 {
   x: number;
   y: number;
@@ -154,8 +168,9 @@ interface GameState {
   players?: Record<string, RenderPlayer>;
   // When present, tanks are parachuting onto their spawn flags (round start).
   // `progress` runs 0→1 over the countdown; once it reaches 1 (or is absent)
-  // tanks render normally.
-  spawnAnim?: { progress: number };
+  // tanks render normally. `mySocketId` restricts the drop to the local tank:
+  // bot and opponent tanks render standing on their spawn spot instead.
+  spawnAnim?: { progress: number; mySocketId?: string | null };
 }
 
 interface DrawableEffect {
@@ -182,6 +197,10 @@ export class Renderer {
   // Spawn-animation progress (0→1) for the current frame, or null when no
   // round-start parachute drop is in flight. Set from GameState in draw().
   _spawnProgress: number | null;
+  // Local socket id while the drop is in flight: only this tank parachutes,
+  // everyone else stands on their spawn spot. null (no id known) drops the
+  // whole field. Set from GameState in draw().
+  _spawnMySocketId: string | null;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -208,6 +227,7 @@ export class Renderer {
     this.theme = 6;
     this.skipEnvironment = false;
     this._spawnProgress = null;
+    this._spawnMySocketId = null;
 
     // Pre-rendered graph-paper field, seeded onto the (back) fading canvas so
     // the grid is present from frame 0.
@@ -269,6 +289,7 @@ export class Renderer {
     // (animation finished) tanks render normally, so treat that as inactive.
     this._spawnProgress =
       spawnAnim && spawnAnim.progress < 1 ? spawnAnim.progress : null;
+    this._spawnMySocketId = spawnAnim?.mySocketId ?? null;
 
     if (mines) {
       mines.forEach((mine) => this._drawMine(mine));
@@ -388,8 +409,12 @@ export class Renderer {
   _drawPlayer(player: RenderPlayer, socketId: string) {
     if (player.alive) {
       const isBot = socketId.includes("bot");
-      if (this._spawnProgress !== null) {
-        // Round start: parachute the tank onto its spawn flag.
+      if (
+        this._spawnProgress !== null &&
+        usesSpawnDrop(socketId, this._spawnMySocketId)
+      ) {
+        // Round start: parachute the tank onto its spawn flag — the local
+        // tank only; bots and opponents stand on their spawn spot.
         this._drawSpawnTank(player, isBot, this._spawnProgress);
       } else {
         // Shape-based arcade tank: treads + barrel + circle hull + ink outline.
