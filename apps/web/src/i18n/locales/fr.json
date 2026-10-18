@@ -322,6 +322,7 @@
       "click": "Clic",
       "esc": "Échap",
       "moveStick": "Joystick gauche",
+      "dragAnywhere": "Glisser : n'importe où",
       "aimStick": "Joystick droit",
       "holdAim": "Maintenir pour viser",
       "tapNearest": "Toucher : le plus proche",

@@ -6,7 +6,7 @@ import "../../../engine/InputHandler"; // module side effect: window.gameInput
 // TouchControls is the thin React layer that translates on-screen gestures into
 // the global `window.gameInput` the engine reads. These tests pin that wiring,
 // notably the Brawl-Stars-shaped fire button (tap → auto-aim request, drag →
-// live aim vector, release → fire).
+// live aim vector, release → fire) and the always-visible move stick.
 
 const resetInput = () => {
   const input = window.gameInput!;
@@ -97,6 +97,19 @@ describe("TouchControls", () => {
 
     fireEvent.pointerUp(moveZone, { pointerId: 1, clientX: 140, clientY: 100 });
     expect(window.gameInput!.direction).toEqual({ x: 0, y: 0 });
+  });
+
+  it("keeps the move stick on screen while idle, and only the move stick", () => {
+    const { container } = mount();
+    const move = container.querySelector('[aria-label="Move"]') as HTMLElement;
+    const aim = container.querySelector(
+      '[aria-label="Aim and fire"]'
+    ) as HTMLElement;
+
+    // One resting drawing (ring + thumb) on the move zone…
+    expect(move.querySelectorAll("div")).toHaveLength(2);
+    // …and none on the aim zone, whose area the buttons share.
+    expect(aim.querySelectorAll("div")).toHaveLength(0);
   });
 
   it("clears held state on unmount so the tank doesn't keep firing", () => {

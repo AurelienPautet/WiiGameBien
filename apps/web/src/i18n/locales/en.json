@@ -322,6 +322,7 @@
       "click": "Click",
       "esc": "Esc",
       "moveStick": "Left stick",
+      "dragAnywhere": "Drag: anywhere",
       "aimStick": "Right stick",
       "holdAim": "Hold to aim",
       "tapNearest": "Tap: nearest",
