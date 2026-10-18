@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from "react";
-import { Bomb, Crosshair, Pause } from "lucide-react";
+import { Bomb, Pause } from "lucide-react";
+import { FireButton } from "./FireButton";
 import { VirtualJoystick, type JoystickVector } from "./VirtualJoystick";
 
 // Deadzones (as a fraction of full stick travel). The move stick maps to 8-way
@@ -9,7 +10,7 @@ const MOVE_DEADZONE = 0.3;
 const AIM_DEADZONE = 0.25;
 
 interface TouchControlsProps {
-  /** Hold the aim stick to fire continuously; when false, show a fire button. */
+  /** Hold the aim stick to fire continuously (off = the stick only aims). */
   autoFire: boolean;
   /** Open/close the pause menu (shares the engine's pause path). */
   onPause: () => void;
@@ -21,8 +22,13 @@ interface TouchControlsProps {
  * On-screen twin-stick controls for touch play. It writes intent straight into
  * the global `window.gameInput` the engine already reads — left stick drives
  * `direction`, right stick drives `aimVector` (+ held `firing` when auto-fire is
- * on), and the buttons set `plant` / `click` / pause. The simulation is
- * untouched; the engine resolves `aimVector` into the absolute `aim` it expects.
+ * on), the fire button drives `autoAimFire` / `aimVector` / `click`, and the
+ * buttons set `plant` / pause. The simulation is untouched; the engine resolves
+ * `aimVector` (and the fire button's auto-aim tap) into the absolute `aim` it
+ * expects.
+ *
+ * The fire button is Brawl-Stars-shaped: tap to shoot the nearest enemy, drag
+ * to aim and release to shoot that way (see FireButton).
  */
 export const TouchControls = ({
   autoFire,
@@ -82,8 +88,19 @@ export const TouchControls = ({
     if (window.gameInput) window.gameInput.plant = true;
   }, []);
 
-  const fire = useCallback((e: React.PointerEvent) => {
-    e.preventDefault();
+  // Fire button. The tap just *requests* an auto-aimed shot: the target is
+  // picked where the true enemy positions live (the local room in solo, the
+  // server when online). The drag reports the direction live so the turret and
+  // reticle follow the finger, and the release fires one shot that way.
+  const fireAtNearest = useCallback(() => {
+    if (window.gameInput) window.gameInput.autoAimFire = true;
+  }, []);
+
+  const aimFromDrag = useCallback((dir: JoystickVector) => {
+    if (window.gameInput) window.gameInput.aimVector = dir;
+  }, []);
+
+  const fireAlongAim = useCallback(() => {
     if (window.gameInput) window.gameInput.click = true;
   }, []);
 
@@ -125,17 +142,13 @@ export const TouchControls = ({
         <Bomb className="h-7 w-7" strokeWidth={2.5} />
       </button>
 
-      {/* Fire (only when auto-fire is off) */}
-      {!autoFire && (
-        <button
-          type="button"
-          onPointerDown={fire}
-          className={`${btn} bottom-20 right-8 h-20 w-20 bg-red`}
-          aria-label="Fire"
-        >
-          <Crosshair className="h-9 w-9" strokeWidth={2.5} />
-        </button>
-      )}
+      {/* Fire — tap for the nearest enemy, drag to aim and release to shoot */}
+      <FireButton
+        tint={color}
+        onTapFire={fireAtNearest}
+        onAim={aimFromDrag}
+        onAimedFire={fireAlongAim}
+      />
     </div>
   );
 };

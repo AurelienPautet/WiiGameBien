@@ -306,8 +306,9 @@
       "esc": "Esc",
       "moveStick": "Left stick",
       "aimStick": "Right stick",
-      "fireButton": "Fire button",
       "holdAim": "Hold to aim",
+      "tapNearest": "Tap: nearest",
+      "dragAim": "Drag: aim",
       "mineButton": "Mine button"
     }
   },

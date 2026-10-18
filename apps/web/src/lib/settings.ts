@@ -51,7 +51,8 @@ export interface Settings {
   touchControls: TouchControlsMode;
   /**
    * Touch: hold the right (aim) joystick to fire continuously. When off, the
-   * right stick only aims and a dedicated fire button is shown (one shot / tap).
+   * right stick only aims; the fire button (always shown) handles shooting —
+   * tap it to fire at the nearest enemy, drag it to aim, release to shoot.
    */
   autoFire: boolean;
 }

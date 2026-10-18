@@ -57,10 +57,15 @@ export interface ClientToServerEvents {
   ) => void;
   quit: () => void;
   // "tock" — the ~60fps player input. Keys verbatim: serverid, mysocketid,
-  // playerid, direction, plant, click, aim, room_id, mytick. serverid/mysocketid/
-  // playerid are nullable on the wire (the solo-derived engine may not have set
-  // them yet); the server only meaningfully reads serverid, room_id, mytick,
-  // direction, aim, click, plant.
+  // playerid, direction, plant, click, aim, autoAim, room_id, mytick.
+  // serverid/mysocketid/playerid are nullable on the wire (the solo-derived
+  // engine may not have set them yet); the server only meaningfully reads
+  // serverid, room_id, mytick, direction, aim, click, plant, autoAim.
+  //
+  // `autoAim` (additive, optional) is the touch fire button's quick tap: fire
+  // once at the nearest enemy, which the server resolves itself (it holds the
+  // authoritative positions, and the coop ally rule). Absent/undefined means
+  // the client's `aim` is used as-is, so older clients stay valid.
   tock: (input: {
     serverid: string | null;
     mysocketid: string | null;
@@ -69,6 +74,7 @@ export interface ClientToServerEvents {
     plant: boolean;
     click: boolean;
     aim: { x: number; y: number };
+    autoAim?: boolean;
     room_id: number | string | null;
     mytick: number;
   }) => void;

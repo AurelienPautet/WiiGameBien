@@ -6,6 +6,7 @@ import { verifySession } from "../auth/session";
 import * as levelsService from "../services/levels.service";
 import * as ratingsRepo from "../repositories/ratings.repo";
 import { beginCountdown } from "../game/countdown";
+import { nearestEnemyCentre } from "@ouigame/shared/game";
 import { users } from "../shared_state";
 import type { Room, RoomMode } from "@ouigame/shared/game";
 import type { Block, CollisonsBox } from "@ouigame/shared/types";
@@ -335,7 +336,20 @@ function registerSocketHandlers({
       if (Number.isFinite(data.mytick)) player.mytick = data.mytick;
       if (isVector(data.direction)) player.direction = data.direction;
       if (isVector(data.aim)) player.aim = data.aim;
-      if (data.click) player.shoot(room);
+      // Tap-to-fire (touch fire button): aim at the nearest enemy ourselves
+      // rather than trusting the sent `aim` — the server holds the true
+      // positions, and the coop ally rule lives in the shared helper.
+      if (data.autoAim === true) {
+        const target = nearestEnemyCentre(room, socket.id);
+        if (target) player.aim = target;
+      }
+      if (data.click || data.autoAim === true) {
+        // `aim` may have just been re-pointed by this same packet (auto-aim, or
+        // a click whose aim arrived with it); refresh the barrel angle so the
+        // bullet leaves along it instead of last tick's aim.
+        player.CalculateAngle();
+        player.shoot(room);
+      }
       if (data.plant) player.plant(room);
     });
   });

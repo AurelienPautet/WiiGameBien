@@ -89,9 +89,14 @@ function roomStub(overrides: Record<string, unknown> = {}) {
 function playerStub() {
   return {
     position: { x: 0, y: 0 },
+    size: { w: 45, h: 45 },
+    alive: true,
+    pending_spawn: false,
+    is_bot: false,
     mytick: 0,
     direction: { x: 0, y: 0 },
     aim: { x: 0, y: 0 },
+    CalculateAngle: jest.fn(),
     shoot: jest.fn(),
     plant: jest.fn(),
   };
@@ -197,8 +202,85 @@ describe("tock — input handling", () => {
     });
     expect(player.direction).toEqual({ x: 1, y: 0 });
     expect(player.aim).toEqual({ x: 0, y: 0 }); // unchanged
+    // The barrel angle is refreshed BEFORE the shot so it leaves along `aim`.
+    expect(player.CalculateAngle.mock.invocationCallOrder[0]).toBeLessThan(
+      player.shoot.mock.invocationCallOrder[0]!
+    );
     expect(player.shoot).toHaveBeenCalledWith(rooms[1]);
     expect(player.plant).toHaveBeenCalledWith(rooms[1]);
+  });
+
+  test("does not shoot when the packet only carries movement", () => {
+    const { socket, rooms } = setup();
+    const player = playerStub();
+    rooms[1] = roomStub({ players: { s1: player } });
+    socket.__emit("tock", {
+      serverid: SERVER_ID,
+      room_id: 1,
+      direction: { x: 0, y: -1 },
+    });
+    expect(player.direction).toEqual({ x: 0, y: -1 });
+    expect(player.CalculateAngle).not.toHaveBeenCalled();
+    expect(player.shoot).not.toHaveBeenCalled();
+  });
+
+  test("autoAim aims at the nearest enemy and fires, ignoring the sent aim", () => {
+    const { socket, rooms } = setup();
+    const player = playerStub();
+    // Enemy box centre = position + size / 2 (45-wide box) = (197.5, 97.5).
+    const enemy = { ...playerStub(), position: { x: 175, y: 75 } };
+    rooms[1] = roomStub({ players: { s1: player, s2: enemy } });
+    socket.__emit("tock", {
+      serverid: SERVER_ID,
+      room_id: 1,
+      aim: { x: 999, y: 999 },
+      autoAim: true,
+    });
+    expect(player.aim).toEqual({ x: 197.5, y: 97.5 });
+    expect(player.CalculateAngle).toHaveBeenCalled();
+    expect(player.shoot).toHaveBeenCalledWith(rooms[1]);
+  });
+
+  test("autoAim in coop skips human teammates and locks onto the bot", () => {
+    const { socket, rooms } = setup();
+    const player = playerStub();
+    const teammate = { ...playerStub(), position: { x: 20, y: 20 } }; // nearer
+    const bot = {
+      ...playerStub(),
+      is_bot: true,
+      position: { x: 275, y: 75 },
+    };
+    rooms[1] = roomStub({
+      mode: "coop",
+      players: { s1: player, s2: teammate, s3: bot },
+    });
+    socket.__emit("tock", {
+      serverid: SERVER_ID,
+      room_id: 1,
+      autoAim: true,
+    });
+    // The bot's box centre: position (275, 75) + half the 45-wide box.
+    expect(player.aim).toEqual({ x: 297.5, y: 97.5 });
+    expect(player.shoot).toHaveBeenCalledWith(rooms[1]);
+  });
+
+  test("autoAim falls back to the sent aim when nothing is alive to target", () => {
+    const { socket, rooms } = setup();
+    const player = playerStub();
+    const corpse = {
+      ...playerStub(),
+      alive: false,
+      position: { x: 100, y: 100 },
+    };
+    rooms[1] = roomStub({ players: { s1: player, s2: corpse } });
+    socket.__emit("tock", {
+      serverid: SERVER_ID,
+      room_id: 1,
+      aim: { x: 10, y: 20 },
+      autoAim: true,
+    });
+    expect(player.aim).toEqual({ x: 10, y: 20 });
+    expect(player.shoot).toHaveBeenCalledWith(rooms[1]);
   });
 
   test("rejects a mismatched server id", () => {
