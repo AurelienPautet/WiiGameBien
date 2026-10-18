@@ -304,8 +304,9 @@
       "esc": "Esc",
       "moveStick": "Joystick izquierdo",
       "aimStick": "Joystick derecho",
-      "fireButton": "Botón de disparo",
       "holdAim": "Mantén para apuntar",
+      "tapNearest": "Toca: el más cercano",
+      "dragAim": "Arrastra: apuntar",
       "mineButton": "Botón de mina"
     }
   },

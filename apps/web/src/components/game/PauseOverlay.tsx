@@ -97,11 +97,11 @@ export const PauseOverlay = ({
                   </ControlRow>
                   <ControlRow label={c("aim")}>
                     <Cap>{c("aimStick")}</Cap>
+                    {settings.autoFire && <Cap>{c("holdAim")}</Cap>}
                   </ControlRow>
                   <ControlRow label={c("fire")}>
-                    <Cap>
-                      {settings.autoFire ? c("holdAim") : c("fireButton")}
-                    </Cap>
+                    <Cap>{c("tapNearest")}</Cap>
+                    <Cap>{c("dragAim")}</Cap>
                   </ControlRow>
                   <ControlRow label={c("plant")}>
                     <Cap>{c("mineButton")}</Cap>

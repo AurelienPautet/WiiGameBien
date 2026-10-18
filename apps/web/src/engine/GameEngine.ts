@@ -12,6 +12,7 @@
 import {
   Room,
   loadlevel,
+  nearestEnemyCentre,
   SIM_STEP_S,
   SIM_STEP_MS,
   MAX_SUBSTEPS,
@@ -759,13 +760,32 @@ export class GameEngine {
     const player = room.players[this.mysocketid!]; // mysocketid is 999 for solo
     if (player) {
       player.direction = input.direction;
-      player.aim = resolveAim(input, this._localPlayerCenter());
+      // Tap-to-fire (touch fire button): resolve the nearest enemy right here —
+      // solo owns the true positions — and snap the aim onto it. The write-back
+      // keeps the on-screen reticle on the target. Without a target (or without
+      // the flag) the pointer / aim-vector aim is used as usual.
+      const autoAimTarget = input.autoAimFire
+        ? nearestEnemyCentre(room, this.mysocketid!)
+        : null;
+      if (autoAimTarget) {
+        player.aim = autoAimTarget;
+        if (typeof window !== "undefined" && window.gameInput) {
+          window.gameInput.aim = autoAimTarget;
+        }
+      } else {
+        player.aim = resolveAim(input, this._localPlayerCenter());
+      }
       if (input.plant) {
         player.plant(room);
       }
-      // `click` is a one-shot tap; `firing` is the held touch auto-fire. Both
-      // flow through Player.shoot(), which gates on alive + bullet count.
-      if (input.click || input.firing) {
+      // `click` is a one-shot tap; `firing` is the held touch auto-fire;
+      // `autoAimFire` is the fire button's tap-to-shoot. All flow through
+      // Player.shoot(), which gates on alive + bullet count.
+      if (input.click || input.firing || input.autoAimFire) {
+        // The aim may have just been re-pointed above (auto-aim); the barrel
+        // angle is otherwise only refreshed by the sim step, so recompute it
+        // here to make the shot leave along the fresh aim.
+        player.CalculateAngle();
         if (
           player.alive &&
           (player.bulletcount as number) < (player.max_bulletcount as number)
@@ -915,6 +935,9 @@ export class GameEngine {
       plant: input.plant,
       // Held touch auto-fire fires every step (server re-gates on bullet count).
       click: input.click || input.firing,
+      // Tap-to-fire: let the server aim at the nearest enemy itself — it holds
+      // the authoritative positions and the coop ally rule.
+      autoAim: input.autoAimFire,
       aim: resolveAim(input, this._localPlayerCenter()),
       room_id: this.roomId,
       mytick: this.tick,

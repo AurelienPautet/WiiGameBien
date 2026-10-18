@@ -304,8 +304,9 @@
       "esc": "Esc",
       "moveStick": "Linker Stick",
       "aimStick": "Rechter Stick",
-      "fireButton": "Feuertaste",
       "holdAim": "Zum Zielen halten",
+      "tapNearest": "Tippen: nächster",
+      "dragAim": "Ziehen: zielen",
       "mineButton": "Minen-Taste"
     }
   },

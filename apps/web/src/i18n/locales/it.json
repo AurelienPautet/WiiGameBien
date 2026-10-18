@@ -304,8 +304,9 @@
       "esc": "Esc",
       "moveStick": "Stick sinistro",
       "aimStick": "Stick destro",
-      "fireButton": "Pulsante fuoco",
       "holdAim": "Tieni premuto per mirare",
+      "tapNearest": "Tocca: più vicino",
+      "dragAim": "Trascina: mira",
       "mineButton": "Pulsante mina"
     }
   },

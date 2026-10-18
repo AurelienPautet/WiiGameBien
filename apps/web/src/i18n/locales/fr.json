@@ -306,8 +306,9 @@
       "esc": "Échap",
       "moveStick": "Joystick gauche",
       "aimStick": "Joystick droit",
-      "fireButton": "Bouton de tir",
       "holdAim": "Maintenir pour viser",
+      "tapNearest": "Toucher : le plus proche",
+      "dragAim": "Glisser : viser",
       "mineButton": "Bouton mine"
     }
   },

@@ -8,6 +8,7 @@ export * from "./check_intersect.js";
 export * from "./game_constants.js";
 export * from "./loop.js";
 export * from "./commons.js";
+export * from "./auto_aim.js";
 export * from "./Stats.js";
 export * from "./Block.js";
 export * from "./Hole.js";
