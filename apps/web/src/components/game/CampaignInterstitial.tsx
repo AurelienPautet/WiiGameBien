@@ -100,7 +100,6 @@ export const CampaignInterstitial = ({
   return (
     <OverlayScrim>
       <OverlayPanel
-        tone={isWin ? "win" : "lose"}
         icon={
           isWin ? (
             <CheckCircle2 className="w-14 h-14 text-green-d" />

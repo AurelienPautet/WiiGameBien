@@ -98,12 +98,12 @@
    src/components/game/overlay/. Keep new overlays on these rules:
 
      1. One scrim   — OverlayScrim: inset-0 z-50, bg-ink/70 backdrop-blur-sm.
-     2. One surface — OverlayPanel: dark arcade card (border-4 border-ink,
-                      rounded-arcade, shadow-arcade) + optional result accent bar.
-     3. One heading — IoTitle (outlined); result colour rides the icon/accent,
+     2. One surface — OverlayPanel: white arcade card (border-4 border-ink,
+                      rounded-arcade, shadow-arcade).
+     3. One heading — IoTitle (outlined); result colour rides the icon,
                       never the title fill.
-     4. One palette — arcade tokens only (green/red/yellow/blue/ink/white),
-                      mapped via RESULT_TONE. No raw Tailwind *-400/*-500/gray-*.
+     4. One palette — arcade tokens only (green/red/yellow/blue/ink/white).
+                      No raw Tailwind *-400/*-500/gray-*.
      5. One stat    — Stat / StatGrid on the bg-white/10 border-2 border-ink chip,
                       numbers use tabular-nums (never font-mono).
      6. One actions — OverlayActions: green "Play Again" + ghost "Quit".
