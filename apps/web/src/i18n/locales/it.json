@@ -107,7 +107,9 @@
     "hits": "Colpi a Segno",
     "accuracy": "Precisione",
     "minesPlanted": "Mine Piazzate",
-    "blocksBroken": "Blocchi Distrutti"
+    "blocksBroken": "Blocchi Distrutti",
+    "timePlayed": "Tempo di gioco",
+    "timeInGame": "Tempo in gioco"
   },
   "rooms": {
     "playOnline": "Gioca Online",

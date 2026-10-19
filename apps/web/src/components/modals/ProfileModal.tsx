@@ -17,16 +17,19 @@ import {
   CheckCircle,
   Medal,
   Lock,
+  Clock,
 } from "lucide-react";
 import { useModal, useAuth } from "../../contexts";
 import {
   usePlayerStats,
   useMySoloStats,
   useMyAchievements,
+  usePlaytime,
 } from "../../hooks/api";
 import type { MyStats, MySoloStats } from "@ouigame/shared/api";
 import { ACHIEVEMENTS, type AchievementCategory } from "@ouigame/shared/api";
 import { storage } from "../../lib/storage";
+import { formatDurationMs } from "../../lib/formatTime";
 import { colorFromIndex } from "../../constants/tankColors";
 import {
   ACHIEVEMENT_ICONS,
@@ -54,6 +57,7 @@ export const ProfileModal = () => {
   const { data: stats, isLoading } = usePlayerStats();
   const { data: soloStats, isLoading: soloLoading } = useMySoloStats();
   const { data: achievementsData, isLoading: achLoading } = useMyAchievements();
+  const { data: playtime } = usePlaytime();
 
   // key -> unlockedAt for O(1) lookup while rendering the catalog.
   const unlockedAt = useMemo(() => {
@@ -91,6 +95,15 @@ export const ProfileModal = () => {
   const soloKdRatio =
     soloDeaths > 0 ? (soloKills / soloDeaths).toFixed(2) : soloKills.toFixed(0);
 
+  // Playtime: level time (solo + campaign + online) vs total connected time.
+  // "—" until the query lands so a real 0m never flashes mid-load.
+  const timePlayedLabel = playtime
+    ? formatDurationMs(playtime.soloMs + playtime.onlineMs)
+    : "—";
+  const timeInGameLabel = playtime ? formatDurationMs(playtime.sessionMs) : "—";
+  const soloTimeLabel = playtime ? formatDurationMs(playtime.soloMs) : "—";
+  const onlineTimeLabel = playtime ? formatDurationMs(playtime.onlineMs) : "—";
+
   const bodyColor = colorFromIndex(storage.getBodyIndex());
   const turretColor = colorFromIndex(storage.getTurretIndex());
 
@@ -120,6 +133,18 @@ export const ProfileModal = () => {
             <p className="text-ink-soft text-sm truncate">
               {user?.email || t("profile.noEmail")}
             </p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-ink-soft">
+              <span className="bg-field border-2 border-ink rounded-md px-2 py-0.5 inline-flex items-center gap-1.5">
+                <Clock size={13} className="text-orange-d" />
+                {t("profile.timePlayed")}
+                <span className="text-ink normal-case">{timePlayedLabel}</span>
+              </span>
+              <span className="bg-field border-2 border-ink rounded-md px-2 py-0.5 inline-flex items-center gap-1.5">
+                <Clock size={13} className="text-blue-d" />
+                {t("profile.timeInGame")}
+                <span className="text-ink normal-case">{timeInGameLabel}</span>
+              </span>
+            </div>
           </div>
           <div className="flex-1" />
           <Button variant="red" size="sm" onClick={handleLogout}>
@@ -190,6 +215,12 @@ export const ProfileModal = () => {
                     value={soloAccuracy}
                     icon={Target}
                     color="text-blue-d"
+                  />
+                  <StatCard
+                    title={t("profile.timePlayed")}
+                    value={soloTimeLabel}
+                    icon={Clock}
+                    color="text-orange-d"
                   />
                 </Grid>
               ) : (
@@ -267,6 +298,12 @@ export const ProfileModal = () => {
                     value={blocks}
                     icon={Hammer}
                     color="text-yellow-d"
+                  />
+                  <StatCard
+                    title={t("profile.timePlayed")}
+                    value={onlineTimeLabel}
+                    icon={Clock}
+                    color="text-orange-d"
                   />
                 </Grid>
               ) : (

@@ -109,7 +109,9 @@
     "minesPlanted": "Mines plantées",
     "blocksBroken": "Blocs cassés",
     "achievements": "Succès",
-    "achievementsProgress": "{{unlocked}} sur {{total}} débloqués"
+    "achievementsProgress": "{{unlocked}} sur {{total}} débloqués",
+    "timePlayed": "Temps de jeu",
+    "timeInGame": "Temps en jeu"
   },
   "rooms": {
     "playOnline": "Multijoueur",
