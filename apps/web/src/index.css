@@ -88,9 +88,34 @@
     4px 6px 0 rgba(0, 0, 0, 0.18);
 }
 
+/* Animate only the arriving content. Navigation stays still and the outgoing
+   page/tab unmounts immediately, so fast clicks never wait for an exit. */
+.content-transition {
+  animation: contentEnter 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tab-content-transition[data-state="active"] {
+  animation: contentEnter 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes contentEnter {
+  from {
+    opacity: 0.4;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .content-transition,
+  .tab-content-transition[data-state="active"] {
+    animation: none;
+  }
+}
+
 /* Dialog / overlay / toast entrances + list cascades now live in Motion
    (src/lib/motion.tsx and the components themselves). The keyframes that
-   remain below are the self-contained in-game cues — countdown badge, life
+   follow below are the self-contained in-game cues — countdown badge, life
    hearts, auto-advance bar — which stay plain CSS. */
 
 /* ========================================================================

@@ -14,3 +14,7 @@ Open [gallery.html](gallery.html) to browse all screenshots.
 - [Accueil · Mobile](42-home-clean-copy-mobile.png): Navigation compacte commune à toutes les pages.
 
 Vérification : 269 tests web passent ; typage, build et formatage validés ; lint sans erreur (32 avertissements existants). Le contrôle navigateur compare position, largeur et hauteur de la navigation sur huit vues (accueil, classements, créations niveaux/campagnes, solo, les deux éditeurs et administration), à 1440 × 1000, 1920 × 1080, 1024 × 768, 768 × 1200, 390 × 844 et 320 × 640. Aucun débordement horizontal ni erreur JavaScript ; footer d’accueil centré en bas. Compte temporaire supprimé après vérification.
+
+[Démo des transitions de navigation](navigation_transitions.mp4) : passage entre Accueil, Classements et Mes créations, puis entre Niveaux et Campagnes. Le menu reste fixe. Le fondu et le glissement durent 240 ms pour une page et 180 ms pour un onglet, et sont désactivés avec `prefers-reduced-motion`.
+
+Validation des transitions : 271 tests web, typage, build et formatage validés ; lint sans erreur (32 avertissements existants). Vérification navigateur des animations, de la stabilité de la navigation, de la conservation de la page lors des changements d’onglet, du clavier, des clics rapides, du mobile et du mode sans animations. Compte de test supprimé après capture.

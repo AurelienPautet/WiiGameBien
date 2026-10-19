@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { ModalRenderer } from "../modals/ModalRenderer";
 import { ToastContainer } from "../ui";
@@ -22,6 +23,7 @@ export const MenuLayout = ({
   footer,
 }: MenuLayoutProps) => {
   const { t } = useTranslation();
+  const { pathname } = useLocation();
   return (
     <div
       className={`menu-shell graph-paper${footer ? " menu-shell--with-footer" : ""}`}
@@ -38,9 +40,12 @@ export const MenuLayout = ({
       </a>
       <Sidebar />
       <main
+        // Query-string changes keep the current page; only a new route
+        // restarts its entrance animation.
+        key={pathname}
         id="main-content"
         tabIndex={-1}
-        className={contained ? "menu-main" : "menu-main menu-main--stage"}
+        className={`menu-main content-transition${contained ? "" : " menu-main--stage"}`}
       >
         {children}
       </main>

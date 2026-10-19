@@ -47,7 +47,10 @@ export const TabsContent = forwardRef<
 >(({ className, ...props }, ref) => (
   <RadixTabs.Content
     ref={ref}
-    className={cn("focus-visible:outline-none", className)}
+    className={cn(
+      "tab-content-transition focus-visible:outline-none",
+      className
+    )}
     {...props}
   />
 ));
