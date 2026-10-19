@@ -2,10 +2,8 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   House,
-  Gamepad2,
   ChartNoAxesColumnIncreasing,
-  Pencil,
-  Swords,
+  PencilRuler,
   Settings,
   Shield,
 } from "lucide-react";
@@ -63,38 +61,38 @@ export const Sidebar = () => {
       </button>
 
       <nav className="sidebar-nav" aria-label={t("nav.mainNavigation")}>
-        <NavLink to="/" end className={navClass}>
+        <NavLink
+          to="/"
+          end
+          className={({ isActive }) =>
+            navClass({ isActive: isActive || pathname === "/levels" })
+          }
+        >
           <House /> <span>{t("nav.home")}</span>
-        </NavLink>
-        <NavLink to="/levels" className={navClass}>
-          <Gamepad2 /> <span>{t("nav.playSolo")}</span>
         </NavLink>
         <NavLink to="/rankings" className={navClass}>
           <ChartNoAxesColumnIncreasing /> <span>{t("nav.rankings")}</span>
         </NavLink>
-        <button
-          type="button"
-          className={cn(
-            "sidebar-link",
-            (pathname === "/editor" || activeModal === MODALS.MY_LEVELS) &&
-              "is-active"
-          )}
-          onClick={() => openModal(MODALS.MY_LEVELS)}
+        <NavLink
+          to={
+            pathname === "/campaign-editor" ||
+            activeModal === MODALS.MY_CAMPAIGNS
+              ? "/creations?tab=campaigns"
+              : "/creations"
+          }
+          className={({ isActive }) =>
+            navClass({
+              isActive:
+                isActive ||
+                pathname === "/editor" ||
+                pathname === "/campaign-editor" ||
+                activeModal === MODALS.MY_LEVELS ||
+                activeModal === MODALS.MY_CAMPAIGNS,
+            })
+          }
         >
-          <Pencil /> <span>{t("nav.editor")}</span>
-        </button>
-        <button
-          type="button"
-          className={cn(
-            "sidebar-link",
-            (pathname === "/campaign-editor" ||
-              activeModal === MODALS.MY_CAMPAIGNS) &&
-              "is-active"
-          )}
-          onClick={() => openModal(MODALS.MY_CAMPAIGNS)}
-        >
-          <Swords /> <span>{t("nav.campaigns")}</span>
-        </button>
+          <PencilRuler /> <span>{t("nav.creations")}</span>
+        </NavLink>
       </nav>
 
       <div className="sidebar-utilities">

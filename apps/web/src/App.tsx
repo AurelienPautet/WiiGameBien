@@ -19,6 +19,7 @@ import {
   LevelEditor,
   CampaignEditor,
   LevelsScreen,
+  CreationsScreen,
   RankingsScreen,
   AdminDashboard,
 } from "./pages";
@@ -66,6 +67,14 @@ const AppRouter = () => {
         element={
           <MenuLayout>
             <LevelsScreen />
+          </MenuLayout>
+        }
+      />
+      <Route
+        path="/creations"
+        element={
+          <MenuLayout>
+            <CreationsScreen />
           </MenuLayout>
         }
       />

@@ -28,7 +28,8 @@
     "campaigns": "Campagnes",
     "admin": "Admin",
     "mainNavigation": "Navigation principale",
-    "skipToContent": "Aller au contenu"
+    "skipToContent": "Aller au contenu",
+    "creations": "Mes créations"
   },
   "topbar": {
     "online": "en ligne",
@@ -532,5 +533,11 @@
     "bot": "Bot",
     "host": "Hôte",
     "waitingForHost": "En attente du lancement par l'hôte…"
+  },
+  "creations": {
+    "subtitle": "Retrouve tes niveaux et assemble tes campagnes.",
+    "levels": "Niveaux",
+    "campaigns": "Campagnes",
+    "loginToManage": "Connecte-toi pour créer et gérer tes niveaux et campagnes."
   }
 }

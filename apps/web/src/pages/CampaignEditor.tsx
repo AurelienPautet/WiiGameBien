@@ -11,7 +11,7 @@ import {
   Swords,
   Layers,
 } from "lucide-react";
-import { useModal, useAuth, useToast, MODALS } from "../contexts";
+import { useAuth, useToast } from "../contexts";
 import { LevelSelector } from "../components/ui";
 import {
   IoTitle,
@@ -37,7 +37,6 @@ export const CampaignEditor = () => {
   const campaignId = searchParams.get("id");
 
   const { user } = useAuth();
-  const { openModal } = useModal();
   const { addToast, TOAST_TYPES } = useToast();
 
   const [name, setName] = useState("");
@@ -119,8 +118,7 @@ export const CampaignEditor = () => {
   };
 
   const handleClose = () => {
-    navigate("/");
-    openModal(MODALS.MY_CAMPAIGNS);
+    navigate("/creations?tab=campaigns");
   };
 
   const handleSave = () => {
@@ -157,8 +155,7 @@ export const CampaignEditor = () => {
             t("campaignEditor.toast.title"),
             t("campaignEditor.toast.saved")
           );
-          navigate("/");
-          openModal(MODALS.MY_CAMPAIGNS);
+          navigate("/creations?tab=campaigns");
         },
         onError: (err: Error) => {
           setSaving(false);
