@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Matches the blue-hull, red-barrel tank in the sidebar (tankShape.ts). -->
+  <g stroke="#2b2f36" stroke-linejoin="round">
+    <path d="M25.18 37 26.06 2.9h11.88L38.82 37Z" fill="#f14e54" stroke-width="4.4" />
+    <circle cx="32" cy="37" r="22" fill="#00b2e1" stroke-width="4.84" />
+  </g>
+</svg>
