@@ -1,30 +1,55 @@
 import type { ReactNode } from "react";
-import { Topbar } from "./Topbar";
+import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
+import { Sidebar } from "./Sidebar";
 import { ModalRenderer } from "../modals/ModalRenderer";
 import { ToastContainer } from "../ui";
 
 interface MenuLayoutProps {
   children: ReactNode;
-  /** Constrain + pad the content column. Disable for full-bleed screens. */
+  /** Disable for editor stages, which fit the remaining viewport. */
   contained?: boolean;
+  /** Optional full-width footer, below both navigation and page content. */
+  footer?: ReactNode;
 }
 
 /**
  * Shell for the (responsive, scrollable) menu screens — Home, Level Select,
- * Rankings. Graph-paper field + sticky Topbar + the shared overlay/toast layer.
- * Gameplay and the editors do NOT use this (they render in the scaled stage).
+ * Rankings and editors. Gameplay keeps its full-window stage.
  */
-export const MenuLayout = ({ children, contained = true }: MenuLayoutProps) => {
+export const MenuLayout = ({
+  children,
+  contained = true,
+  footer,
+}: MenuLayoutProps) => {
+  const { t } = useTranslation();
+  const { pathname } = useLocation();
   return (
-    <div className="graph-paper min-h-screen relative flex flex-col">
-      <Topbar />
-      {contained ? (
-        <main className="w-full max-w-[1280px] mx-auto px-5 pb-16 flex-1">
-          {children}
-        </main>
-      ) : (
-        <main className="flex-1">{children}</main>
-      )}
+    <div
+      className={`menu-shell graph-paper${footer ? " menu-shell--with-footer" : ""}`}
+    >
+      <a
+        href="#main-content"
+        className="skip-link"
+        onClick={(e) => {
+          e.preventDefault();
+          document.getElementById("main-content")?.focus();
+        }}
+      >
+        {t("nav.skipToContent")}
+      </a>
+      <Sidebar />
+      <main
+        // Query-string changes keep the current page; only a new route
+        // restarts its entrance animation.
+        key={pathname}
+        id="main-content"
+        tabIndex={-1}
+        className={`menu-main content-transition${contained ? "" : " menu-main--stage"}`}
+      >
+        {children}
+      </main>
+      {footer && <div className="menu-footer">{footer}</div>}
       <ModalRenderer />
       <ToastContainer />
     </div>

@@ -1,4 +1,4 @@
 export { MenuLayout } from "./MenuLayout";
 export { OrientationHint } from "./OrientationHint";
-export { Topbar } from "./Topbar";
+export { Sidebar, OnlineStatus } from "./Sidebar";
 export { ScaledStage } from "./ScaledStage";

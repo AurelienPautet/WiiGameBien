@@ -1,21 +1,11 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import {
-  Play,
-  Gamepad2,
-  Flag,
-  Paintbrush,
-  Mail,
-  ExternalLink,
-  Github,
-  Star,
-} from "lucide-react";
-import { useModal, useAuth, MODALS } from "../../contexts";
+import { Play, Gamepad2, Flag, ArrowRight, Star, Heart } from "lucide-react";
+import { useModal, useAuth, useSocket, MODALS } from "../../contexts";
 import { colorFromIndex } from "../../constants/tankColors";
 import { storage } from "../../lib/storage";
 import { useRankings } from "../../hooks/api";
-import { motion } from "motion/react";
 import {
   Button,
   Panel,
@@ -23,40 +13,89 @@ import {
   IoTitle,
   SectionLabel,
   Input,
-  IconButton,
   TankAvatar,
 } from "../ui/primitives";
-import { Stagger, MotionItem, FloatY } from "../../lib/motionComponents";
-import { springs } from "../../lib/motion";
-import { palette } from "../../theme/palette";
+import { OnlineStatus } from "../layout/Sidebar";
+import { FloatY } from "../../lib/motionComponents";
 
-const BAR_COLORS = [
-  palette.blue,
-  palette.red,
-  palette.green,
-  palette.purple,
-  palette.yellow,
-];
+// Keep the quiet-lobby recommendation in one place. This is the live socket
+// count, so the hierarchy updates without reloading when the lobby fills up.
+const MULTIPLAYER_FEATURE_THRESHOLD = 100;
+const LEADER_COLORS = ["blue", "red", "green", "purple"];
+
+type PlayMode = "campaign" | "online" | "solo";
+
+/** Decorative arena built from the same tanks used throughout the game. */
+function ArenaIllustration({ campaign }: { campaign: boolean }) {
+  return (
+    <div className="home-arena" aria-hidden="true">
+      {campaign && (
+        <svg className="arena-path" viewBox="0 0 240 220">
+          <path
+            d="M45 175 H135 Q165 175 165 145 V100 Q165 75 195 75 H220"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="5"
+            strokeDasharray="8 10"
+            strokeLinecap="round"
+          />
+        </svg>
+      )}
+      <span className="arena-block arena-block--one" />
+      <span className="arena-block arena-block--two" />
+      <span className="arena-tank arena-tank--one">
+        <TankAvatar
+          bodyColor="blue"
+          turretColor="red"
+          size={116}
+          angle={-0.7}
+        />
+      </span>
+      {campaign ? (
+        <span className="arena-flag">
+          <Flag size={58} strokeWidth={3} />
+        </span>
+      ) : (
+        <span className="arena-tank arena-tank--two">
+          <TankAvatar
+            bodyColor="yellow"
+            turretColor="red"
+            size={100}
+            angle={-1.15}
+          />
+        </span>
+      )}
+      {campaign && (
+        <span className="arena-lives">
+          <Heart />
+          <Heart />
+          <Heart />
+        </span>
+      )}
+      {!campaign && (
+        <>
+          <span className="arena-bullet arena-bullet--one" />
+          <span className="arena-bullet arena-bullet--two" />
+        </>
+      )}
+    </div>
+  );
+}
 
 export const LandingPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { openModal, activeModal } = useModal();
   const { user } = useAuth();
+  const { onlineCount } = useSocket();
   const { data: topPlayers = [] } = useRankings("KILLS");
-
   const [playerName, setPlayerName] = useState(
     () => storage.getPlayerName() || ""
   );
-  const [tankColors, setTankColors] = useState({
-    body: "orange",
-    turret: "orange",
-  });
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPlayerName(e.target.value);
-    storage.setPlayerName(e.target.value);
-  };
+  const [tankColors, setTankColors] = useState(() => ({
+    body: colorFromIndex(storage.getBodyIndex()),
+    turret: colorFromIndex(storage.getTurretIndex()),
+  }));
 
   useEffect(() => {
     if (user?.username) {
@@ -65,7 +104,6 @@ export const LandingPage = () => {
     }
   }, [user]);
 
-  // Reload tank colours on mount and whenever an overlay (e.g. Tank Select) closes.
   useEffect(() => {
     setTankColors({
       body: colorFromIndex(storage.getBodyIndex()),
@@ -73,196 +111,160 @@ export const LandingPage = () => {
     });
   }, [activeModal]);
 
-  const leaders = topPlayers.slice(0, 5);
-  const maxData = leaders.reduce(
-    (m, p) => Math.max(m, Number(p.total_data)),
-    1
-  );
+  const campaignFeatured = onlineCount < MULTIPLAYER_FEATURE_THRESHOLD;
+  const featured: PlayMode = campaignFeatured ? "campaign" : "online";
+  const secondary: PlayMode = campaignFeatured ? "online" : "campaign";
+  const modes = {
+    campaign: {
+      title: t("landing.campaignTitle"),
+      sub: t("landing.playCampaignSub"),
+      icon: Flag,
+      action: () => openModal(MODALS.CAMPAIGN_SELECTOR),
+    },
+    online: {
+      title: t("landing.onlineTitle"),
+      sub: t("landing.playOnlineSub"),
+      icon: Play,
+      action: () => openModal(MODALS.ROOM_SELECTOR),
+    },
+    solo: {
+      title: t("landing.soloTitle"),
+      sub: t("landing.playSoloSub"),
+      icon: Gamepad2,
+      action: () => navigate("/levels"),
+    },
+  };
+  const main = modes[featured];
+  const leaders = topPlayers.slice(0, 4);
 
   return (
-    <div className="pt-8">
-      <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] items-stretch">
-        {/* LEFT — branding + play buttons */}
-        <Panel className="relative overflow-hidden rounded-[22px] p-8 bg-gradient-to-b from-white to-[#f3f5f8]">
-          <div className="absolute inset-0 opacity-50 pointer-events-none graph-paper-soft" />
-          <Stagger className="relative z-10">
-            <MotionItem>
-              <SectionLabel className="mb-3.5">
-                {user
-                  ? t("landing.welcomeBack", { name: user.username })
-                  : t("landing.welcome")}
-              </SectionLabel>
-            </MotionItem>
-            <MotionItem>
-              <IoTitle as="h1" className="text-6xl leading-[0.95] my-1">
-                OUI&nbsp;TANK
-              </IoTitle>
-            </MotionItem>
-            <MotionItem>
-              <p className="text-lg text-ink-soft font-medium max-w-[440px] mt-3 mb-6">
-                {t("landing.tagline")}
-              </p>
-            </MotionItem>
+    <div className="home-page">
+      <header className="home-heading">
+        <IoTitle as="h1">{t("nav.home")}</IoTitle>
+        <OnlineStatus />
+      </header>
 
-            {!user && (
-              <MotionItem>
-                <Input
-                  className="max-w-[280px] mb-4"
-                  placeholder={t("landing.namePlaceholder")}
-                  maxLength={20}
-                  value={playerName}
-                  onChange={handleNameChange}
-                />
-              </MotionItem>
-            )}
+      <div className="home-grid">
+        <div className="home-play-modes">
+          <Panel
+            className={`home-feature home-mode--${featured}`}
+            data-featured-mode={featured}
+          >
+            <div className="home-feature-copy">
+              <IoTitle as="h2">{main.title}</IoTitle>
+              <p>{main.sub}</p>
+              <Button
+                variant="ghost"
+                size="lg"
+                className="home-play-button"
+                onClick={main.action}
+              >
+                <Play className="fill-current" size={24} />
+                {t("landing.play")}
+                <ArrowRight size={25} />
+              </Button>
+            </div>
+            <ArenaIllustration campaign={campaignFeatured} />
+          </Panel>
+          <div className="home-secondary-modes">
+            {(["solo", secondary] as const).map((mode) => {
+              const item = modes[mode];
+              const Icon = item.icon;
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  className={`home-mode-card home-mode--${mode}`}
+                  onClick={item.action}
+                >
+                  <Icon size={34} strokeWidth={2.7} />
+                  <IoTitle as="h2">{item.title}</IoTitle>
+                  <span className="home-mode-description">{item.sub}</span>
+                  <ArrowRight
+                    className="home-mode-arrow"
+                    size={26}
+                    strokeWidth={3}
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-            <MotionItem className="flex flex-col gap-3 max-w-[440px]">
-              <Button
-                variant="green"
-                size="lg"
-                className="justify-start gap-4 py-5 text-xl"
-                onClick={() => openModal(MODALS.ROOM_SELECTOR)}
-              >
-                <Play size={26} strokeWidth={3} className="shrink-0" />
-                <span className="text-left leading-tight">
-                  {t("landing.playOnline")}
-                  <span className="block text-sm font-medium opacity-85">
-                    {t("landing.playOnlineSub")}
-                  </span>
-                </span>
-              </Button>
-              <Button
-                variant="blue"
-                size="lg"
-                className="justify-start gap-4"
-                onClick={() => navigate("/levels")}
-              >
-                <Gamepad2 size={24} strokeWidth={3} className="shrink-0" />
-                <span className="text-left leading-tight">
-                  {t("landing.playSolo")}
-                  <span className="block text-sm font-medium opacity-85">
-                    {t("landing.playSoloSub")}
-                  </span>
-                </span>
-              </Button>
-              <Button
-                variant="yellow"
-                size="lg"
-                className="justify-start gap-4"
-                onClick={() => openModal(MODALS.CAMPAIGN_SELECTOR)}
-              >
-                <Flag size={24} strokeWidth={3} className="shrink-0" />
-                <span className="text-left leading-tight">
-                  {t("landing.playCampaign")}
-                  <span className="block text-sm font-medium opacity-85">
-                    {t("landing.playCampaignSub")}
-                  </span>
-                </span>
-              </Button>
-            </MotionItem>
-          </Stagger>
-        </Panel>
-
-        {/* RIGHT — tank stage + leaderboard */}
-        <div className="flex flex-col gap-4">
-          <Panel className="relative flex-1 flex flex-col items-center rounded-[22px] p-5 graph-paper">
-            <span className="absolute top-3.5 left-3.5 bg-panel-dark/[0.86] text-white text-xs font-semibold tracking-wide px-2.5 py-1 rounded-lg border-2 border-ink">
-              {t("landing.yourTank")}
-            </span>
-            <IconButton
-              className="absolute top-3.5 right-3.5"
-              onClick={() => openModal(MODALS.TANK_SELECT)}
-              title={t("landing.customizeTank")}
-            >
-              <Paintbrush size={18} strokeWidth={2.5} />
-            </IconButton>
-            <div className="flex-1 flex items-center justify-center py-4">
-              <FloatY distance={10}>
+        <div className="home-aside">
+          <Panel className="home-tank-panel">
+            <SectionLabel>{t("landing.yourTank")}</SectionLabel>
+            <div className="home-tank-preview">
+              <FloatY distance={5}>
                 <TankAvatar
                   bodyColor={tankColors.body}
                   turretColor={tankColors.turret}
-                  size={190}
+                  size={user ? 230 : 200}
                 />
               </FloatY>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => openModal(MODALS.TANK_SELECT)}
-            >
-              {t("landing.customize")}
-            </Button>
+            <div className="home-tank-controls">
+              {!user && (
+                <div className="home-guest-name">
+                  <label htmlFor="player-name">{t("landing.yourName")}</label>
+                  <Input
+                    id="player-name"
+                    autoComplete="nickname"
+                    placeholder={t("landing.namePlaceholder")}
+                    maxLength={20}
+                    value={playerName}
+                    onChange={(e) => {
+                      setPlayerName(e.target.value);
+                      storage.setPlayerName(e.target.value);
+                    }}
+                  />
+                </div>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => openModal(MODALS.TANK_SELECT)}
+              >
+                {t("landing.customize")}
+              </Button>
+            </div>
           </Panel>
-
-          <DarkPanel className="p-4">
-            <h4 className="flex items-center gap-1.5 m-0 mb-2.5 text-sm tracking-[2px] uppercase">
-              <Star size={15} className="fill-yellow text-yellow" />{" "}
-              {t("landing.leaderboard")}
-            </h4>
+          <DarkPanel className="home-leaderboard">
+            <button
+              type="button"
+              className="home-leaderboard-heading"
+              onClick={() => navigate("/rankings")}
+            >
+              <Star size={22} className="fill-yellow text-yellow" />
+              <span>{t("landing.leaderboard")}</span>
+              <ArrowRight size={18} />
+            </button>
             {leaders.length === 0 ? (
-              <p className="text-white/50 text-sm py-2">
+              <p className="text-white/70 text-sm py-4">
                 {t("landing.noRankings")}
               </p>
             ) : (
-              leaders.map((p, i) => (
-                <div
-                  key={p.username}
-                  className="flex items-center gap-2.5 mb-2 last:mb-0"
-                >
-                  <span className="text-[13px] text-white w-24 font-semibold truncate">
-                    {p.username}
-                  </span>
-                  <div className="flex-1 h-4 rounded-lg border-2 border-ink bg-white/10 overflow-hidden">
-                    <motion.span
-                      className="block h-full origin-left"
-                      style={{
-                        width: `${Math.max(8, (Number(p.total_data) / maxData) * 100)}%`,
-                        background: BAR_COLORS[i % BAR_COLORS.length],
-                      }}
-                      initial={{ scaleX: 0 }}
-                      animate={{ scaleX: 1 }}
-                      transition={{ ...springs.soft, delay: 0.15 + i * 0.08 }}
+              <ol>
+                {leaders.map((p, i) => (
+                  <li
+                    key={p.username}
+                    className={p.username === user?.username ? "is-you" : ""}
+                  >
+                    <span className="home-rank">{i + 1}</span>
+                    <TankAvatar
+                      bodyColor={LEADER_COLORS[i] ?? "blue"}
+                      turretColor="red"
+                      size={30}
                     />
-                  </div>
-                  <span className="text-xs text-white/70 w-12 text-right">
-                    {p.total_data}
-                  </span>
-                </div>
-              ))
+                    <span className="home-leader-name">{p.username}</span>
+                    <span className="tabular-nums">{p.total_data}</span>
+                  </li>
+                ))}
+              </ol>
             )}
           </DarkPanel>
         </div>
       </div>
-
-      <footer className="mt-8 text-center text-ink-soft font-medium text-sm">
-        <div className="flex items-center justify-center gap-4">
-          <a
-            href="https://aurelien.pautet.net/contact"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-blue-d font-semibold hover:underline"
-          >
-            <Mail size={16} /> {t("landing.contact")}
-          </a>
-          <a
-            href="https://aurelien.pautet.net/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-blue-d font-semibold hover:underline"
-          >
-            <ExternalLink size={16} /> {t("landing.about")}
-          </a>
-          <a
-            href="https://github.com/AurelienPautet/WiiGameBien"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-blue-d font-semibold hover:underline"
-          >
-            <Github size={16} /> {t("landing.github")}
-          </a>
-        </div>
-        <div className="mt-1.5 opacity-70">{t("landing.copyright")}</div>
-      </footer>
     </div>
   );
 };

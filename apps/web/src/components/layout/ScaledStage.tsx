@@ -1,4 +1,10 @@
-import type { CSSProperties, ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { ToastContainer } from "../ui";
 import { useWindowScale } from "../../hooks/useWindowScale";
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "../../constants/canvas";
@@ -8,6 +14,8 @@ interface ScaledStageProps {
   // GameView sets "none" so the browser doesn't claim touch gestures
   // (scroll/zoom) over the on-screen controls. The editors leave it default.
   touchAction?: CSSProperties["touchAction"];
+  /** Editor stage: fit the shell's available space instead of the window. */
+  embedded?: boolean;
 }
 
 /**
@@ -19,8 +27,31 @@ interface ScaledStageProps {
  * The editors raise validation toasts; the ToastContainer here is what renders
  * them while a stage is mounted.
  */
-export const ScaledStage = ({ children, touchAction }: ScaledStageProps) => {
-  const scale = useWindowScale();
+export const ScaledStage = ({
+  children,
+  touchAction,
+  embedded = false,
+}: ScaledStageProps) => {
+  const windowScale = useWindowScale();
+  const hostRef = useRef<HTMLDivElement>(null);
+  const [containerScale, setContainerScale] = useState(1);
+  useEffect(() => {
+    if (!embedded || !hostRef.current) return;
+    const host = hostRef.current;
+    const update = () => {
+      const raw = Math.min(
+        host.clientWidth / CANVAS_WIDTH,
+        host.clientHeight / CANVAS_HEIGHT
+      );
+      const dpr = window.devicePixelRatio || 1;
+      setContainerScale(raw >= 1 ? Math.floor(raw * dpr) / dpr : raw);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, [embedded]);
+  const scale = embedded ? containerScale : windowScale;
   return (
     // Size the stage box to the *dynamic* viewport (dvw/dvh), NOT 100vw/100vh.
     // useWindowScale fits the 1150×800 arena into window.innerWidth/innerHeight
@@ -48,8 +79,13 @@ export const ScaledStage = ({ children, touchAction }: ScaledStageProps) => {
     // the virtual stage size, the transform is the only thing that ever scales
     // it, so the whole arena stays visible at every window size.
     <div
-      className="w-screen h-screen overflow-hidden graph-paper flex items-center justify-center"
-      style={{ width: "100dvw", height: "100dvh" }}
+      ref={hostRef}
+      className="overflow-hidden graph-paper flex items-center justify-center"
+      style={
+        embedded
+          ? { width: "100%", height: "100%" }
+          : { width: "100dvw", height: "100dvh" }
+      }
     >
       <div
         className="relative flex-none overflow-hidden"
@@ -62,7 +98,7 @@ export const ScaledStage = ({ children, touchAction }: ScaledStageProps) => {
         }}
       >
         {children}
-        <ToastContainer />
+        {!embedded && <ToastContainer />}
       </div>
     </div>
   );

@@ -4,11 +4,9 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   useSocket,
   useAuth,
-  useModal,
   useToast,
   useSettings,
   useGame,
-  MODALS,
 } from "../contexts";
 import { useSaveLevel, useLevel } from "../hooks/api";
 import { Save, X, Trash2, Play } from "lucide-react";
@@ -139,7 +137,6 @@ export const LevelEditor = () => {
 
   const { isConnected } = useSocket()!;
   const { user } = useAuth();
-  const { openModal } = useModal();
   const { addToast, TOAST_TYPES } = useToast();
   const { settings } = useSettings();
   // `isPlaying` flips true while a test run is overlaid on the editor; quitting
@@ -182,8 +179,7 @@ export const LevelEditor = () => {
   useEffect(() => {
     if (saveLevelMutation.isSuccess) {
       setSaving(false);
-      navigate("/");
-      openModal(MODALS.MY_LEVELS);
+      navigate("/creations");
     }
     if (saveLevelMutation.isError) {
       setSaving(false);
@@ -201,7 +197,6 @@ export const LevelEditor = () => {
     saveLevelMutation.isError,
     saveLevelMutation.error,
     navigate,
-    openModal,
     addToast,
     TOAST_TYPES,
     t,
@@ -468,10 +463,9 @@ export const LevelEditor = () => {
     });
   };
 
-  // Close editor - go back to My Levels modal
+  // Return to the shared creations page.
   const handleClose = () => {
-    navigate("/");
-    openModal(MODALS.MY_LEVELS);
+    navigate("/creations");
   };
 
   // Block selector items (shape-based — no sprites).

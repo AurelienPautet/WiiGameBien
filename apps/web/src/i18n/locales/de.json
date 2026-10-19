@@ -26,7 +26,10 @@
     "rankings": "Ranglisten",
     "editor": "Editor",
     "campaigns": "Kampagnen",
-    "admin": "Admin"
+    "admin": "Admin",
+    "mainNavigation": "Hauptnavigation",
+    "skipToContent": "Zum Inhalt springen",
+    "creations": "Meine Kreationen"
   },
   "topbar": {
     "online": "online",
@@ -51,11 +54,16 @@
     "customizeTank": "Tank anpassen",
     "customize": "Anpassen",
     "leaderboard": "Bestenliste",
-    "noRankings": "Noch keine Rankings — sei der Erste.",
+    "noRankings": "Noch keine Rankings.",
     "contact": "Kontakt",
     "about": "Über",
     "github": "GitHub",
-    "copyright": "OUI TANK © 2026 — ein niedliches Panzer-Battle-Spiel"
+    "copyright": "OUI TANK © 2026",
+    "yourName": "Dein Name",
+    "campaignTitle": "Kampagne",
+    "onlineTitle": "Mehrspieler",
+    "soloTitle": "Solo",
+    "play": "Spielen"
   },
   "auth": {
     "chooseUsername": "Wähle einen Benutzernamen",
@@ -440,5 +448,10 @@
     "bot": "Bot",
     "host": "Host",
     "waitingForHost": "Warten, bis der Host startet…"
+  },
+  "creations": {
+    "levels": "Level",
+    "campaigns": "Kampagnen",
+    "loginToManage": "Melde dich an, um deine Level und Kampagnen zu erstellen und zu verwalten."
   }
 }

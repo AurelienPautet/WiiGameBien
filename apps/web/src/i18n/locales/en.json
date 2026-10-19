@@ -26,7 +26,10 @@
     "rankings": "Rankings",
     "editor": "Editor",
     "campaigns": "Campaigns",
-    "admin": "Admin"
+    "admin": "Admin",
+    "mainNavigation": "Main navigation",
+    "skipToContent": "Skip to content",
+    "creations": "My creations"
   },
   "topbar": {
     "online": "online",
@@ -51,11 +54,16 @@
     "customizeTank": "Customize tank",
     "customize": "Customize",
     "leaderboard": "Leaderboard",
-    "noRankings": "No rankings yet — be the first.",
+    "noRankings": "No rankings yet.",
     "contact": "Contact",
     "about": "About",
     "github": "GitHub",
-    "copyright": "OUI TANK © 2026 — a cute io tank battler"
+    "copyright": "OUI TANK © 2026",
+    "yourName": "Your name",
+    "campaignTitle": "Campaign",
+    "onlineTitle": "Multiplayer",
+    "soloTitle": "Solo",
+    "play": "Play"
   },
   "auth": {
     "chooseUsername": "Choose a Username",
@@ -521,5 +529,10 @@
     "bot": "Bot",
     "host": "Host",
     "waitingForHost": "Waiting for the host to start…"
+  },
+  "creations": {
+    "levels": "Levels",
+    "campaigns": "Campaigns",
+    "loginToManage": "Log in to create and manage your levels and campaigns."
   }
 }

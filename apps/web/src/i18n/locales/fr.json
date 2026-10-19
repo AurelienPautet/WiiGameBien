@@ -26,7 +26,10 @@
     "rankings": "Classements",
     "editor": "Éditeur",
     "campaigns": "Campagnes",
-    "admin": "Admin"
+    "admin": "Admin",
+    "mainNavigation": "Navigation principale",
+    "skipToContent": "Aller au contenu",
+    "creations": "Mes créations"
   },
   "topbar": {
     "online": "en ligne",
@@ -51,11 +54,16 @@
     "customizeTank": "Personnalise ton char",
     "customize": "Personnaliser",
     "leaderboard": "Classement",
-    "noRankings": "Aucun classement pour le moment — sois le premier.",
+    "noRankings": "Aucun classement pour le moment.",
     "contact": "Contact",
     "about": "À propos",
     "github": "GitHub",
-    "copyright": "OUI TANK © 2026 — un jeu de tanks io adorable"
+    "copyright": "OUI TANK © 2026",
+    "yourName": "Ton pseudo",
+    "campaignTitle": "Campagne",
+    "onlineTitle": "Multijoueur",
+    "soloTitle": "Solo",
+    "play": "Jouer"
   },
   "auth": {
     "chooseUsername": "Choisis un pseudo",
@@ -521,5 +529,10 @@
     "bot": "Bot",
     "host": "Hôte",
     "waitingForHost": "En attente du lancement par l'hôte…"
+  },
+  "creations": {
+    "levels": "Niveaux",
+    "campaigns": "Campagnes",
+    "loginToManage": "Connecte-toi pour créer et gérer tes niveaux et campagnes."
   }
 }
