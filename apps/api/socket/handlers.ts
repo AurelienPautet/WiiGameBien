@@ -5,6 +5,7 @@
 import { verifySession } from "../auth/session";
 import * as levelsService from "../services/levels.service";
 import * as ratingsRepo from "../repositories/ratings.repo";
+import * as playSessions from "./playSessions";
 import { beginCountdown } from "../game/countdown";
 import { nearestEnemyCentre } from "@ouigame/shared/game";
 import { users } from "../shared_state";
@@ -69,11 +70,17 @@ function registerSocketHandlers({
     try {
       const user = await verifySession(token);
       if (user) {
+        // Re-auth on a socket that already carried another account (or the
+        // same one after a logout): close the previous play session first so
+        // the clock cannot keep running under the old player.
+        const previous = users[socket.id];
+        if (previous) playSessions.sessionClosed(socket.id, previous.playerId);
         users[socket.id] = {
           playerId: user.playerId,
           username: user.username,
           email: user.email,
         };
+        playSessions.sessionOpened(socket.id, user.playerId);
         return true;
       }
     } catch (err) {
@@ -123,6 +130,10 @@ function registerSocketHandlers({
 
   function disconnect_socket(socket: AppSocket) {
     console.log(socket.id, "Got disconnect!");
+    // End the player's play session (after the reconnect grace) before the
+    // in-memory auth record for this socket goes away.
+    const user = users[socket.id];
+    if (user) playSessions.sessionClosed(socket.id, user.playerId);
     // Drop the in-memory auth record for this socket. The persisted session
     // (HTTP) stays valid so the user remains logged in across reconnects.
     delete users[socket.id];
@@ -147,6 +158,8 @@ function registerSocketHandlers({
       socket.emit("authenticated", ok);
     });
     socket.on("deauthenticate", () => {
+      const user = users[socket.id];
+      if (user) playSessions.sessionClosed(socket.id, user.playerId);
       delete users[socket.id];
     });
 

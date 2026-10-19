@@ -9,3 +9,13 @@ export const usePlayerStats = () => {
     enabled: storage.hasSession(),
   });
 };
+
+// Playtime breakdown (solo / online / session ms) for the profile modal.
+export const usePlaytime = () => {
+  return useQuery({
+    queryKey: ["stats", "playtime"],
+    queryFn: statsApi.getPlaytime,
+    enabled: storage.hasSession(),
+    staleTime: 30 * 1000, // 30 seconds
+  });
+};

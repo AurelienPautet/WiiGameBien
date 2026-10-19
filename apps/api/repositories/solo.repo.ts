@@ -27,6 +27,17 @@ async function levelStats(levelId: number) {
   return result[0]!;
 }
 
+// Sum of the player's solo-round durations (ms). Solo and campaign level
+// attempts both live in this table, so this is the player's total solo/campaign
+// level time. 0 when they have no rounds.
+async function totalPlayTimeMs(playerId: number) {
+  const result = await db
+    .select({ total: sum(soloRounds.timeMs) })
+    .from(soloRounds)
+    .where(eq(soloRounds.playerId, playerId));
+  return Number(result[0]!.total) || 0;
+}
+
 // Best successful time per player for a level (anonymous as null username),
 // ordered fastest-first.
 async function levelLeaderboard(levelId: number, limit: number) {
@@ -84,4 +95,5 @@ export {
   levelLeaderboard,
   globalLeaderboard,
   myStats,
+  totalPlayTimeMs,
 };

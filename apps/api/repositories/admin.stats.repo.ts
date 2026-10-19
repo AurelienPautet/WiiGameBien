@@ -16,6 +16,7 @@ const {
   rounds,
   soloRounds,
   campaignRuns,
+  playSessions,
   playerAchievements,
 } = schema;
 
@@ -143,8 +144,22 @@ async function soloCombatTotals() {
   return result[0]!;
 }
 
-// --- Overview: solo completion ---
+// --- Overview: playtime (total milliseconds per source) ---
 
+async function playtimeTotals() {
+  const [solo, online, sessions] = await Promise.all([
+    db.select({ ms: sum(soloRounds.timeMs) }).from(soloRounds),
+    db.select({ ms: sum(rounds.durationMs) }).from(rounds),
+    db.select({ ms: sum(playSessions.durationMs) }).from(playSessions),
+  ]);
+  return {
+    soloMs: solo[0]!.ms,
+    onlineMs: online[0]!.ms,
+    sessionMs: sessions[0]!.ms,
+  };
+}
+
+// --- Overview: solo completion ---
 async function soloCompletion() {
   const result = await db
     .select({
@@ -322,6 +337,7 @@ export {
   gameCounts,
   onlineCombatTotals,
   soloCombatTotals,
+  playtimeTotals,
   soloCompletion,
   campaignRunStats,
   achievementCount,

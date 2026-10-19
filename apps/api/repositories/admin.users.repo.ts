@@ -171,6 +171,8 @@ async function getUserListItem(id: number) {
 }
 
 // Deeper combat totals for one user (rounds + solo rounds), always one row.
+// The two time columns stay separate here so the service can report online and
+// solo contributions independently of the combat sums.
 async function getCombatTotals(id: number) {
   const rows = await db
     .select({
@@ -178,6 +180,7 @@ async function getCombatTotals(id: number) {
       onlineShots: sql<string | null>`SUM(${rounds.shots})`,
       onlineHits: sql<string | null>`SUM(${rounds.hits})`,
       onlineBlocks: sql<string | null>`SUM(${rounds.blocksDestroyed})`,
+      onlineTimeMs: sql<string | null>`SUM(${rounds.durationMs})`,
     })
     .from(rounds)
     .where(eq(rounds.playerId, id));
@@ -187,6 +190,7 @@ async function getCombatTotals(id: number) {
       soloShots: sql<string | null>`SUM(${soloRounds.shots})`,
       soloHits: sql<string | null>`SUM(${soloRounds.hits})`,
       soloBlocks: sql<string | null>`SUM(${soloRounds.blocksDestroyed})`,
+      soloTimeMs: sql<string | null>`SUM(${soloRounds.timeMs})`,
       soloCompletions: sql<string>`COUNT(*) FILTER (WHERE ${soloRounds.success})`,
     })
     .from(soloRounds)

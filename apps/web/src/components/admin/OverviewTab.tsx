@@ -16,9 +16,12 @@ import {
   CheckCircle2,
   LogIn,
   Globe,
+  Clock,
+  Timer,
   type LucideIcon,
 } from "lucide-react";
 import { useAdminOverview, useAdminTimeseries } from "../../hooks/api";
+import { formatDurationMs } from "../../lib/formatTime";
 import { palette } from "../../theme/palette";
 import {
   DarkPanel,
@@ -113,6 +116,20 @@ export function OverviewTab() {
           value: overview.games.campaignRuns,
           tone: "purple",
           icon: Flag,
+        },
+        {
+          label: "Time Played",
+          value: formatDurationMs(overview.playtime.totalMs),
+          hint: "solo + online",
+          tone: "yellow",
+          icon: Clock,
+        },
+        {
+          label: "Time in Game",
+          value: formatDurationMs(overview.playtime.sessionMs),
+          hint: "includes menus",
+          tone: "teal",
+          icon: Timer,
         },
         {
           label: "Total Kills",

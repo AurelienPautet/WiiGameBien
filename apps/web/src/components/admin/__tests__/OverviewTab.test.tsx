@@ -55,6 +55,12 @@ const OVERVIEW: AdminOverview = {
     completionRate: 0.4,
     distinctLevelsCompleted: 70,
   },
+  playtime: {
+    soloMs: 3 * 3_600_000, // 3h
+    onlineMs: 90 * 60_000, // 1h30m
+    sessionMs: 6 * 3_600_000, // 6h
+    totalMs: 3 * 3_600_000 + 90 * 60_000, // 4h30m
+  },
   campaignsStats: { runs: 700, completions: 210, completionRate: 0.3 },
   achievements: { unlocked: 4200 },
   logins: { total: 10000, success: 9600, failed: 400, successRate: 0.96 },

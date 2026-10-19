@@ -107,7 +107,9 @@
     "hits": "Treffer",
     "accuracy": "Genauigkeit",
     "minesPlanted": "Minen gelegt",
-    "blocksBroken": "Blöcke zerstört"
+    "blocksBroken": "Blöcke zerstört",
+    "timePlayed": "Spielzeit",
+    "timeInGame": "Zeit im Spiel"
   },
   "rooms": {
     "playOnline": "Online spielen",

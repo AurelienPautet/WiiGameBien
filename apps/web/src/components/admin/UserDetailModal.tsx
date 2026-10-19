@@ -11,6 +11,8 @@ import {
   Layers,
   Medal,
   History,
+  Clock,
+  Timer,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useAdminUser } from "../../hooks/api";
@@ -22,6 +24,7 @@ import {
   TankAvatar,
 } from "../ui/primitives";
 import { cn } from "../../lib/cn";
+import { formatDurationMs } from "../../lib/formatTime";
 import { humanizeLabel } from "./labels";
 
 // Locale date+time for the login log; plain date for created/rows.
@@ -105,6 +108,18 @@ export const UserDetailModal = ({ userId, onClose }: UserDetailModalProps) => {
                   value={user.soloRounds}
                   icon={Gamepad2}
                   color="text-purple"
+                />
+                <Stat
+                  label="Time played"
+                  value={formatDurationMs(user.timePlayedMs)}
+                  icon={Clock}
+                  color="text-orange-d"
+                />
+                <Stat
+                  label="In game"
+                  value={formatDurationMs(user.sessionTimeMs)}
+                  icon={Timer}
+                  color="text-blue-d"
                 />
                 <Stat
                   label="Wins"

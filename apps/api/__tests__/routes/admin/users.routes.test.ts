@@ -11,6 +11,7 @@ import {
   createRound,
   createSoloRound,
   createCampaign,
+  createPlaySession,
 } from "../../helpers/db";
 import { eq } from "drizzle-orm";
 
@@ -167,8 +168,14 @@ describe("GET /api/admin/users/:id", () => {
       shots: 10,
       hits: 5,
       blocksDestroyed: 3,
+      durationMs: 40_000,
     });
-    await createSoloRound(user.id, level.id, { success: true, kills: 1 });
+    await createSoloRound(user.id, level.id, {
+      success: true,
+      kills: 1,
+      timeMs: 20_000,
+    });
+    await createPlaySession(user.id, { durationMs: 300_000 });
     await createCampaign(user.id, [level.id], { name: "DetailCampaign" });
     await db.insert(schema.logings).values({
       playerId: user.id,
@@ -190,6 +197,9 @@ describe("GET /api/admin/users/:id", () => {
     expect(res.body.blocksDestroyed).toBe(3);
     expect(res.body.soloCompletions).toBe(1);
     expect(res.body.campaignRuns).toBe(0);
+    // Playtime: online (40s) + solo (20s) level time, and the 300s session.
+    expect(res.body.timePlayedMs).toBe(60_000);
+    expect(res.body.sessionTimeMs).toBe(300_000);
 
     expect(Array.isArray(res.body.recentLogins)).toBe(true);
     expect(res.body.recentLogins).toHaveLength(1);

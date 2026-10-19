@@ -12,4 +12,12 @@ router.get("/me", authMiddleware, async (req: Request, res: Response) => {
   res.json(stats);
 });
 
+// GET /api/stats/playtime — solo/online/session time breakdown.
+router.get("/playtime", authMiddleware, async (req: Request, res: Response) => {
+  const playerId = req.user!.playerId;
+
+  const playtime = await statsService.getPlaytime(playerId);
+  res.json(playtime);
+});
+
 export default router;

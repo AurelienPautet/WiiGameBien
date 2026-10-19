@@ -107,7 +107,9 @@
     "hits": "Aciertos",
     "accuracy": "Precisión",
     "minesPlanted": "Minas Plantadas",
-    "blocksBroken": "Bloques Destruidos"
+    "blocksBroken": "Bloques Destruidos",
+    "timePlayed": "Tiempo jugado",
+    "timeInGame": "Tiempo en el juego"
   },
   "rooms": {
     "playOnline": "Juego en Línea",

@@ -36,3 +36,15 @@ export type Rankings = z.infer<typeof RankingsSchema>;
 // null when the user has no rounds / is not found in the computed ranking.
 export const PersonalRankSchema = RankingRowSchema.nullable();
 export type PersonalRank = z.infer<typeof PersonalRankSchema>;
+
+// GET /api/stats/playtime — the profile's playtime breakdown, in milliseconds.
+// `soloMs` covers solo + campaign level time, `onlineMs` covers online rounds
+// (undefined for rounds recorded before durations existed), and `sessionMs` is
+// total time connected to the game (includes menus and lobby, so it is the
+// widest of the three). All are real numbers, 0 when unknown.
+export const PlaytimeStatsSchema = z.object({
+  soloMs: z.number(),
+  onlineMs: z.number(),
+  sessionMs: z.number(),
+});
+export type PlaytimeStats = z.infer<typeof PlaytimeStatsSchema>;

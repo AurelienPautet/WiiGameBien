@@ -63,6 +63,10 @@ const rounds = pgTable(
     hits: integer("hits").notNull(),
     plants: integer("plants").notNull(),
     blocksDestroyed: integer("blocks_destroyed").notNull(),
+    // ANALYTICS: round duration, recorded from the tick loop's round clock.
+    // Nullable because rounds inserted before this column existed have no
+    // duration (they must not be misread as zero-length rounds).
+    durationMs: integer("duration_ms"),
     timestamp: timestamp("timestamp").defaultNow(),
   },
   (table) => ({
@@ -99,4 +103,25 @@ const soloRounds = pgTable(
   })
 );
 
-module.exports = { ratings, logings, rounds, soloRounds };
+// One row per logged-in socket "play session" (connect → disconnect, with a
+// short reconnect grace so a page refresh does not split a session). This is
+// total time in the game, including menus and lobby — distinct from the
+// per-round durations in `rounds` / `solo_rounds`.
+const playSessions = pgTable(
+  "OuiTank-play_sessions",
+  {
+    id: serial("id").primaryKey(),
+    // ANALYTICS: session history outlives the player (nullable → set null).
+    playerId: integer("player_id").references(() => players.id, {
+      onDelete: "set null",
+    }),
+    startedAt: timestamp("started_at").notNull(),
+    endedAt: timestamp("ended_at").notNull(),
+    durationMs: integer("duration_ms").notNull(),
+  },
+  (table) => ({
+    playerIdx: index("play_sessions_player_id_idx").on(table.playerId),
+  })
+);
+
+module.exports = { ratings, logings, rounds, soloRounds, playSessions };

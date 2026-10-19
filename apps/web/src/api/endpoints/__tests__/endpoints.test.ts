@@ -16,6 +16,7 @@ import { apiClient } from "../../client";
 import { levelsApi } from "../levels";
 import { soloApi } from "../solo";
 import { campaignsApi } from "../campaigns";
+import { statsApi } from "../stats";
 
 const get = apiClient.get as ReturnType<typeof vi.fn>;
 const post = apiClient.post as ReturnType<typeof vi.fn>;
@@ -71,5 +72,14 @@ describe("campaignsApi", () => {
     expect(get).toHaveBeenCalledWith("/campaigns?name=x%20y");
     campaignsApi.submitRun(5, { completed: true } as never);
     expect(post).toHaveBeenCalledWith("/campaigns/5/runs", { completed: true });
+  });
+});
+
+describe("statsApi", () => {
+  it("fetches my stats and playtime breakdown", () => {
+    statsApi.getMyStats();
+    expect(get).toHaveBeenCalledWith("/stats/me");
+    statsApi.getPlaytime();
+    expect(get).toHaveBeenCalledWith("/stats/playtime");
   });
 });

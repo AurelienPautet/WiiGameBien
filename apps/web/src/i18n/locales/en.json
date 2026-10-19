@@ -109,7 +109,9 @@
     "minesPlanted": "Mines Planted",
     "blocksBroken": "Blocks Broken",
     "achievements": "Achievements",
-    "achievementsProgress": "{{unlocked}} of {{total}} unlocked"
+    "achievementsProgress": "{{unlocked}} of {{total}} unlocked",
+    "timePlayed": "Time played",
+    "timeInGame": "In game"
   },
   "rooms": {
     "playOnline": "Play Online",

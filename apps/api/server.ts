@@ -21,6 +21,7 @@ import { createRoomRegistry } from "./game/roomRegistry";
 import { createTickLoop } from "./game/tickLoop";
 import { registerSocketHandlers } from "./socket/handlers";
 import { registerOnlineCount } from "./socket/onlineCount";
+import * as playSessions from "./socket/playSessions";
 import { errorHandler } from "./middleware/error.middleware";
 
 const app = express();
@@ -179,3 +180,14 @@ registerSocketHandlers({
 registerOnlineCount({ io });
 
 tickLoop.start();
+
+// --- Graceful shutdown ---
+// Persist in-flight play sessions before exiting. Deploys/restarts send
+// SIGTERM; the tracker's 15s disconnect timers would never fire, so the time
+// players spent connected to this process would otherwise be lost. SIGINT
+// covers a local Ctrl+C. A failing insert must not block the exit.
+for (const signal of ["SIGTERM", "SIGINT"] as const) {
+  process.once(signal, () => {
+    void playSessions.flushAll().finally(() => process.exit(0));
+  });
+}
