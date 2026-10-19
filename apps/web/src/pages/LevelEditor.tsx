@@ -9,7 +9,7 @@ import {
   useGame,
 } from "../contexts";
 import { useSaveLevel, useLevel } from "../hooks/api";
-import { Save, X, Trash2, Play } from "lucide-react";
+import { Save, X, Trash2, Play, PencilRuler, Flag } from "lucide-react";
 import { GameCanvas } from "../components/game";
 import {
   IoTitle,
@@ -47,9 +47,33 @@ import {
 import { tryCreatePostProcessor } from "../engine/PostProcessor";
 import type { PostProcessor } from "../engine/PostProcessor";
 
-// On-screen size of the canvas (kept compact; the board scales to fit).
-const DISPLAY_WIDTH = 920;
-const DISPLAY_HEIGHT = 640;
+// The editor keeps gameplay's light, foggy floor so the preview matches a real
+// run — but on its own, a whole white board reads as a blank (almost
+// transparent) page. The editor dials the floor back toward the solid field
+// grey and lays a faint cell grid on the overlay: an actual work surface.
+const EDITOR_FIELD_WHITEN = 0.15;
+const EDITOR_GRID_COLOR = "rgba(43, 47, 54, 0.1)";
+// Fraction of the work area the board fills (the rest is breathing room).
+const BOARD_FIT_RATIO = 0.94;
+
+// Draw the editable cell grid — only in the editor, and only under the
+// flags/bots, so the markers stay readable.
+function drawEditorGrid(ctx: CanvasRenderingContext2D) {
+  ctx.save();
+  ctx.strokeStyle = EDITOR_GRID_COLOR;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (let x = CELL_SIZE; x < CANVAS_WIDTH; x += CELL_SIZE) {
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, CANVAS_HEIGHT);
+  }
+  for (let y = CELL_SIZE; y < CANVAS_HEIGHT; y += CELL_SIZE) {
+    ctx.moveTo(0, y);
+    ctx.lineTo(CANVAS_WIDTH, y);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
 
 // Draw a single editor cell via the SHARED arcade primitives (engine/shapes) —
 // the exact same code the in-game Renderer uses. Used for the ghost preview and
@@ -147,10 +171,19 @@ export const LevelEditor = () => {
   // the full scene in the no-WebGL fallback), the WebGL output, and the shared
   // post-processor instance.
   const stageRef = useRef<HTMLDivElement | null>(null);
+  const stageHostRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLCanvasElement | null>(null);
   const glRef = useRef<HTMLCanvasElement | null>(null);
   const postRef = useRef<PostProcessor | null>(null);
   const [postActive, setPostActive] = useState(false);
+  // Board footprint in virtual editor pixels: the --stage transform already
+  // scales the whole editor, so fit the 1150×800 board inside the work area at
+  // its own aspect ratio instead of hard-coding a size that clips on some
+  // window shapes.
+  const [stageSize, setStageSize] = useState({
+    width: CANVAS_WIDTH / 1.25,
+    height: CANVAS_HEIGHT / 1.25,
+  });
   const [layout, setLayout] = useState<number[]>(createEmptyLayout);
   const [selectedBlock, setSelectedBlock] = useState(BLOCKS.WALL);
   const [mode, setMode] = useState("online"); // "online" or "solo"
@@ -211,6 +244,7 @@ export const LevelEditor = () => {
       CANVAS_WIDTH,
       CANVAS_HEIGHT
     );
+    post?.setFieldWhiten(EDITOR_FIELD_WHITEN);
     postRef.current = post;
     setPostActive(post !== null);
     return () => {
@@ -223,6 +257,29 @@ export const LevelEditor = () => {
   useEffect(() => {
     postRef.current?.setEffects(settings.effects);
   }, [settings.effects]);
+
+  // Fit the board to the work area, preserving the 23:16 board ratio.
+  useEffect(() => {
+    const host = stageHostRef.current;
+    if (!host) return;
+    const update = () => {
+      const w = host.clientWidth;
+      const h = host.clientHeight;
+      if (!w || !h) return;
+      // Leave a margin so the board reads as a framed work surface instead of
+      // butting against the card's border.
+      const scale =
+        Math.min(w / CANVAS_WIDTH, h / CANVAS_HEIGHT) * BOARD_FIT_RATIO;
+      setStageSize({
+        width: Math.floor(CANVAS_WIDTH * scale),
+        height: Math.floor(CANVAS_HEIGHT * scale),
+      });
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, []);
 
   // Render loop. The overlay 2D canvas carries the flags/bots/placement ghost
   // (and the whole scene in the no-WebGL fallback); the post-processor draws the
@@ -250,6 +307,7 @@ export const LevelEditor = () => {
         drawBlocks(ctx, blocks);
         holes.forEach((h) => drawHole(ctx, h));
       }
+      drawEditorGrid(ctx);
       drawFlagsAndBots(ctx, flags, bots);
 
       // Placement ghost.
@@ -488,13 +546,21 @@ export const LevelEditor = () => {
     { id: BLOCKS.BOT_BLACK, label: t("levelEditor.blocks.botBlack") },
   ];
 
+  const spawnCount = layout.filter((block) => block === BLOCKS.FLAG).length;
+
   return (
     <div className="relative w-full h-full graph-paper text-ink flex flex-col">
-      {/* Header */}
-      <div className="h-24 bg-white border-b-4 border-ink flex items-center justify-between gap-4 px-8">
-        <IoTitle className="text-2xl shrink-0">
-          {t("levelEditor.title")}
-        </IoTitle>
+      {/* Header — same white rail as the campaign editor, with a colour badge
+          so the editor has an anchor instead of a floating slab of white. */}
+      <div className="h-24 shrink-0 bg-white border-b-4 border-ink flex items-center justify-between gap-4 px-8">
+        <div className="flex items-center gap-3 whitespace-nowrap">
+          <span className="bg-yellow text-ink border-[3px] border-ink rounded-[11px] p-2">
+            <PencilRuler size={22} strokeWidth={2.5} />
+          </span>
+          <IoTitle className="text-2xl shrink-0">
+            {t("levelEditor.title")}
+          </IoTitle>
+        </div>
 
         {/* Mode Toggle */}
         <SegmentedControl<string>
@@ -537,73 +603,98 @@ export const LevelEditor = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex">
+      {/* Body: two solid cards on the graph-paper desk, mirroring the campaign
+          editor. No translucent surfaces — the board sits on a field-grey mat. */}
+      <div className="flex-1 flex min-h-0 gap-4 p-4">
         {/* Block Palette */}
-        <div className="w-48 bg-white border-r-4 border-ink flex flex-col items-center py-4">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-ink-soft mb-4">
+        <aside className="w-48 shrink-0 flex flex-col bg-white border-4 border-ink rounded-arcade shadow-arcade p-3 min-h-0">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-ink-soft text-center mb-3">
             {t("levelEditor.selectBlock")}
           </h2>
 
-          <div className="flex flex-col gap-2">
-            {[...baseBlocks, ...(mode === "solo" ? botBlocks : [])].map(
-              (block) => (
-                <button
-                  key={block.id}
-                  onClick={() => setSelectedBlock(block.id)}
-                  className={cn(
-                    "size-14 grid place-items-center rounded-lg border-[3px] bg-field hover:scale-110 transition-transform",
-                    selectedBlock === block.id
-                      ? "border-yellow ring-2 ring-yellow/50"
-                      : "border-ink"
-                  )}
-                  title={block.label}
-                >
-                  <BlockThumb type={block.id} />
-                </button>
-              )
-            )}
+          {/* Two columns: the solo palette has 13 blocks and must stay inside
+              the card (a single column used to spill over the footer). */}
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+            <div className="grid grid-cols-2 gap-2 content-start">
+              {[...baseBlocks, ...(mode === "solo" ? botBlocks : [])].map(
+                (block) => (
+                  <button
+                    key={block.id}
+                    onClick={() => setSelectedBlock(block.id)}
+                    className={cn(
+                      "aspect-square grid place-items-center rounded-[10px] border-[3px] bg-field transition-[transform,box-shadow,background-color] hover:-translate-y-0.5",
+                      selectedBlock === block.id
+                        ? "border-yellow ring-[3px] ring-yellow/60 bg-white shadow-[0_3px_0_var(--color-yellow-d)]"
+                        : "border-ink shadow-[0_3px_0_rgba(0,0,0,0.18)] hover:bg-[#d4d8dc]"
+                    )}
+                    aria-pressed={selectedBlock === block.id}
+                    title={block.label}
+                  >
+                    <BlockThumb type={block.id} size={38} />
+                  </button>
+                )
+              )}
+            </div>
           </div>
-        </div>
+        </aside>
 
-        {/* Canvas Area. The interaction surface holds two stacked canvases at
+        {/* Canvas card. The interaction surface holds two stacked canvases at
             board resolution, scaled to the display footprint: the 2D overlay
             (texture source / fallback) and the WebGL output on top. */}
-        <div className="flex-1 flex items-center justify-center graph-paper">
+        <section className="flex-1 min-w-0 flex flex-col bg-white border-4 border-ink rounded-arcade shadow-arcade p-3 min-h-0">
           <div
-            ref={stageRef}
-            className="relative cursor-crosshair border-4 border-ink rounded-lg shadow-arcade overflow-hidden"
-            style={{ width: DISPLAY_WIDTH, height: DISPLAY_HEIGHT }}
-            onMouseMove={handleMouseMove}
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={() => {
-              setOnCanvas(false);
-              setIsMouseDown(false);
-            }}
-            onMouseEnter={() => setOnCanvas(true)}
-            onContextMenu={handleContextMenu}
+            ref={stageHostRef}
+            className="flex-1 min-h-0 grid place-items-center p-1 overflow-hidden"
           >
-            <canvas
-              ref={overlayRef}
-              width={CANVAS_WIDTH}
-              height={CANVAS_HEIGHT}
-              className="absolute inset-0 w-full h-full"
-              style={postActive ? { visibility: "hidden" } : undefined}
-            />
-            <canvas
-              ref={glRef}
-              width={CANVAS_WIDTH}
-              height={CANVAS_HEIGHT}
-              className="absolute inset-0 w-full h-full"
-              style={postActive ? undefined : { display: "none" }}
-            />
+            <div
+              ref={stageRef}
+              className="relative cursor-crosshair bg-field border-4 border-ink rounded-lg shadow-[0_6px_0_rgba(43,47,54,0.28)] overflow-hidden"
+              style={{ width: stageSize.width, height: stageSize.height }}
+              onMouseMove={handleMouseMove}
+              onMouseDown={handleMouseDown}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={() => {
+                setOnCanvas(false);
+                setIsMouseDown(false);
+              }}
+              onMouseEnter={() => setOnCanvas(true)}
+              onContextMenu={handleContextMenu}
+            >
+              <canvas
+                ref={overlayRef}
+                width={CANVAS_WIDTH}
+                height={CANVAS_HEIGHT}
+                className="absolute inset-0 w-full h-full"
+                style={postActive ? { visibility: "hidden" } : undefined}
+              />
+              <canvas
+                ref={glRef}
+                width={CANVAS_WIDTH}
+                height={CANVAS_HEIGHT}
+                className="absolute inset-0 w-full h-full"
+                style={postActive ? undefined : { display: "none" }}
+              />
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Footer */}
-      <div className="h-16 bg-white border-t-4 border-ink" />
+          {/* Status rail — replaces the empty white strip. */}
+          <div className="shrink-0 flex items-center justify-between gap-4 pt-2.5 px-0.5 text-[13px] font-semibold text-ink-soft">
+            <div className="flex items-center gap-4 min-w-0">
+              <span className="truncate">{t("levelEditor.hintPlace")}</span>
+              <span className="truncate">{t("levelEditor.hintErase")}</span>
+            </div>
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 shrink-0",
+                spawnCount > 8 && "text-red-d"
+              )}
+            >
+              <Flag size={14} />
+              {t("levelEditor.spawnCount", { count: spawnCount })}
+            </span>
+          </div>
+        </section>
+      </div>
 
       {/* Test run: the full game overlaid on the editor (which stays mounted, so
           the layout survives). Quitting the run flips isPlaying back to false. */}

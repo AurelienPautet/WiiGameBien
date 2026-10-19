@@ -53,12 +53,18 @@ export const CreationsScreen = () => {
     });
   };
 
+  // On desktop the page is pinned to the viewport (shell padding + the main
+  // column's own padding), so the panel claims the leftover height and its list
+  // scrolls inside the card instead of pushing the page past the fold.
   return (
-    <div className="pt-6">
-      <header className="mb-6">
+    <div className="pt-6 flex flex-col lg:h-[calc(100dvh-112px)] min-[1600px]:h-[calc(100dvh-128px)]">
+      <header className="mb-5 shrink-0">
         <IoTitle as="h1" className="text-4xl">
           {t("nav.creations")}
         </IoTitle>
+        <p className="mt-2 text-ink-soft font-medium">
+          {t("creations.subtitle")}
+        </p>
       </header>
       {isLoading ? (
         <Panel className="p-8 text-center text-ink-soft">
@@ -75,31 +81,36 @@ export const CreationsScreen = () => {
           </Button>
         </Panel>
       ) : (
-        <Panel className="p-4 sm:p-6 h-[calc(100dvh-250px)] min-h-[460px]">
+        <Panel className="flex flex-col flex-1 min-h-[520px] lg:min-h-0 p-4 sm:p-5">
           <Tabs
             value={tab}
             onValueChange={(value) =>
               setSearchParams({ tab: value }, { replace: true })
             }
-            className="h-full flex flex-col"
+            className="h-full min-h-0 flex flex-col"
           >
-            <TabsList aria-label={t("nav.creations")}>
+            <TabsList
+              aria-label={t("nav.creations")}
+              className="shrink-0 gap-1.5 rounded-[14px] border-[3px] border-ink bg-field p-1.5"
+            >
               <TabsTrigger
                 value="levels"
-                className="flex min-w-0 items-center justify-center gap-2 px-2 text-sm sm:px-4 sm:text-base"
+                variant="segmented"
+                className="min-w-0 px-2 text-sm sm:px-4 sm:text-base"
               >
                 <PencilRuler size={20} />
                 {t("creations.levels")}
               </TabsTrigger>
               <TabsTrigger
                 value="campaigns"
-                className="flex min-w-0 items-center justify-center gap-2 px-2 text-sm sm:px-4 sm:text-base"
+                variant="segmented"
+                className="min-w-0 px-2 text-sm sm:px-4 sm:text-base"
               >
                 <Flag size={20} />
                 {t("creations.campaigns")}
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="levels" className="flex-1 min-h-0 pt-5">
+            <TabsContent value="levels" className="flex-1 min-h-0 pt-4">
               <LevelSelector
                 mode="myLevels"
                 onCreate={() => navigate("/editor")}
@@ -111,7 +122,7 @@ export const CreationsScreen = () => {
                 onDelete={handleDeleteLevel}
               />
             </TabsContent>
-            <TabsContent value="campaigns" className="flex-1 min-h-0 pt-5">
+            <TabsContent value="campaigns" className="flex-1 min-h-0 pt-4">
               <CampaignSelector
                 mode="my"
                 onCreate={() => navigate("/campaign-editor")}
