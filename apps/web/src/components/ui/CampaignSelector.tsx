@@ -60,8 +60,9 @@ export function CampaignSelector({
         )}
       </div>
 
-      {/* List */}
-      <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+      {/* List — the vertical padding leaves room for the cards' hover lift so
+          the scroll container does not clip their top border. */}
+      <div className="flex-1 overflow-y-auto space-y-3 pr-2 py-1">
         {isLoading ? (
           <div className="text-center py-8 text-ink-soft">
             {t("campaignSelector.loadingCampaigns")}

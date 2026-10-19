@@ -318,7 +318,7 @@ export function LevelSelector({
       {/* Level List */}
       <div
         ref={listRef}
-        className="flex-1 overflow-y-auto space-y-3 pr-2"
+        className="flex-1 overflow-y-auto space-y-3 pr-2 py-1"
         onScroll={() => {
           if (mode === "solo" && listRef.current) {
             const state: SoloSelectorState = {
