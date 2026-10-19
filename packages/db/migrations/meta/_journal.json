@@ -43,6 +43,13 @@
       "when": 1781824915185,
       "tag": "0005_admin_dashboard",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792434926016,
+      "tag": "0006_chunky_sage",
+      "breakpoints": true
     }
   ]
 }
