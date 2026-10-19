@@ -80,6 +80,23 @@
   color: white;
   box-shadow: 0 3px 0 var(--color-blue-d);
 }
+.sidebar-nav .sidebar-link {
+  position: relative;
+  isolation: isolate;
+}
+.sidebar-nav .sidebar-link.is-active {
+  background: transparent;
+  box-shadow: none;
+}
+.sidebar-selection {
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 12px;
+  background: var(--color-blue);
+  box-shadow: 0 3px 0 var(--color-blue-d);
+}
 .sidebar-utilities {
   border-top: 2px solid #e4e7eb;
   padding-top: 14px;

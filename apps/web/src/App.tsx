@@ -1,5 +1,11 @@
 import { useEffect } from "react";
-import { HashRouter, Routes, Route } from "react-router-dom";
+import {
+  HashRouter,
+  Routes,
+  Route,
+  Outlet,
+  useLocation,
+} from "react-router-dom";
 import { MotionConfig } from "motion/react";
 import {
   SocketProvider,
@@ -49,11 +55,20 @@ const GameView = () => {
 // Route "/": the immersive game stage while playing, otherwise the Home hub.
 const MainContent = () => {
   const { isPlaying } = useGame();
-  return isPlaying ? (
-    <GameView />
-  ) : (
-    <MenuLayout footer={<HomeFooter />}>
-      <LandingPage />
+  return isPlaying ? <GameView /> : <LandingPage />;
+};
+
+/** Keep the navigation mounted so its selection can slide across routes. */
+const MenuRouteLayout = () => {
+  const { isPlaying } = useGame();
+  const { pathname } = useLocation();
+  if (pathname === "/" && isPlaying) return <Outlet />;
+  return (
+    <MenuLayout
+      contained={pathname !== "/editor" && pathname !== "/campaign-editor"}
+      footer={pathname === "/" ? <HomeFooter /> : undefined}
+    >
+      <Outlet />
     </MenuLayout>
   );
 };
@@ -61,61 +76,36 @@ const MainContent = () => {
 const AppRouter = () => {
   return (
     <Routes>
-      <Route path="/" element={<MainContent />} />
-      <Route
-        path="/levels"
-        element={
-          <MenuLayout>
-            <LevelsScreen />
-          </MenuLayout>
-        }
-      />
-      <Route
-        path="/creations"
-        element={
-          <MenuLayout>
-            <CreationsScreen />
-          </MenuLayout>
-        }
-      />
-      <Route
-        path="/rankings"
-        element={
-          <MenuLayout>
-            <RankingsScreen />
-          </MenuLayout>
-        }
-      />
-      <Route
-        path="/admin"
-        element={
-          <MenuLayout>
+      <Route element={<MenuRouteLayout />}>
+        <Route path="/" element={<MainContent />} />
+        <Route path="/levels" element={<LevelsScreen />} />
+        <Route path="/creations" element={<CreationsScreen />} />
+        <Route path="/rankings" element={<RankingsScreen />} />
+        <Route
+          path="/admin"
+          element={
             <ProtectedAdminRoute>
               <AdminDashboard />
             </ProtectedAdminRoute>
-          </MenuLayout>
-        }
-      />
-      <Route
-        path="/editor"
-        element={
-          <MenuLayout contained={false}>
+          }
+        />
+        <Route
+          path="/editor"
+          element={
             <ScaledStage embedded>
               <LevelEditor />
             </ScaledStage>
-          </MenuLayout>
-        }
-      />
-      <Route
-        path="/campaign-editor"
-        element={
-          <MenuLayout contained={false}>
+          }
+        />
+        <Route
+          path="/campaign-editor"
+          element={
             <ScaledStage embedded>
               <CampaignEditor />
             </ScaledStage>
-          </MenuLayout>
-        }
-      />
+          }
+        />
+      </Route>
     </Routes>
   );
 };

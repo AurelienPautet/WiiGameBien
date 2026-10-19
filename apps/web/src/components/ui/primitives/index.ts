@@ -21,6 +21,7 @@ export {
   type DialogContentProps,
 } from "./Dialog";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./Tabs";
+export { SelectionIndicator } from "./SelectionIndicator";
 export { Select, type SelectOption } from "./Select";
 export { RadioGroup, type RadioGroupProps } from "./RadioGroup";
 export { Switch } from "./Switch";

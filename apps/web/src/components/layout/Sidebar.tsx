@@ -1,4 +1,6 @@
+import { useId } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { LayoutGroup } from "motion/react";
 import { useTranslation } from "react-i18next";
 import {
   House,
@@ -10,7 +12,7 @@ import {
 import { useModal, useAuth, useSocket, MODALS } from "../../contexts";
 import { storage } from "../../lib/storage";
 import { colorFromIndex } from "../../constants/tankColors";
-import { TankAvatar } from "../ui/primitives";
+import { SelectionIndicator, TankAvatar } from "../ui/primitives";
 import { cn } from "../../lib/cn";
 
 export const OnlineStatus = () => {
@@ -36,6 +38,7 @@ export const Sidebar = () => {
   const { pathname } = useLocation();
   const { openModal, activeModal } = useModal();
   const { user } = useAuth();
+  const groupId = useId();
   // ModalContext rerenders this shell when customization closes, so read the
   // saved colors directly rather than keeping a second copy in local state.
   const colors = {
@@ -45,6 +48,35 @@ export const Sidebar = () => {
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
     cn("sidebar-link", isActive && "is-active");
+  const creationsActive =
+    pathname === "/creations" ||
+    pathname === "/editor" ||
+    pathname === "/campaign-editor" ||
+    activeModal === MODALS.MY_LEVELS ||
+    activeModal === MODALS.MY_CAMPAIGNS;
+  const items = [
+    {
+      to: "/",
+      label: t("nav.home"),
+      icon: House,
+      active: !creationsActive && (pathname === "/" || pathname === "/levels"),
+    },
+    {
+      to: "/rankings",
+      label: t("nav.rankings"),
+      icon: ChartNoAxesColumnIncreasing,
+      active: !creationsActive && pathname === "/rankings",
+    },
+    {
+      to:
+        pathname === "/campaign-editor" || activeModal === MODALS.MY_CAMPAIGNS
+          ? "/creations?tab=campaigns"
+          : "/creations",
+      label: t("nav.creations"),
+      icon: PencilRuler,
+      active: creationsActive,
+    },
+  ];
   return (
     <aside className="sidebar">
       <button
@@ -59,40 +91,21 @@ export const Sidebar = () => {
         </span>
       </button>
 
-      <nav className="sidebar-nav" aria-label={t("nav.mainNavigation")}>
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) =>
-            navClass({ isActive: isActive || pathname === "/levels" })
-          }
-        >
-          <House /> <span>{t("nav.home")}</span>
-        </NavLink>
-        <NavLink to="/rankings" className={navClass}>
-          <ChartNoAxesColumnIncreasing /> <span>{t("nav.rankings")}</span>
-        </NavLink>
-        <NavLink
-          to={
-            pathname === "/campaign-editor" ||
-            activeModal === MODALS.MY_CAMPAIGNS
-              ? "/creations?tab=campaigns"
-              : "/creations"
-          }
-          className={({ isActive }) =>
-            navClass({
-              isActive:
-                isActive ||
-                pathname === "/editor" ||
-                pathname === "/campaign-editor" ||
-                activeModal === MODALS.MY_LEVELS ||
-                activeModal === MODALS.MY_CAMPAIGNS,
-            })
-          }
-        >
-          <PencilRuler /> <span>{t("nav.creations")}</span>
-        </NavLink>
-      </nav>
+      <LayoutGroup id={groupId}>
+        <nav className="sidebar-nav" aria-label={t("nav.mainNavigation")}>
+          {items.map(({ to, label, icon: Icon, active }) => (
+            <NavLink
+              key={label}
+              to={to}
+              end
+              className={navClass({ isActive: active })}
+            >
+              {active && <SelectionIndicator className="sidebar-selection" />}
+              <Icon /> <span>{label}</span>
+            </NavLink>
+          ))}
+        </nav>
+      </LayoutGroup>
 
       <div className="sidebar-utilities">
         {user?.isAdmin && (
