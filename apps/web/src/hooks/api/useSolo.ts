@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { soloApi } from "../../api";
 import { storage } from "../../lib/storage";
 import type { SoloGlobalType } from "@ouigame/shared/api";
@@ -88,6 +93,9 @@ export const useGlobalSoloLeaderboard = (type: SoloGlobalType, limit = 50) => {
     queryFn: () => soloApi.getGlobalLeaderboard(type, limit),
     enabled: !!type,
     staleTime: 60 * 1000, // 1 minute
+    // Keep the previous stat's rows on screen while the next one loads, so the
+    // podium/list doesn't collapse and flash on every tab switch.
+    placeholderData: keepPreviousData,
   });
 };
 
