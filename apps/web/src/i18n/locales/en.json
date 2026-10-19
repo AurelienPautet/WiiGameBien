@@ -26,7 +26,9 @@
     "rankings": "Rankings",
     "editor": "Editor",
     "campaigns": "Campaigns",
-    "admin": "Admin"
+    "admin": "Admin",
+    "mainNavigation": "Main navigation",
+    "skipToContent": "Skip to content"
   },
   "topbar": {
     "online": "online",
@@ -55,7 +57,18 @@
     "contact": "Contact",
     "about": "About",
     "github": "GitHub",
-    "copyright": "OUI TANK © 2026 — a cute io tank battler"
+    "copyright": "OUI TANK © 2026 — a cute io tank battler",
+    "hello": "Hi {{name}}!",
+    "helloGuest": "Ready to roll?",
+    "ready": "Let’s make some sparks!",
+    "featured": "Your next adventure",
+    "yourName": "Your name",
+    "campaignTitle": "Campaign",
+    "onlineTitle": "Multiplayer",
+    "soloTitle": "Solo",
+    "campaignIntro": "One adventure. A reserve of lives. How far can you go?",
+    "onlineIntro": "Jump into battle with friends and other players.",
+    "play": "Play"
   },
   "auth": {
     "chooseUsername": "Choose a Username",

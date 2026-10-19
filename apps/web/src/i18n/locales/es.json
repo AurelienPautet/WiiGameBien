@@ -26,7 +26,9 @@
     "rankings": "Clasificaciones",
     "editor": "Editor",
     "campaigns": "Campañas",
-    "admin": "Admin"
+    "admin": "Admin",
+    "mainNavigation": "Navegación principal",
+    "skipToContent": "Saltar al contenido"
   },
   "topbar": {
     "online": "en línea",
@@ -55,7 +57,18 @@
     "contact": "Contacto",
     "about": "Acerca de",
     "github": "GitHub",
-    "copyright": "OUI TANK © 2026 — un adorable juego de tanques io"
+    "copyright": "OUI TANK © 2026 — un adorable juego de tanques io",
+    "hello": "¡Hola, {{name}}!",
+    "helloGuest": "¡Te toca jugar!",
+    "ready": "¿Listo para sacar chispas?",
+    "featured": "Tu próxima aventura",
+    "yourName": "Tu nombre",
+    "campaignTitle": "Campaña",
+    "onlineTitle": "Multijugador",
+    "soloTitle": "Solo",
+    "campaignIntro": "Una aventura y una reserva de vidas. ¿Hasta dónde llegarás?",
+    "onlineIntro": "Únete a la batalla con tus amigos y otros jugadores.",
+    "play": "Jugar"
   },
   "auth": {
     "chooseUsername": "Elige un Nombre de Usuario",

@@ -11,7 +11,7 @@ import {
   useGame,
 } from "./contexts";
 import { QueryProvider } from "./providers/QueryProvider";
-import { LandingPage } from "./components/landing";
+import { LandingPage, HomeFooter } from "./components/landing";
 import { MenuLayout, OrientationHint, ScaledStage } from "./components/layout";
 import { GameCanvas } from "./components/game";
 import { MusicController } from "./components/MusicController";
@@ -51,7 +51,7 @@ const MainContent = () => {
   return isPlaying ? (
     <GameView />
   ) : (
-    <MenuLayout>
+    <MenuLayout footer={<HomeFooter />}>
       <LandingPage />
     </MenuLayout>
   );
@@ -90,17 +90,21 @@ const AppRouter = () => {
       <Route
         path="/editor"
         element={
-          <ScaledStage>
-            <LevelEditor />
-          </ScaledStage>
+          <MenuLayout contained={false}>
+            <ScaledStage embedded>
+              <LevelEditor />
+            </ScaledStage>
+          </MenuLayout>
         }
       />
       <Route
         path="/campaign-editor"
         element={
-          <ScaledStage>
-            <CampaignEditor />
-          </ScaledStage>
+          <MenuLayout contained={false}>
+            <ScaledStage embedded>
+              <CampaignEditor />
+            </ScaledStage>
+          </MenuLayout>
         }
       />
     </Routes>

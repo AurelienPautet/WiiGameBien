@@ -26,7 +26,9 @@
     "rankings": "Ranglisten",
     "editor": "Editor",
     "campaigns": "Kampagnen",
-    "admin": "Admin"
+    "admin": "Admin",
+    "mainNavigation": "Hauptnavigation",
+    "skipToContent": "Zum Inhalt springen"
   },
   "topbar": {
     "online": "online",
@@ -55,7 +57,18 @@
     "contact": "Kontakt",
     "about": "Über",
     "github": "GitHub",
-    "copyright": "OUI TANK © 2026 — ein niedliches Panzer-Battle-Spiel"
+    "copyright": "OUI TANK © 2026 — ein niedliches Panzer-Battle-Spiel",
+    "hello": "Hallo {{name}}!",
+    "helloGuest": "Bereit zum Losrollen?",
+    "ready": "Lass die Funken fliegen!",
+    "featured": "Dein nächstes Abenteuer",
+    "yourName": "Dein Name",
+    "campaignTitle": "Kampagne",
+    "onlineTitle": "Mehrspieler",
+    "soloTitle": "Solo",
+    "campaignIntro": "Ein Abenteuer, ein Vorrat an Leben. Wie weit kommst du?",
+    "onlineIntro": "Stürze dich mit Freunden und anderen Spielern ins Gefecht.",
+    "play": "Spielen"
   },
   "auth": {
     "chooseUsername": "Wähle einen Benutzernamen",

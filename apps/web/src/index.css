@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./menu.css";
 
 /* ========================================================================
    ARCADE DESIGN SYSTEM TOKENS — mirror of apps/web/src/theme/palette.ts.

@@ -26,7 +26,9 @@
     "rankings": "Classements",
     "editor": "Éditeur",
     "campaigns": "Campagnes",
-    "admin": "Admin"
+    "admin": "Admin",
+    "mainNavigation": "Navigation principale",
+    "skipToContent": "Aller au contenu"
   },
   "topbar": {
     "online": "en ligne",
@@ -55,7 +57,18 @@
     "contact": "Contact",
     "about": "À propos",
     "github": "GitHub",
-    "copyright": "OUI TANK © 2026 — un jeu de tanks io adorable"
+    "copyright": "OUI TANK © 2026 — un jeu de tanks io adorable",
+    "hello": "Salut {{name}} !",
+    "helloGuest": "À toi de jouer !",
+    "ready": "Prêt à faire des étincelles ?",
+    "featured": "Ta prochaine aventure",
+    "yourName": "Ton pseudo",
+    "campaignTitle": "Campagne",
+    "onlineTitle": "Multijoueur",
+    "soloTitle": "Solo",
+    "campaignIntro": "Une aventure, une réserve de vies. Jusqu’où iras-tu ?",
+    "onlineIntro": "Rejoins la bataille avec tes amis et d’autres joueurs.",
+    "play": "Jouer"
   },
   "auth": {
     "chooseUsername": "Choisis un pseudo",
