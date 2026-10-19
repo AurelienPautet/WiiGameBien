@@ -1163,7 +1163,8 @@ export class GameEngine {
     // Round-start parachute drop: progress 0→1 over SPAWN_ANIM_MS, or undefined
     // once finished / inactive so the renderer draws tanks normally. Pass our
     // socket id so only our tank parachutes in — solo bots and match opponents
-    // stay standing on their spawn spot.
+    // stay standing on their spawn spot — and so the renderer layers our tank
+    // above every other live tank for the whole match.
     const spawnAnim =
       this.spawnAnimElapsed !== null
         ? {
@@ -1187,6 +1188,7 @@ export class GameEngine {
         bullets: bullets,
         players: players,
         spawnAnim: spawnAnim,
+        mySocketId: this.mysocketid,
       } as unknown as Parameters<typeof this.renderer.draw>[0],
       () => this.debris.draw(this.renderer.c)
     );
