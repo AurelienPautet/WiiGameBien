@@ -3,6 +3,7 @@ import * as RadixTabs from "@radix-ui/react-tabs";
 import { LayoutGroup } from "motion/react";
 import { cn } from "../../../lib/cn";
 import { ui } from "../../../audio";
+import { tabPressHandlers } from "../../../lib/tabPress";
 import { SelectionIndicator } from "./SelectionIndicator";
 
 // Radix Tabs — keyboard nav (arrows/Home/End) + ARIA roles for free, replacing
@@ -56,13 +57,14 @@ export const TabsTrigger = forwardRef<
       ref={ref}
       value={value}
       className={cn(
-        "relative isolate flex-1 py-3 px-4 text-center font-display font-semibold uppercase rounded-t-xl cursor-pointer transition-colors",
+        "tab-pressable relative isolate flex-1 py-3 px-4 text-center font-display font-semibold uppercase rounded-t-xl cursor-pointer transition-colors",
         "border-x-[3px] border-t-[3px] border-transparent text-ink-soft hover:text-ink",
         "data-[state=active]:text-ink",
         "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue/30",
         className
       )}
       {...props}
+      {...tabPressHandlers<HTMLButtonElement>(props)}
       onClick={(e) => {
         ui.tab();
         onClick?.(e);

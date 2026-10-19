@@ -14,6 +14,7 @@ import { storage } from "../../lib/storage";
 import { colorFromIndex } from "../../constants/tankColors";
 import { SelectionIndicator, TankAvatar } from "../ui/primitives";
 import { cn } from "../../lib/cn";
+import { tabPressHandlers } from "../../lib/tabPress";
 
 export const OnlineStatus = () => {
   const { t } = useTranslation();
@@ -47,7 +48,7 @@ export const Sidebar = () => {
   };
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    cn("sidebar-link", isActive && "is-active");
+    cn("sidebar-link tab-pressable", isActive && "is-active");
   const creationsActive =
     pathname === "/creations" ||
     pathname === "/editor" ||
@@ -99,6 +100,7 @@ export const Sidebar = () => {
               to={to}
               end
               className={navClass({ isActive: active })}
+              {...tabPressHandlers<HTMLAnchorElement>()}
             >
               {active && <SelectionIndicator className="sidebar-selection" />}
               <Icon /> <span>{label}</span>
@@ -109,18 +111,24 @@ export const Sidebar = () => {
 
       <div className="sidebar-utilities">
         {user?.isAdmin && (
-          <NavLink to="/admin" className={navClass} aria-label={t("nav.admin")}>
+          <NavLink
+            to="/admin"
+            className={navClass}
+            aria-label={t("nav.admin")}
+            {...tabPressHandlers<HTMLAnchorElement>()}
+          >
             <Shield /> <span>{t("nav.admin")}</span>
           </NavLink>
         )}
         <button
           type="button"
           className={cn(
-            "sidebar-link",
+            "sidebar-link tab-pressable",
             activeModal === MODALS.SETTINGS && "is-active"
           )}
           onClick={() => openModal(MODALS.SETTINGS)}
           aria-label={t("topbar.settings")}
+          {...tabPressHandlers<HTMLButtonElement>()}
         >
           <Settings /> <span>{t("topbar.settings")}</span>
         </button>
