@@ -81,6 +81,28 @@ function totalActiveSessionMs(): number {
   return total;
 }
 
+// Persist every open session right now (graceful shutdown): the process is
+// about to exit, so the socket disconnect handlers will never get to run their
+// grace timers. Sessions in the grace window are written too — their player is
+// already gone, so recording up to now is the same outcome, just earlier.
+async function flushAll(): Promise<void> {
+  const endedAt = Date.now();
+  const inserts: Promise<unknown>[] = [];
+  for (const [playerId, session] of sessions) {
+    if (session.endTimer !== null) clearTimeout(session.endTimer);
+    inserts.push(
+      playSessionsRepo.insertSession({
+        playerId,
+        startedAt: new Date(session.startedAt),
+        endedAt: new Date(endedAt),
+        durationMs: endedAt - session.startedAt,
+      })
+    );
+  }
+  sessions.clear();
+  await Promise.allSettled(inserts);
+}
+
 // Test hook: drop every tracked session and its pending timer.
 function __resetForTests(): void {
   for (const session of sessions.values()) {
@@ -94,6 +116,7 @@ export {
   sessionClosed,
   activeSessionMs,
   totalActiveSessionMs,
+  flushAll,
   RECONNECT_GRACE_MS,
   __resetForTests,
 };

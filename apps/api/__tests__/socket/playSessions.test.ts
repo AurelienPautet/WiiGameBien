@@ -10,6 +10,7 @@ import {
   sessionClosed,
   activeSessionMs,
   totalActiveSessionMs,
+  flushAll,
   RECONNECT_GRACE_MS,
   __resetForTests,
 } from "../../socket/playSessions";
@@ -125,6 +126,28 @@ test("reports the elapsed time of sessions still in progress", () => {
   expect(insertSession).toHaveBeenCalledTimes(1);
   expect(activeSessionMs(1)).toBe(0);
   expect(totalActiveSessionMs()).toBe(30_000);
+});
+
+test("flushAll persists every open session immediately, without double-writing", async () => {
+  sessionOpened("s1", 1);
+  sessionOpened("s2", 2);
+  jest.setSystemTime(T0 + 42_000);
+  await flushAll();
+
+  expect(insertSession).toHaveBeenCalledTimes(2);
+  const byPlayer = Object.fromEntries(
+    insertSession.mock.calls.map(([row]) => [row.playerId, row])
+  );
+  expect(byPlayer[1].durationMs).toBe(42_000);
+  expect(byPlayer[2].durationMs).toBe(42_000);
+  expect(activeSessionMs(1)).toBe(0);
+  expect(totalActiveSessionMs()).toBe(0);
+
+  // The pending disconnect handlers must not record the same session again.
+  sessionClosed("s1", 1);
+  sessionClosed("s2", 2);
+  jest.advanceTimersByTime(RECONNECT_GRACE_MS);
+  expect(insertSession).toHaveBeenCalledTimes(2);
 });
 
 test("a closed socket that was never opened is a no-op", () => {
