@@ -88,6 +88,27 @@ export function partitionPlayersByLife<T extends { alive: boolean }>(
 }
 
 /**
+ * Move the local player's entry to the end of the live-tank draw list. Canvas
+ * paints are ordered — the last entry painted sits on top — and the players
+ * map iterates in arbitrary arrival order, so without this an opponent keyed
+ * after you paints over your tank wherever the two hulls overlap (most visible
+ * during the round-start parachute drop).
+ *
+ * Dead need no handling here: a dead local player is partitioned into the
+ * wrecks by `partitionPlayersByLife`, which paints beneath every live tank
+ * anyway — a corpse is never promoted above the living.
+ */
+export function localTankLast<T>(
+  liveTanks: [string, T][],
+  mySocketId: string | null | undefined
+): [string, T][] {
+  if (mySocketId == null) return liveTanks;
+  const mine = liveTanks.filter(([id]) => id === mySocketId);
+  if (mine.length === 0) return liveTanks;
+  return [...liveTanks.filter(([id]) => id !== mySocketId), ...mine];
+}
+
+/**
  * Whether the round-start parachute drop animates `socketId`'s tank. The drop
  * is the local player's intro, solo and matches alike: only the local tank
  * parachutes, so bots and opponents render standing on their spawn spot until
@@ -171,6 +192,10 @@ interface GameState {
   // tanks render normally. `mySocketId` restricts the drop to the local tank:
   // bot and opponent tanks render standing on their spawn spot instead.
   spawnAnim?: { progress: number; mySocketId?: string | null };
+  // The local player's socket id, when known. Draw-order only: the local tank
+  // is painted last so it renders above every other live tank. null (unknown /
+  // spectating) leaves the natural map order untouched.
+  mySocketId?: string | null;
 }
 
 interface DrawableEffect {
@@ -201,6 +226,10 @@ export class Renderer {
   // everyone else stands on their spawn spot. null (no id known) drops the
   // whole field. Set from GameState in draw().
   _spawnMySocketId: string | null;
+  // Local socket id for draw-order layering: this tank paints last among the
+  // live tanks, so it renders on top of opponents that overlap it. null leaves
+  // the natural map order untouched. Set from GameState in draw().
+  _mySocketId: string | null;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -228,6 +257,7 @@ export class Renderer {
     this.skipEnvironment = false;
     this._spawnProgress = null;
     this._spawnMySocketId = null;
+    this._mySocketId = null;
 
     // Pre-rendered graph-paper field, seeded onto the (back) fading canvas so
     // the grid is present from frame 0.
@@ -282,14 +312,24 @@ export class Renderer {
     this.drawTicks++;
     this.clear();
 
-    const { mines, holes, blocks, Bcollision, bullets, players, spawnAnim } =
-      gameState;
+    const {
+      mines,
+      holes,
+      blocks,
+      Bcollision,
+      bullets,
+      players,
+      spawnAnim,
+      mySocketId,
+    } = gameState;
 
     // Drive the round-start parachute drop for this frame. Once progress hits 1
     // (animation finished) tanks render normally, so treat that as inactive.
     this._spawnProgress =
       spawnAnim && spawnAnim.progress < 1 ? spawnAnim.progress : null;
     this._spawnMySocketId = spawnAnim?.mySocketId ?? null;
+    // Draw-order identity: the local tank paints last among the live tanks.
+    this._mySocketId = mySocketId ?? null;
 
     if (mines) {
       mines.forEach((mine) => this._drawMine(mine));
@@ -318,15 +358,19 @@ export class Renderer {
     // Draw players, split so wrecks render beneath living tanks: a dead tank
     // stays in the map as a wreck and must not paint over a live player. The
     // between-hook (floor-level debris) layers into the gap, above the wrecks
-    // but below the live tanks.
+    // but below the live tanks. Within the live tanks the local player paints
+    // last, so your tank sits above any opponent it overlaps (the players map
+    // iterates in arbitrary arrival order — most visible during the parachute
+    // drop).
     const { wrecks, liveTanks } = players
       ? partitionPlayersByLife(players)
       : { wrecks: [], liveTanks: [] };
+    const liveOrder = localTankLast(liveTanks, this._mySocketId);
     for (const [socketId, player] of wrecks) {
       this._drawPlayer(player, socketId);
     }
     drawBetweenWrecksAndTanks?.();
-    for (const [socketId, player] of liveTanks) {
+    for (const [socketId, player] of liveOrder) {
       this._drawPlayer(player, socketId);
     }
   }

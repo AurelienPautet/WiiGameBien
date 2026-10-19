@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { partitionPlayersByLife } from "../Renderer.js";
+import { partitionPlayersByLife, localTankLast } from "../Renderer.js";
 
 // Regression for: "a dead tank's corpse — and the cannon barrel that broke off
 // it — can show above an alive player". Players arrive in a map with arbitrary
@@ -72,5 +72,72 @@ describe("partitionPlayersByLife", () => {
 
     expect(ids(wrecks)).toEqual(["u"]);
     expect(ids(liveTanks)).toEqual(["x", "y"]);
+  });
+});
+
+// Regression for: "sometimes the player is rendered behind enemy tanks during
+// the parachute dropout". The players map iterates in arrival order, so an
+// opponent keyed after the local player painted over your tank wherever hulls
+// overlapped. draw() now runs the live-tank list through localTankLast so the
+// last thing painted among the living is your own tank.
+describe("localTankLast", () => {
+  const ids = (entries: [string, unknown][]) => entries.map(([id]) => id);
+
+  it("moves the local player's tank to the end of the draw list", () => {
+    const liveTanks: [string, unknown][] = [
+      ["me", {}],
+      ["opp1", {}],
+      ["opp2", {}],
+    ];
+
+    const ordered = localTankLast(liveTanks, "me");
+
+    expect(ids(ordered)).toEqual(["opp1", "opp2", "me"]);
+    expect(ids(liveTanks)).toEqual(["me", "opp1", "opp2"]); // input untouched
+  });
+
+  it("leaves the list alone when already last", () => {
+    const liveTanks: [string, unknown][] = [
+      ["opp1", {}],
+      ["me", {}],
+    ];
+
+    expect(ids(localTankLast(liveTanks, "me"))).toEqual(["opp1", "me"]);
+  });
+
+  it("leaves the list alone with no local id (spectating / unknown)", () => {
+    const liveTanks: [string, unknown][] = [
+      ["a", {}],
+      ["b", {}],
+    ];
+
+    expect(ids(localTankLast(liveTanks, null))).toEqual(["a", "b"]);
+    expect(ids(localTankLast(liveTanks, undefined))).toEqual(["a", "b"]);
+  });
+
+  it("leaves the list alone when the local player is not a live tank (dead)", () => {
+    // A dead local player has been partitioned into the wrecks already, so it
+    // does not appear in the liveTank list — a corpse must stay beneath the
+    // living, not be promoted on top.
+    const liveTanks: [string, unknown][] = [
+      ["a", {}],
+      ["b", {}],
+    ];
+
+    expect(ids(localTankLast(liveTanks, "me"))).toEqual(["a", "b"]);
+  });
+
+  it("composes with the life partition: wrecks first, me last of the living", () => {
+    const players: Record<string, { alive: boolean }> = {
+      me: { alive: true },
+      deadOpp: { alive: false },
+      opp: { alive: true },
+    };
+
+    const { wrecks, liveTanks } = partitionPlayersByLife(players);
+    const order = localTankLast(liveTanks, "me");
+
+    expect(ids(wrecks)).toEqual(["deadOpp"]);
+    expect(ids(order)).toEqual(["opp", "me"]);
   });
 });
