@@ -36,7 +36,6 @@ export const Sidebar = () => {
   const { pathname } = useLocation();
   const { openModal, activeModal } = useModal();
   const { user } = useAuth();
-  const { isConnected } = useSocket();
   // ModalContext rerenders this shell when customization closes, so read the
   // saved colors directly rather than keeping a second copy in local state.
   const colors = {
@@ -129,12 +128,11 @@ export const Sidebar = () => {
           <span className="block truncate font-bold">
             {user?.username ?? t("topbar.login")}
           </span>
-          <span className="mt-1 flex items-center gap-1.5 text-xs text-ink-soft">
-            <span
-              className={cn("status-dot", isConnected ? "bg-green" : "bg-red")}
-            />
-            {t(isConnected ? "topbar.connected" : "topbar.disconnected")}
-          </span>
+          {user && (
+            <span className="sidebar-account-description mt-1 block text-xs text-ink-soft">
+              {t("topbar.profile")}
+            </span>
+          )}
         </span>
       </button>
     </aside>

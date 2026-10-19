@@ -675,7 +675,7 @@
     max-width: 125px;
     font-size: 13px;
   }
-  .sidebar-account > span > span:last-child {
+  .sidebar-account-description {
     display: none;
   }
   .menu-main {
