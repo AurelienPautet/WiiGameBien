@@ -178,6 +178,28 @@ export const AdminLevelsResponseSchema = z.object({
 });
 export type AdminLevelsResponse = z.infer<typeof AdminLevelsResponseSchema>;
 
+// GET /api/admin/levels/thumbnails — paged level layouts the client re-renders
+// thumbnails from. `content` is the raw Drizzle json column (the stored
+// `{ data: number[] }` envelope), so it stays z.unknown() on the wire.
+export const AdminLevelThumbnailSourceSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  content: z.unknown(),
+});
+export type AdminLevelThumbnailSource = z.infer<
+  typeof AdminLevelThumbnailSourceSchema
+>;
+
+export const AdminLevelThumbnailsResponseSchema = z.object({
+  levels: z.array(AdminLevelThumbnailSourceSchema),
+  total: z.number(),
+  page: z.number(),
+  pageSize: z.number(),
+});
+export type AdminLevelThumbnailsResponse = z.infer<
+  typeof AdminLevelThumbnailsResponseSchema
+>;
+
 // GET /api/admin/campaigns — paginated campaign catalog with run aggregates.
 export const AdminCampaignListItemSchema = z.object({
   id: z.number(),
@@ -290,6 +312,20 @@ export const AdminUpdateLevelRequestSchema = z.object({
 });
 export type AdminUpdateLevelRequest = z.infer<
   typeof AdminUpdateLevelRequestSchema
+>;
+
+// PUT /api/admin/levels/:id/thumbnail — replace one level's stored thumbnail
+// with freshly rendered bytes (hex-encoded JPEG, as produced by the client
+// renderer). Capped well above a real 1150×800 thumbnail (< 1 MB hex) so a
+// malformed client can't push an arbitrarily large blob through.
+export const AdminUpdateLevelThumbnailRequestSchema = z.object({
+  hexData: z
+    .string()
+    .regex(/^(?:[0-9a-f]{2})+$/i, "hexData must be an even-length hex string")
+    .max(2_000_000, "hexData is too large"),
+});
+export type AdminUpdateLevelThumbnailRequest = z.infer<
+  typeof AdminUpdateLevelThumbnailRequestSchema
 >;
 
 // GET /api/admin/logins — paged query plus an optional status filter.

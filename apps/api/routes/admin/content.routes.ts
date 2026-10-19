@@ -6,6 +6,7 @@ import {
   AdminLevelsQuerySchema,
   AdminPagedQuerySchema,
   AdminUpdateLevelRequestSchema,
+  AdminUpdateLevelThumbnailRequestSchema,
   AdminIdParamSchema,
   type AdminLevelsQuery,
   type AdminPagedQuery,
@@ -37,6 +38,59 @@ router.get(
       pageSize,
     });
     res.json(result);
+  }
+);
+
+// GET /api/admin/levels/thumbnails?page=&pageSize= — paged level layouts
+// (id/name/content) for the "re-render all thumbnails" maintenance job. All
+// statuses, stable id order: the client walks the pages, redraws each level
+// with the current visual style and pushes the new bytes back through
+// PUT /levels/:id/thumbnail.
+router.get(
+  "/levels/thumbnails",
+  validate({ query: AdminPagedQuerySchema }),
+  async (req: Request, res: Response) => {
+    const q = req.validatedQuery as AdminPagedQuery;
+    const page = q.page ?? 1;
+    const pageSize = q.pageSize ?? 25;
+
+    const result = await contentService.listThumbnailSources({
+      page,
+      pageSize,
+    });
+    res.json(result);
+  }
+);
+
+// PUT /api/admin/levels/:id/thumbnail — replace one level's stored thumbnail
+// with freshly rendered bytes (hex-encoded JPEG from the client renderer).
+// 404 if the level is missing.
+router.put(
+  "/levels/:id/thumbnail",
+  validate({
+    params: AdminIdParamSchema,
+    body: AdminUpdateLevelThumbnailRequestSchema,
+  }),
+  async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const { hexData } = req.body as { hexData: string };
+
+    const level = await contentService.getLevel(id);
+    if (level === null) {
+      throw notFound("Level not found");
+    }
+
+    await contentService.setLevelThumbnail(id, hexData);
+
+    await recordAudit({
+      actorId: req.user!.playerId,
+      action: "level.rerender_thumbnail",
+      targetType: "level",
+      targetId: id,
+      details: { name: level.name, bytes: hexData.length / 2 },
+    });
+
+    res.json({ success: true });
   }
 );
 

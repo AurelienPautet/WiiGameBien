@@ -27,6 +27,7 @@ import {
   Tooltip,
 } from "../ui/primitives";
 import { cn } from "../../lib/cn";
+import { RerenderThumbnailsButton } from "./RerenderThumbnailsButton";
 
 type Section = "levels" | "campaigns";
 type LevelStatus = NonNullable<AdminLevelsQuery["status"]> | "all";
@@ -528,6 +529,9 @@ export const ContentTab = () => {
           aria-label="Content type"
         />
         <SectionLabel>Content moderation</SectionLabel>
+        <div className="ml-auto">
+          <RerenderThumbnailsButton />
+        </div>
       </div>
 
       <DarkPanel className="p-3 sm:p-4">

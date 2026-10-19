@@ -27,57 +27,31 @@ import {
   drawFlag,
   drawTank,
 } from "../engine/shapes";
+import {
+  BLOCKS,
+  BOT_COLOR,
+  drawFlagsAndBots,
+  extractEntities,
+} from "../engine/levelScene";
+import { renderLevelThumbnailHex } from "../lib/levelThumbnail";
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from "../constants/canvas";
+import {
+  CELL_SIZE,
+  GRID_COLS,
+  GRID_ROWS,
+  TOTAL_CELLS,
+} from "../constants/level";
 // The editor renders its field / walls / holes through the SAME WebGL
 // post-processor the game uses, so the preview matches gameplay exactly
 // (animated scenery, bloom, depth-in-holes). Flags / bots / the placement ghost
 // are drawn on a 2D overlay composited on top; on no-WebGL it all falls back to
 // 2D, drawn with the same engine/shapes primitives.
 import { tryCreatePostProcessor } from "../engine/PostProcessor";
-import type { PostProcessor, EnvBlock, EnvHole } from "../engine/PostProcessor";
+import type { PostProcessor } from "../engine/PostProcessor";
 
-// Board resolution + cell size match the game exactly (1150×800, 50px cells),
-// so the shared renderer treats the editor board identically. The canvases
-// render at this resolution and are CSS-scaled down to the display footprint.
-const CANVAS_WIDTH = 1150;
-const CANVAS_HEIGHT = 800;
-const GRID_COLS = 23;
-const GRID_ROWS = 16;
-const CELL_SIZE = 50;
-const TOTAL_CELLS = GRID_COLS * GRID_ROWS; // 368
 // On-screen size of the canvas (kept compact; the board scales to fit).
 const DISPLAY_WIDTH = 920;
 const DISPLAY_HEIGHT = 640;
-
-// Block types
-const BLOCKS = {
-  EMPTY: -1,
-  WALL: 1,
-  PLATFORM: 2,
-  FLAG: 3,
-  HOLE: 4,
-  BOT_BROWN: 11, // Brown — stationary turret
-  BOT_GREY: 12, // Grey — basic mobile soldier
-  BOT_TEAL: 13, // Teal — no-rebound rockets
-  BOT_GREEN: 14, // Green — stationary ricochet sniper
-  BOT_YELLOW: 15, // Yellow — miner
-  BOT_PURPLE: 16, // Purple — fast rapid-fire warrior
-  BOT_MAGENTA: 17, // Magenta — rapid-fire rover, never dodges
-  BOT_WHITE: 18, // White — rapid fire, near-blind
-  BOT_BLACK: 19, // Black — elite: fast rockets + mines
-};
-
-// Bot block id → tank colour name (shared with the game palette).
-const BOT_COLOR: Record<number, string> = {
-  [BLOCKS.BOT_BROWN]: "brown",
-  [BLOCKS.BOT_GREY]: "grey",
-  [BLOCKS.BOT_TEAL]: "teal",
-  [BLOCKS.BOT_GREEN]: "green",
-  [BLOCKS.BOT_YELLOW]: "yellow",
-  [BLOCKS.BOT_PURPLE]: "purple",
-  [BLOCKS.BOT_MAGENTA]: "magenta",
-  [BLOCKS.BOT_WHITE]: "white",
-  [BLOCKS.BOT_BLACK]: "black",
-};
 
 // Draw a single editor cell via the SHARED arcade primitives (engine/shapes) —
 // the exact same code the in-game Renderer uses. Used for the ghost preview and
@@ -111,77 +85,6 @@ function drawEditorBlock(
       });
     }
   }
-}
-
-interface EditorEntities {
-  blocks: EnvBlock[];
-  holes: EnvHole[];
-  flags: { x: number; y: number }[];
-  bots: { x: number; y: number; color: string }[];
-}
-
-// Turn the flat layout array into board-space geometry: walls/platforms and
-// holes feed the WebGL environment; flags/bots are 2D overlay markers.
-function extractEntities(layout: number[]): EditorEntities {
-  const cell = { w: CELL_SIZE, h: CELL_SIZE };
-  const blocks: EnvBlock[] = [];
-  const holes: EnvHole[] = [];
-  const flags: { x: number; y: number }[] = [];
-  const bots: { x: number; y: number; color: string }[] = [];
-  for (let i = 0; i < layout.length; i++) {
-    const block = layout[i];
-    if (block === undefined || block < 0) continue;
-    const x = (i % GRID_COLS) * CELL_SIZE;
-    const y = Math.floor(i / GRID_COLS) * CELL_SIZE;
-    if (block === BLOCKS.WALL || block === BLOCKS.PLATFORM) {
-      blocks.push({ position: { x, y }, size: cell, type: block });
-    } else if (block === BLOCKS.HOLE) {
-      holes.push({ position: { x, y }, size: cell });
-    } else if (block === BLOCKS.FLAG) {
-      flags.push({ x, y });
-    } else {
-      const color = BOT_COLOR[block];
-      if (color) bots.push({ x, y, color });
-    }
-  }
-  return { blocks, holes, flags, bots };
-}
-
-// Draw the overlay markers (spawn flags + bot tanks) — same primitives the game
-// uses for tanks, so they bloom/composite identically.
-function drawFlagsAndBots(
-  ctx: CanvasRenderingContext2D,
-  flags: { x: number; y: number }[],
-  bots: { x: number; y: number; color: string }[]
-): void {
-  flags.forEach((f) => drawFlag(ctx, f.x, f.y, CELL_SIZE));
-  bots.forEach((b) =>
-    drawTank(ctx, {
-      cx: b.x + CELL_SIZE / 2,
-      cy: b.y + CELL_SIZE / 2,
-      r: CELL_SIZE * 0.4,
-      bodyColor: b.color,
-      turretColor: b.color,
-      angle: -Math.PI / 2,
-      isBot: true,
-    })
-  );
-}
-
-// Static 2D thumbnail of the whole level (no ghost / no animation) for the saved
-// preview — decoupled from the GL canvas so it's stable and needs no readback.
-function renderThumbnail(layout: number[]): string | null {
-  const c = document.createElement("canvas");
-  c.width = CANVAS_WIDTH;
-  c.height = CANVAS_HEIGHT;
-  const ctx = c.getContext("2d");
-  if (!ctx) return null;
-  paintField(ctx, CANVAS_WIDTH, CANVAS_HEIGHT, CELL_SIZE);
-  const { blocks, holes, flags, bots } = extractEntities(layout);
-  drawBlocks(ctx, blocks);
-  holes.forEach((h) => drawHole(ctx, h));
-  drawFlagsAndBots(ctx, flags, bots);
-  return c.toDataURL("image/jpeg", 0.1);
 }
 
 // Initialize level layout with border walls
@@ -546,18 +449,10 @@ export const LevelEditor = () => {
       return;
     }
 
-    // Generate thumbnail (static 2D render of the whole level).
-    const lowQuality = renderThumbnail(layout);
-    if (!lowQuality) return;
-    const base64Data = lowQuality.split(",")[1];
-    if (base64Data === undefined) return;
-
-    // Convert base64 to hex (matching old implementation)
-    const binary = atob(base64Data);
-    let hexData = "";
-    for (let i = 0; i < binary.length; i++) {
-      hexData += binary.charCodeAt(i).toString(16).padStart(2, "0");
-    }
+    // Generate thumbnail (static 2D render of the whole level) and encode it as
+    // the hex wire format the API stores.
+    const hexData = renderLevelThumbnailHex(layout);
+    if (hexData === null) return;
 
     const levelData = { data: layout };
     const maxPlayers = spawnCount;
