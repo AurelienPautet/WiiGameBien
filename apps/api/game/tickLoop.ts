@@ -124,6 +124,13 @@ function createTickLoop({
   // its backlog instead of fast-forwarding — the "spiral of death" guard.
   let accumulator = 0;
 
+  // Wall-clock start (performance.now) of the live round per room id. A round
+  // is "live" between the end of its start countdown and its winner check
+  // firing, so the recorded duration excludes the lobby hold, the countdown
+  // and the between-rounds respawn wait. Rooms deleted mid-round are pruned on
+  // the next tick.
+  const roundStartedAt = new Map<number, number>();
+
   // Persist one online round, then (for logged-in players) evaluate achievements
   // and push any new unlocks to that player's socket. Internally sequential
   // (insert → aggregate-includes-this-round → unlock) but fired WITHOUT awaiting
@@ -132,9 +139,10 @@ function createTickLoop({
     socketid: string,
     playerId: number | null,
     levelId: number,
-    stats: RoundStats
+    stats: RoundStats,
+    durationMs: number
   ) {
-    await statsRepo.insertRound(playerId, levelId, stats);
+    await statsRepo.insertRound(playerId, levelId, stats, durationMs);
     if (playerId === null) return;
     const unlocked = await achievementsService.evaluateOnlineRound(
       playerId,
@@ -146,8 +154,35 @@ function createTickLoop({
   }
 
   function stepAllRooms() {
+    const now = performance.now();
+    // Drop round clocks whose room was deleted mid-round (the round will never
+    // end through update(), so nothing else would ever clear the entry).
+    for (const roomId of roundStartedAt.keys()) {
+      if (rooms[roomId] === undefined) roundStartedAt.delete(roomId);
+    }
+
     for (const room of Object.values(rooms)) {
+      // A round is live once its start countdown is over and it has not ended
+      // yet. The clock starts on the first tick that sees this state.
+      if (
+        room.status === "playing" &&
+        !room.countdownActive &&
+        !room.waitingrespawn &&
+        !roundStartedAt.has(room.id)
+      ) {
+        roundStartedAt.set(room.id, now);
+      }
+
       if (room.update(SIM_STEP_S)) {
+        // Round over: its full duration is now known. A missing clock (e.g. a
+        // lobby room somehow ending) records 0 rather than a bogus epoch span.
+        const startedAt = roundStartedAt.get(room.id);
+        const durationMs =
+          startedAt === undefined
+            ? 0
+            : Math.max(0, Math.round(now - startedAt));
+        roundStartedAt.delete(room.id);
+
         // room.levels holds level IDs; the current entry is present for a live
         // room. Guard so a malformed/empty list skips the round insert.
         const levelId = room.levels[room.levelid];
@@ -172,9 +207,13 @@ function createTickLoop({
           // Fire-and-forget so the tick never blocks; the .catch keeps a
           // transient DB error (during insert or achievement eval) from
           // surfacing as an unhandled rejection.
-          void recordOnlineRound(socketid, playerId, levelId, stats).catch(
-            (err) => console.error("recordOnlineRound failed:", err)
-          );
+          void recordOnlineRound(
+            socketid,
+            playerId,
+            levelId,
+            stats,
+            durationMs
+          ).catch((err) => console.error("recordOnlineRound failed:", err));
         }
 
         scheduleRespawn(room);

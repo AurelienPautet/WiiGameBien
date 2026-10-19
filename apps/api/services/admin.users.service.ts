@@ -9,6 +9,8 @@ import type {
   AdminUsersResponse,
 } from "@ouigame/shared/api";
 import * as repo from "../repositories/admin.users.repo";
+import * as playSessionsRepo from "../repositories/playSessions.repo";
+import * as playSessions from "../socket/playSessions";
 
 // Normalize a timestamp coming back from Drizzle to an ISO string. Mapped
 // timestamp columns arrive as Date, but raw SQL aggregates (e.g. MAX(...)) come
@@ -88,15 +90,23 @@ async function getUserDetail(id: number): Promise<AdminUserDetail | null> {
   const base = await repo.getUserListItem(id);
   if (base === undefined) return null;
 
-  const [combat, campaignRunsCount, recentLogins, levels, campaigns, keys] =
-    await Promise.all([
-      repo.getCombatTotals(id),
-      repo.countCampaignRuns(id),
-      repo.getRecentLogins(id, 20),
-      repo.getCreatedLevels(id),
-      repo.getCreatedCampaigns(id),
-      repo.getAchievementKeys(id),
-    ]);
+  const [
+    combat,
+    campaignRunsCount,
+    sessionTimeMs,
+    recentLogins,
+    levels,
+    campaigns,
+    keys,
+  ] = await Promise.all([
+    repo.getCombatTotals(id),
+    repo.countCampaignRuns(id),
+    playSessionsRepo.totalSessionTimeMs(id),
+    repo.getRecentLogins(id, 20),
+    repo.getCreatedLevels(id),
+    repo.getCreatedCampaigns(id),
+    repo.getAchievementKeys(id),
+  ]);
 
   const deaths =
     (Number(combat.online.onlineDeaths) || 0) +
@@ -111,6 +121,11 @@ async function getUserDetail(id: number): Promise<AdminUserDetail | null> {
     (Number(combat.online.onlineBlocks) || 0) +
     (Number(combat.solo.soloBlocks) || 0);
   const soloCompletions = Number(combat.solo.soloCompletions) || 0;
+  // Online + solo level time is the player's game time; session time is the
+  // wider connected-time metric (includes menus and lobby).
+  const timePlayedMs =
+    (Number(combat.online.onlineTimeMs) || 0) +
+    (Number(combat.solo.soloTimeMs) || 0);
 
   return {
     ...toListItem(base),
@@ -121,6 +136,9 @@ async function getUserDetail(id: number): Promise<AdminUserDetail | null> {
     blocksDestroyed,
     soloCompletions,
     campaignRuns: campaignRunsCount,
+    timePlayedMs,
+    // Finished sessions plus the current one (0 when the player is offline).
+    sessionTimeMs: sessionTimeMs + playSessions.activeSessionMs(id),
     recentLogins: recentLogins.map((l) => ({
       ip: l.ip,
       status: l.status,

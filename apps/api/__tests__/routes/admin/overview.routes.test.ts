@@ -6,6 +6,8 @@ import {
   createAdminWithSession,
   createLevel,
   createRound,
+  createSoloRound,
+  createPlaySession,
 } from "../../helpers/db";
 
 const app = buildApp();
@@ -20,6 +22,10 @@ describe("GET /api/admin/overview", () => {
     const level = await createLevel(player.id, { name: "OverviewLvl" });
     // Seed a round so games/combat totals are > 0.
     await createRound(player.id, level.id, { kills: 3, wins: 1 });
+    // Seed one of each playtime source.
+    await createSoloRound(player.id, level.id, { timeMs: 5000 });
+    await createRound(player.id, level.id, { durationMs: 3000 });
+    await createPlaySession(player.id, { durationMs: 7000 });
 
     const res = await request(app)
       .get("/api/admin/overview")
@@ -43,6 +49,13 @@ describe("GET /api/admin/overview", () => {
     expect(typeof res.body.campaignsStats.completionRate).toBe("number");
     expect(typeof res.body.achievements.unlocked).toBe("number");
     expect(typeof res.body.logins.successRate).toBe("number");
+    // Playtime: solo + online level time, and total connected time.
+    expect(res.body.playtime).toEqual({
+      soloMs: 5000,
+      onlineMs: 3000,
+      sessionMs: 7000,
+      totalMs: 8000,
+    });
     expect(typeof res.body.generatedAt).toBe("string");
   });
 

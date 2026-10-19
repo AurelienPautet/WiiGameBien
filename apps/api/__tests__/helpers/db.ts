@@ -18,6 +18,7 @@ const {
   campaigns,
   campaignLevels,
   campaignRuns,
+  playSessions,
 } = schema;
 
 // Derive the physical table names from the schema itself so adding/renaming a
@@ -137,6 +138,9 @@ async function createRound(
     hits: overrides.hits ?? 0,
     plants: overrides.plants ?? 0,
     blocksDestroyed: overrides.blocksDestroyed ?? 0,
+    // NULL by default, like pre-duration-column rows: playtime sums must only
+    // count rounds that explicitly carry a duration.
+    durationMs: overrides.durationMs ?? null,
   };
   const [row] = await db.insert(rounds).values(values).returning();
   return row;
@@ -209,6 +213,19 @@ async function createCampaignRun(
   return row;
 }
 
+// One finished play session: the window ends `durationMs` before `now` started.
+async function createPlaySession(playerId: number, overrides: any = {}) {
+  const durationMs = overrides.durationMs ?? 60_000;
+  const endedAt: Date = overrides.endedAt ?? new Date();
+  const startedAt: Date =
+    overrides.startedAt ?? new Date(endedAt.getTime() - durationMs);
+  const [row] = await db
+    .insert(playSessions)
+    .values({ playerId, startedAt, endedAt, durationMs })
+    .returning();
+  return row;
+}
+
 const tables = { ratings, logings };
 
 export {
@@ -224,5 +241,6 @@ export {
   createSoloRound,
   createCampaign,
   createCampaignRun,
+  createPlaySession,
   tables,
 };

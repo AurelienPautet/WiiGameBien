@@ -53,6 +53,14 @@ export const AdminOverviewSchema = z.object({
     completionRate: z.number(),
     distinctLevelsCompleted: z.number(),
   }),
+  // Playtime in milliseconds: `totalMs` = solo + online level time, while
+  // `sessionMs` is total connected time (includes menus and lobby).
+  playtime: z.object({
+    soloMs: z.number(),
+    onlineMs: z.number(),
+    sessionMs: z.number(),
+    totalMs: z.number(),
+  }),
   campaignsStats: z.object({
     runs: z.number(),
     completions: z.number(),
@@ -128,6 +136,10 @@ export const AdminUserDetailSchema = AdminUserListItemSchema.extend({
   blocksDestroyed: z.number(),
   soloCompletions: z.number(),
   campaignRuns: z.number(),
+  // Total level time (online + solo/campaign) and total connected time, both
+  // in milliseconds.
+  timePlayedMs: z.number(),
+  sessionTimeMs: z.number(),
   recentLogins: z.array(
     z.object({
       ip: z.string(),

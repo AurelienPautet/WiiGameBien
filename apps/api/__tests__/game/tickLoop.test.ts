@@ -50,7 +50,8 @@ afterEach(() => {
 });
 
 // Minimal room fake. update() returns true exactly once (a single round end) by
-// default unless `roundEnds` is false.
+// default unless `roundEnds` is false. `status`/`waitingrespawn` mirror the
+// real Room fields the tick loop's round clock reads.
 function makeRoom(id: number, roundEnds: boolean) {
   return {
     id,
@@ -58,7 +59,9 @@ function makeRoom(id: number, roundEnds: boolean) {
     levelid: 0,
     players: {} as Record<string, any>,
     io: makeIo(),
+    status: "playing",
     countdownActive: false,
+    waitingrespawn: false,
     countdownDuration: 3000,
     update: jest.fn().mockReturnValueOnce(roundEnds).mockReturnValue(false),
     respawn_the_room: jest.fn(),
@@ -122,10 +125,41 @@ test("on round end, records each player's round then schedules a respawn", async
   expect(statsRepo.insertRound).toHaveBeenCalledWith(
     42,
     101,
-    player.round_stats.stats
+    player.round_stats.stats,
+    0
   );
   expect(player.round_stats.reset).toHaveBeenCalledTimes(1);
   expect(roomTimers.get(2)?.respawn).toBeDefined();
+});
+
+test("records the round's wall-clock duration (countdown end → round end)", async () => {
+  users["p1"] = { playerId: 42, username: "p1", email: "p1@e.com" };
+  const player = mkPlayer();
+  let now = 1000;
+  perfSpy.mockImplementation(() => now);
+  const room = makeRoom(11, true);
+  room.update = jest.fn(() => now >= 9000); // round ends once the clock hits 9s
+  room.players = { p1: player };
+  const loop = createTickLoop({
+    io: makeIo() as never,
+    rooms: { 11: room } as never,
+    roomTimers: new Map(),
+  });
+
+  now = 1100;
+  loop.start();
+  await jest.advanceTimersByTimeAsync(20); // round clock starts at 1100ms
+  now = 5100;
+  await jest.advanceTimersByTimeAsync(20); // 4s into the round
+  now = 9000;
+  await jest.advanceTimersByTimeAsync(20); // round ends at 9s
+
+  expect(statsRepo.insertRound).toHaveBeenCalledWith(
+    42,
+    101,
+    player.round_stats.stats,
+    9000 - 1100
+  );
 });
 
 test("skips bots and waiting joiners when recording rounds", async () => {
@@ -151,7 +185,8 @@ test("skips bots and waiting joiners when recording rounds", async () => {
   expect(statsRepo.insertRound).toHaveBeenCalledWith(
     null,
     101,
-    human.round_stats.stats
+    human.round_stats.stats,
+    0
   );
   expect(bot.round_stats.reset).toHaveBeenCalledTimes(1);
   expect(waiting.round_stats.reset).toHaveBeenCalledTimes(1);
@@ -175,7 +210,8 @@ test("records a null playerId for a socket with no logged-in user", async () => 
   expect(statsRepo.insertRound).toHaveBeenCalledWith(
     null,
     101,
-    player.round_stats.stats
+    player.round_stats.stats,
+    0
   );
   // Anonymous round → achievements are never evaluated.
   expect(achievementsService.evaluateOnlineRound).not.toHaveBeenCalled();

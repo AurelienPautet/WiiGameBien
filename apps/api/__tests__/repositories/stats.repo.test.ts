@@ -1,4 +1,8 @@
-import { getUserRoundStats, insertRound } from "../../repositories/stats.repo";
+import {
+  getUserRoundStats,
+  insertRound,
+  totalPlayTimeMs,
+} from "../../repositories/stats.repo";
 import { cleanDb, createPlayer, createLevel, createRound } from "../helpers/db";
 
 // Isolation tests for the stats repo's aggregate query. Notably freezes the
@@ -36,35 +40,63 @@ describe("insertRound", () => {
     const player = await createPlayer();
     const level = await createLevel(player.id);
 
-    await insertRound(player.id, level.id, {
-      kills: 1,
-      deaths: 0,
-      wins: 1,
-      shots: 4,
-      hits: 2,
-      plants: 1,
-      blocks_destroyed: 3,
-    });
+    await insertRound(
+      player.id,
+      level.id,
+      {
+        kills: 1,
+        deaths: 0,
+        wins: 1,
+        shots: 4,
+        hits: 2,
+        plants: 1,
+        blocks_destroyed: 3,
+      },
+      90_000
+    );
 
     const stats = await getUserRoundStats(player.id);
     expect(stats!.rounds_played).toBe(1);
     expect(Number(stats!.blocks_destroyed)).toBe(3);
     expect(Number(stats!.shots)).toBe(4);
+    expect(await totalPlayTimeMs(player.id)).toBe(90_000);
   });
 
   test("accepts an anonymous round (playerId null)", async () => {
     const player = await createPlayer();
     const level = await createLevel(player.id);
     await expect(
-      insertRound(null, level.id, {
-        kills: 0,
-        deaths: 1,
-        wins: 0,
-        shots: 0,
-        hits: 0,
-        plants: 0,
-        blocks_destroyed: 0,
-      })
+      insertRound(
+        null,
+        level.id,
+        {
+          kills: 0,
+          deaths: 1,
+          wins: 0,
+          shots: 0,
+          hits: 0,
+          plants: 0,
+          blocks_destroyed: 0,
+        },
+        12_000
+      )
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("totalPlayTimeMs", () => {
+  test("is 0 for a player with no rounds", async () => {
+    const player = await createPlayer();
+    expect(await totalPlayTimeMs(player.id)).toBe(0);
+  });
+
+  test("sums durations and ignores NULL-duration (legacy) rounds", async () => {
+    const player = await createPlayer();
+    const level = await createLevel(player.id);
+    await createRound(player.id, level.id, { durationMs: 60_000 });
+    await createRound(player.id, level.id, { durationMs: 30_500 });
+    await createRound(player.id, level.id); // legacy row: duration_ms NULL
+
+    expect(await totalPlayTimeMs(player.id)).toBe(90_500);
   });
 });

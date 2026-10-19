@@ -25,7 +25,9 @@ async function getUserRoundStats(playerId: number) {
 }
 
 // Insert one round. statsObj uses the wire field `blocks_destroyed`, mapped to
-// the schema column `blocksDestroyed`. Replaces the dead db_stats.add_round.
+// the schema column `blocksDestroyed`. `durationMs` is the round's wall-clock
+// duration taken by the tick loop's round clock. Replaces the dead
+// db_stats.add_round.
 async function insertRound(
   playerId: number | null,
   levelId: number,
@@ -37,7 +39,8 @@ async function insertRound(
     hits: number;
     plants: number;
     blocks_destroyed: number;
-  }
+  },
+  durationMs: number
 ) {
   await db.insert(rounds).values({
     playerId,
@@ -49,7 +52,19 @@ async function insertRound(
     hits: statsObj.hits,
     plants: statsObj.plants,
     blocksDestroyed: statsObj.blocks_destroyed,
+    durationMs,
   });
 }
 
-export { getUserRoundStats, insertRound };
+// Sum of the player's online-round durations (ms). Rounds recorded before the
+// duration column existed are NULL and excluded, so this is a lower bound for
+// very old accounts. 0 when they have no timed rounds.
+async function totalPlayTimeMs(playerId: number) {
+  const result = await db
+    .select({ total: sum(rounds.durationMs) })
+    .from(rounds)
+    .where(eq(rounds.playerId, playerId));
+  return Number(result[0]!.total) || 0;
+}
+
+export { getUserRoundStats, insertRound, totalPlayTimeMs };

@@ -5,6 +5,7 @@
 // lives here so the repo stays pure Drizzle.
 import type { AdminOverview, AdminTimeseriesPoint } from "@ouigame/shared/api";
 import * as repo from "../repositories/admin.stats.repo";
+import * as playSessions from "../socket/playSessions";
 
 // Drizzle aggregates (sum/count) arrive as strings or null; coerce to a number.
 function n(value: unknown): number {
@@ -54,6 +55,7 @@ async function getOverview(): Promise<AdminOverview> {
     games,
     onlineCombat,
     soloCombat,
+    playtime,
     soloComp,
     campaignRunStats,
     achievements,
@@ -66,6 +68,7 @@ async function getOverview(): Promise<AdminOverview> {
     repo.gameCounts(),
     repo.onlineCombatTotals(),
     repo.soloCombatTotals(),
+    repo.playtimeTotals(),
     repo.soloCompletion(),
     repo.campaignRunStats(),
     repo.achievementCount(),
@@ -94,6 +97,13 @@ async function getOverview(): Promise<AdminOverview> {
   // Solo completion.
   const completions = n(soloComp.completions);
   const attempts = n(soloComp.attempts);
+
+  // Playtime: solo + online level time is "time played"; session time is the
+  // wider connected-time metric (includes menus and lobby), and adds the
+  // sessions that are still open so the dashboard is live.
+  const soloMs = n(playtime.soloMs);
+  const onlineMs = n(playtime.onlineMs);
+  const sessionMs = n(playtime.sessionMs) + playSessions.totalActiveSessionMs();
 
   // Campaign runs.
   const cRuns = n(campaignRunStats.runs);
@@ -144,6 +154,12 @@ async function getOverview(): Promise<AdminOverview> {
       attempts,
       completionRate: attempts > 0 ? completions / attempts : 0,
       distinctLevelsCompleted: n(soloComp.distinctLevelsCompleted),
+    },
+    playtime: {
+      soloMs,
+      onlineMs,
+      sessionMs,
+      totalMs: soloMs + onlineMs,
     },
     campaignsStats: {
       runs: cRuns,
