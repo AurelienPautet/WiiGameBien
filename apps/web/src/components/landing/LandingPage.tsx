@@ -131,7 +131,7 @@ export const LandingPage = () => {
       title: t("landing.soloTitle"),
       sub: t("landing.playSoloSub"),
       icon: Gamepad2,
-      action: () => navigate("/levels"),
+      action: () => openModal(MODALS.LEVEL_SELECTOR),
     },
   };
   const main = modes[featured];
