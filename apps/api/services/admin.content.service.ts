@@ -6,6 +6,7 @@
 import type {
   AdminLevelsResponse,
   AdminCampaignsResponse,
+  AdminLevelThumbnailsResponse,
 } from "@ouigame/shared/api";
 import * as repo from "../repositories/admin.content.repo";
 
@@ -58,6 +59,40 @@ async function listLevels({
 async function getLevel(levelId: number) {
   const rows = await repo.getLevelById(levelId);
   return rows[0] ?? null;
+}
+
+// A page of level thumbnail sources: every level's stored layout `content`
+// (the raw json envelope the client re-renders from), in stable id order.
+// All statuses are included — taking a level down doesn't change its preview.
+async function listThumbnailSources({
+  page,
+  pageSize,
+}: {
+  page: number;
+  pageSize: number;
+}): Promise<AdminLevelThumbnailsResponse> {
+  const offset = (page - 1) * pageSize;
+  const [rows, total] = await Promise.all([
+    repo.listThumbnailSources(pageSize, offset),
+    repo.countLevels(undefined),
+  ]);
+
+  return {
+    levels: rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      content: r.content,
+    })),
+    total: Number(total) || 0,
+    page,
+    pageSize,
+  };
+}
+
+// Replace one level's stored thumbnail with freshly rendered bytes (the route
+// validates the hex first and probes the level's existence before calling).
+async function setLevelThumbnail(levelId: number, hexData: string) {
+  await repo.upsertLevelImg(levelId, hexData);
 }
 
 // Moderate a level: set its status (the route validates presence first).
@@ -118,6 +153,8 @@ async function deleteCampaign(campaignId: number) {
 export {
   listLevels,
   getLevel,
+  listThumbnailSources,
+  setLevelThumbnail,
   setLevelStatus,
   deleteLevel,
   listCampaigns,

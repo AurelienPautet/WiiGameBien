@@ -7,6 +7,8 @@ import type {
   AdminUpdateUserRequest,
   AdminLevelsResponse,
   AdminUpdateLevelRequest,
+  AdminLevelThumbnailsResponse,
+  AdminUpdateLevelThumbnailRequest,
   AdminCampaignsResponse,
   AdminLoginsResponse,
   AdminAuditResponse,
@@ -73,6 +75,18 @@ export const adminApi = {
         pageSize: params.pageSize,
       })}`
     ),
+
+  // Level layouts (id/name/content) for the thumbnail maintenance job.
+  getLevelThumbnailSources: (params: AdminPagedQuery) =>
+    apiClient.get<AdminLevelThumbnailsResponse>(
+      `/admin/levels/thumbnails${toQuery({
+        page: params.page,
+        pageSize: params.pageSize,
+      })}`
+    ),
+
+  updateLevelThumbnail: (id: number, body: AdminUpdateLevelThumbnailRequest) =>
+    apiClient.put<SuccessResponse>(`/admin/levels/${id}/thumbnail`, body),
 
   updateLevel: (id: number, body: AdminUpdateLevelRequest) =>
     apiClient.patch<SuccessResponse>(`/admin/levels/${id}`, body),

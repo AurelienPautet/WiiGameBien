@@ -247,6 +247,204 @@ describe("PATCH /api/admin/levels/:id", () => {
   });
 });
 
+describe("GET /api/admin/levels/thumbnails", () => {
+  test("lists every level's layout content in stable id order, all statuses", async () => {
+    const admin = await createAdminWithSession({
+      username: "tboss",
+      email: "tboss@example.com",
+    });
+    const creator = await createPlayer({
+      username: "tmaker",
+      email: "tmaker@example.com",
+    });
+    const up = await createLevel(creator.id, {
+      name: "UpMap",
+      content: { data: [1, -1, 3] },
+    });
+    const down = await createLevel(creator.id, {
+      name: "DownMap",
+      status: "down",
+      content: { data: [1, 4] },
+    });
+
+    const res = await request(app)
+      .get("/api/admin/levels/thumbnails")
+      .set("Authorization", admin.authHeader);
+
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(2);
+    expect(res.body.levels).toEqual([
+      { id: up.id, name: "UpMap", content: { data: [1, -1, 3] } },
+      { id: down.id, name: "DownMap", content: { data: [1, 4] } },
+    ]);
+  });
+
+  test("paginates: total counts all levels, page returns the slice", async () => {
+    const admin = await createAdminWithSession({
+      username: "tboss2",
+      email: "tboss2@example.com",
+    });
+    const creator = await createPlayer({
+      username: "tmaker2",
+      email: "tmaker2@example.com",
+    });
+    for (let i = 0; i < 3; i += 1) {
+      await createLevel(creator.id, {
+        name: `TMap${i}`,
+        content: { data: [i] },
+      });
+    }
+
+    const res = await request(app)
+      .get("/api/admin/levels/thumbnails")
+      .query({ page: 2, pageSize: 2 })
+      .set("Authorization", admin.authHeader);
+
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(3);
+    expect(res.body.page).toBe(2);
+    expect(res.body.pageSize).toBe(2);
+    expect(res.body.levels).toHaveLength(1);
+  });
+
+  test("rejects a non-admin (403)", async () => {
+    const { authHeader } = await createUserWithSession({
+      username: "plain7",
+      email: "plain7@example.com",
+    });
+    const res = await request(app)
+      .get("/api/admin/levels/thumbnails")
+      .set("Authorization", authHeader);
+    expect(res.status).toBe(403);
+  });
+
+  test("rejects an unauthenticated request (401)", async () => {
+    const res = await request(app).get("/api/admin/levels/thumbnails");
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("PUT /api/admin/levels/:id/thumbnail", () => {
+  test("replaces the stored image bytes and writes an audit row", async () => {
+    const admin = await createAdminWithSession({
+      username: "tboss3",
+      email: "tboss3@example.com",
+    });
+    const creator = await createPlayer({
+      username: "tmaker3",
+      email: "tmaker3@example.com",
+    });
+    const level = await createLevel(creator.id, {
+      name: "RedrawMe",
+      img: "aa",
+    });
+
+    const res = await request(app)
+      .put(`/api/admin/levels/${level.id}/thumbnail`)
+      .set("Authorization", admin.authHeader)
+      .send({ hexData: "ffd8ffee" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+
+    const imgs = await db
+      .select()
+      .from(schema.levelsImg)
+      .where(eq(schema.levelsImg.levelId, level.id));
+    expect(imgs).toHaveLength(1);
+    expect((imgs[0]!.img as Buffer).toString("hex")).toBe("ffd8ffee");
+
+    const audit = await db
+      .select()
+      .from(schema.adminAuditLog)
+      .where(eq(schema.adminAuditLog.action, "level.rerender_thumbnail"));
+    expect(audit).toHaveLength(1);
+    expect(audit[0]!.actorId).toBe(admin.player.id);
+    expect(audit[0]!.targetType).toBe("level");
+    expect(audit[0]!.targetId).toBe(level.id);
+    expect(audit[0]!.details).toEqual({ name: "RedrawMe", bytes: 4 });
+  });
+
+  test("inserts an image row for a level that has none", async () => {
+    const admin = await createAdminWithSession({
+      username: "tboss4",
+      email: "tboss4@example.com",
+    });
+    const creator = await createPlayer({
+      username: "tmaker4",
+      email: "tmaker4@example.com",
+    });
+    const level = await createLevel(creator.id, { name: "NoImageYet" });
+
+    const res = await request(app)
+      .put(`/api/admin/levels/${level.id}/thumbnail`)
+      .set("Authorization", admin.authHeader)
+      .send({ hexData: "00ff" });
+
+    expect(res.status).toBe(200);
+    const imgs = await db
+      .select()
+      .from(schema.levelsImg)
+      .where(eq(schema.levelsImg.levelId, level.id));
+    expect(imgs).toHaveLength(1);
+    expect((imgs[0]!.img as Buffer).toString("hex")).toBe("00ff");
+  });
+
+  test("rejects malformed hexData (400)", async () => {
+    const admin = await createAdminWithSession({
+      username: "tboss5",
+      email: "tboss5@example.com",
+    });
+    const creator = await createPlayer({
+      username: "tmaker5",
+      email: "tmaker5@example.com",
+    });
+    const level = await createLevel(creator.id, { name: "BadHex" });
+
+    const odd = await request(app)
+      .put(`/api/admin/levels/${level.id}/thumbnail`)
+      .set("Authorization", admin.authHeader)
+      .send({ hexData: "abc" });
+    expect(odd.status).toBe(400);
+
+    const nonHex = await request(app)
+      .put(`/api/admin/levels/${level.id}/thumbnail`)
+      .set("Authorization", admin.authHeader)
+      .send({ hexData: "zz" });
+    expect(nonHex.status).toBe(400);
+
+    const empty = await request(app)
+      .put(`/api/admin/levels/${level.id}/thumbnail`)
+      .set("Authorization", admin.authHeader)
+      .send({ hexData: "" });
+    expect(empty.status).toBe(400);
+  });
+
+  test("returns 404 for a missing level", async () => {
+    const { authHeader } = await createAdminWithSession({
+      username: "tboss6",
+      email: "tboss6@example.com",
+    });
+    const res = await request(app)
+      .put("/api/admin/levels/999999/thumbnail")
+      .set("Authorization", authHeader)
+      .send({ hexData: "00" });
+    expect(res.status).toBe(404);
+  });
+
+  test("rejects a non-admin (403)", async () => {
+    const { authHeader } = await createUserWithSession({
+      username: "plain8",
+      email: "plain8@example.com",
+    });
+    const res = await request(app)
+      .put("/api/admin/levels/1/thumbnail")
+      .set("Authorization", authHeader)
+      .send({ hexData: "00" });
+    expect(res.status).toBe(403);
+  });
+});
+
 describe("DELETE /api/admin/levels/:id", () => {
   test("deletes the level (children cascade) and writes an audit row", async () => {
     const admin = await createAdminWithSession({

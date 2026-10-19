@@ -8,6 +8,7 @@ import { and, asc, count, desc, eq, ilike, sql, type SQL } from "drizzle-orm";
 
 const {
   levels,
+  levelsImg,
   campaigns,
   campaignLevels,
   campaignRuns,
@@ -83,6 +84,19 @@ async function countLevels(where: SQL | undefined) {
   return rows[0]!.total;
 }
 
+// One page of (id, name, content) for EVERY level regardless of status, ordered
+// by id. This is the source list for the thumbnail re-render job: the order is
+// stable while the job walks the pages (it only ever writes levels_img rows, so
+// the levels table itself — and therefore the pagination — never shifts).
+async function listThumbnailSources(limit: number, offset: number) {
+  return db
+    .select({ id: levels.id, name: levels.name, content: levels.content })
+    .from(levels)
+    .orderBy(asc(levels.id))
+    .limit(limit)
+    .offset(offset);
+}
+
 // Build the ORDER BY for the level list from the validated sort + order. Plays
 // and rating are the same correlated subqueries used in the SELECT.
 function levelsOrderBy(
@@ -120,6 +134,26 @@ async function getLevelById(levelId: number) {
 // Moderate a level: set its status. Children are untouched.
 async function setLevelStatus(levelId: number, status: string) {
   await db.update(levels).set({ status }).where(eq(levels.id, levelId));
+}
+
+// Replace a level's stored thumbnail bytes, inserting the image row when the
+// level has none yet (imported/legacy levels can lack one). levels_img has no
+// unique constraint on level_id, so the upsert keys off an explicit probe
+// instead of ON CONFLICT.
+async function upsertLevelImg(levelId: number, hexData: string) {
+  const img = Buffer.from(hexData, "hex");
+  const existing = await db
+    .select({ id: levelsImg.id })
+    .from(levelsImg)
+    .where(eq(levelsImg.levelId, levelId));
+  if (existing.length > 0) {
+    await db
+      .update(levelsImg)
+      .set({ img })
+      .where(eq(levelsImg.levelId, levelId));
+  } else {
+    await db.insert(levelsImg).values({ levelId, img });
+  }
 }
 
 // Delete a level by id. Child rows (image, ratings, rounds, solo rounds,
@@ -189,8 +223,10 @@ export {
   levelsOrderBy,
   listLevels,
   countLevels,
+  listThumbnailSources,
   getLevelById,
   setLevelStatus,
+  upsertLevelImg,
   deleteLevel,
   campaignsWhere,
   listCampaigns,

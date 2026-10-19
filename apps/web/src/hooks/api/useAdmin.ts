@@ -1,6 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "../../api";
 import { storage } from "../../lib/storage";
+import {
+  levelLayoutFromContent,
+  renderLevelThumbnailHex,
+} from "../../lib/levelThumbnail";
 import type {
   AdminUsersParams,
   AdminLevelsParams,
@@ -122,6 +126,99 @@ export const useUpdateAdminLevel = () => {
       adminApi.updateLevel(id, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "levels"] });
+    },
+  });
+};
+
+// --- Re-render all level thumbnails -----------------------------------------
+
+// Progress reported while the maintenance job walks the level catalog.
+export interface ThumbnailRerenderProgress {
+  done: number;
+  total: number;
+  failed: number;
+}
+
+export interface ThumbnailRerenderResult extends ThumbnailRerenderProgress {
+  /** True when the caller's shouldStop() cut the run short. */
+  stopped: boolean;
+}
+
+// The catalog endpoint caps pageSize at 100 (AdminPagedQuerySchema).
+const THUMBNAIL_PAGE_SIZE = 100;
+
+// Admin maintenance job: redraw every level's thumbnail from its stored layout
+// with the CURRENT renderer (engine/levelScene + lib/levelThumbnail) and save
+// the new bytes back. Runs in the browser because the renderer is canvas-based;
+// uses the same save path as the level editor, so a UI/style change can be
+// pushed to all existing levels with one click.
+//
+// Callers pass `onProgress` for the UI and `shouldStop` so a Stop button can
+// end the run between levels. A per-level render/save failure counts as
+// `failed` and the job continues; only a catalog fetch failure rejects.
+export const useRerenderAdminLevelThumbnails = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      onProgress,
+      shouldStop,
+    }: {
+      onProgress?: (progress: ThumbnailRerenderProgress) => void;
+      shouldStop?: () => boolean;
+    } = {}): Promise<ThumbnailRerenderResult> => {
+      let page = 1;
+      let done = 0;
+      let failed = 0;
+      let total = 0;
+      let stopped = false;
+
+      for (;;) {
+        const source = await adminApi.getLevelThumbnailSources({
+          page,
+          pageSize: THUMBNAIL_PAGE_SIZE,
+        });
+        total = source.total;
+
+        for (const level of source.levels) {
+          if (shouldStop?.()) {
+            stopped = true;
+            break;
+          }
+          const layout = levelLayoutFromContent(level.content);
+          const hexData = layout ? renderLevelThumbnailHex(layout) : null;
+          if (hexData === null) {
+            failed += 1;
+          } else {
+            try {
+              await adminApi.updateLevelThumbnail(level.id, { hexData });
+              done += 1;
+            } catch {
+              failed += 1;
+            }
+          }
+          onProgress?.({ done, total, failed });
+        }
+
+        const processed = done + failed;
+        if (stopped || source.levels.length === 0 || processed >= total) {
+          break;
+        }
+        page += 1;
+      }
+
+      return { done, total, failed, stopped };
+    },
+    onSuccess: ({ done }) => {
+      if (done === 0) return;
+      // Both the admin list and the public/My-Levels cards read the thumbnail.
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "levels"],
+        refetchType: "active",
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["levels"],
+        refetchType: "active",
+      });
     },
   });
 };

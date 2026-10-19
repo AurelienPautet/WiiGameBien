@@ -74,6 +74,10 @@ vi.mock("../../../hooks/api", () => ({
   useUpdateAdminLevel: () => ({ mutate: updateLevel, isPending: false }),
   useDeleteAdminLevel: () => ({ mutate: deleteLevel, isPending: false }),
   useDeleteAdminCampaign: () => ({ mutate: deleteCampaign, isPending: false }),
+  useRerenderAdminLevelThumbnails: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
 }));
 
 import { ContentTab } from "../ContentTab";
