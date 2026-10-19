@@ -39,7 +39,6 @@ export const CampaignEndScreen = ({
   return (
     <OverlayScrim>
       <OverlayPanel
-        tone={completed ? "win" : "lose"}
         icon={
           completed ? (
             <Trophy className="w-16 h-16 text-yellow-d" />

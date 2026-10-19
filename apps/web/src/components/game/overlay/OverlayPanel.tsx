@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { motion, type Variants } from "motion/react";
 import { cn } from "../../../lib/cn";
 import { springs } from "../../../lib/motion";
-import { RESULT_TONE, type ResultTone } from "./resultTone";
 
 // The panel springs in (scale-pop) and orchestrates a cascade of its inner
 // rows; each row rides `rowVariant`, the icon gets an extra bouncy entrance.
@@ -29,8 +28,6 @@ const iconVariant: Variants = {
 };
 
 interface OverlayPanelProps {
-  /** Drives the top accent bar colour. Omit for a plain (no-bar) panel. */
-  tone?: ResultTone;
   /** Big status icon shown above the title. */
   icon?: ReactNode;
   /** Heading. */
@@ -48,11 +45,9 @@ interface OverlayPanelProps {
 /**
  * The one standard overlay surface (rule 2): the white arcade card every game
  * moment renders inside — same motif as the menu `Panel` (white, 4px ink
- * border, arcade shadow). A thin result-coloured accent bar carries the
- * win/lose signal; the title stays solid ink so it reads on white.
+ * border, arcade shadow). The title stays solid ink so it reads on white.
  */
 export function OverlayPanel({
-  tone,
   icon,
   title,
   subtitle,
@@ -73,14 +68,6 @@ export function OverlayPanel({
       initial="hidden"
       animate="visible"
     >
-      {tone && (
-        <span
-          className={cn(
-            "absolute inset-x-0 top-0 h-1.5",
-            RESULT_TONE[tone].bar
-          )}
-        />
-      )}
       {icon && <motion.div variants={iconVariant}>{icon}</motion.div>}
       {title && (
         <motion.h2
