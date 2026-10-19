@@ -46,16 +46,25 @@ export const RankingsScreen = () => {
   const [onlineStat, setOnlineStat] = useState<RankingType>("KILLS");
   const [soloStat, setSoloStat] = useState<SoloGlobalType>("LEVELS_COMPLETED");
 
-  const { data: onlineRankings = [], isLoading: onlineLoading } =
-    useRankings(onlineStat);
+  const {
+    data: onlineRankings = [],
+    isLoading: onlineLoading,
+    isPlaceholderData: onlinePlaceholder,
+  } = useRankings(onlineStat);
   const { data: personalOnlineRank } = usePersonalRank(onlineStat);
-  const { data: soloRankings = [], isLoading: soloLoading } =
-    useGlobalSoloLeaderboard(soloStat, 50);
+  const {
+    data: soloRankings = [],
+    isLoading: soloLoading,
+    isPlaceholderData: soloPlaceholder,
+  } = useGlobalSoloLeaderboard(soloStat, 50);
 
   const rankings = (
     mode === "ONLINE" ? onlineRankings : soloRankings
   ) as RankRow[];
   const isLoading = mode === "ONLINE" ? onlineLoading : soloLoading;
+  // True while the previous stat's rows are still shown waiting for the new
+  // query: keep the layout stable but dim it so the numbers don't look fresh.
+  const isRefreshing = mode === "ONLINE" ? onlinePlaceholder : soloPlaceholder;
   const activeStat = mode === "ONLINE" ? onlineStat : soloStat;
 
   const personalSolo = user
@@ -125,7 +134,13 @@ export const RankingsScreen = () => {
 
       {/* Podium */}
       {podium.length > 0 && (
-        <div className="flex justify-center items-end gap-4 my-7 flex-wrap">
+        <div
+          aria-busy={isRefreshing}
+          className={cn(
+            "flex justify-center items-end gap-4 my-7 flex-wrap transition-opacity",
+            isRefreshing && "opacity-60"
+          )}
+        >
           {podiumOrder.map((p) => {
             if (!p) return null;
             const place = Number(p.rank);
@@ -173,7 +188,10 @@ export const RankingsScreen = () => {
       )}
 
       {/* Ranked list #4+ */}
-      <DarkPanel className="p-2">
+      <DarkPanel
+        aria-busy={isRefreshing}
+        className={cn("p-2 transition-opacity", isRefreshing && "opacity-60")}
+      >
         {isLoading ? (
           <p className="text-center text-white/60 py-8">
             {t("rankings.loadingRankings")}
@@ -212,7 +230,13 @@ export const RankingsScreen = () => {
       </DarkPanel>
 
       {/* Your rank */}
-      <div className="sticky bottom-3.5 mt-3.5 flex items-center gap-3.5 bg-yellow border-4 border-ink rounded-[14px] shadow-[0_8px_0_rgba(0,0,0,0.25)] px-4 py-3">
+      <div
+        aria-busy={isRefreshing}
+        className={cn(
+          "sticky bottom-3.5 mt-3.5 flex items-center gap-3.5 bg-yellow border-4 border-ink rounded-[14px] shadow-[0_8px_0_rgba(0,0,0,0.25)] px-4 py-3 transition-opacity",
+          isRefreshing && "opacity-60"
+        )}
+      >
         <span className="text-xl font-bold text-ink w-12 text-center">
           {personalRank ? `#${personalRank.rank}` : "—"}
         </span>

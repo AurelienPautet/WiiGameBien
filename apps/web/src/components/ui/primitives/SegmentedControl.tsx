@@ -34,6 +34,13 @@ export function SegmentedControl<T extends string>({
   className,
   "aria-label": ariaLabel,
 }: SegmentedControlProps<T>) {
+  // Key buttons by option set + value, not value alone: the same value can
+  // appear in two sets (e.g. KILLS in both online and solo stats). Without the
+  // set in the key, switching sets reuses the shared node and moves it while
+  // `transition-colors` fades its stale active background — a visible flash.
+  // Remounting swaps the active segment instantly; within one set, keys stay
+  // stable so the active cross-fade is preserved.
+  const optionSet = options.map((opt) => opt.value).join("|");
   return (
     <div
       role="group"
@@ -47,7 +54,7 @@ export function SegmentedControl<T extends string>({
         const active = opt.value === value;
         return (
           <button
-            key={opt.value}
+            key={`${optionSet}:${opt.value}`}
             type="button"
             aria-pressed={active}
             onClick={() => {
