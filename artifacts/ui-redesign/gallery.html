@@ -1,3 +1,162 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
-body{margin:0;color:var(--foreground,#263039);font-family:var(--font-sans,system-ui);background:transparent}*{box-sizing:border-box}.controls{display:flex;align-items:center;gap:8px;margin-bottom:12px}select{min-width:0;flex:1;font:inherit;font-size:14px;color:var(--foreground,#263039);background:var(--card,#fff);padding:10px;border:1px solid var(--border,#ccc);border-radius:8px}button{font:inherit;border:1px solid var(--border,#ccc);background:var(--card,#fff);color:var(--foreground,#263039);padding:10px 13px;border-radius:8px;cursor:pointer}button:disabled{opacity:.4;cursor:default}figure{margin:0}figure[hidden]{display:none}img{display:block;max-width:100%;width:auto;max-height:720px;height:auto;margin:0 auto;border-radius:10px}figcaption{font-size:13px;line-height:1.5;color:var(--muted-foreground,#626b76);margin:12px 0 0}#count{font-size:12px;white-space:nowrap;color:var(--muted-foreground,#626b76)}button:focus-visible,select:focus-visible{outline:3px solid var(--primary,#00b2e1);outline-offset:2px}
-</style></head><body><div class="controls"><select aria-label="Screenshot" id="screen"><option value="0">Accueil</option><option value="1">Mes créations · Niveaux</option><option value="2">Mes créations · Campagnes</option><option value="3">Mes créations · Mobile</option><option value="4">Accueil · Mobile</option></select><button id="prev" aria-label="Previous screenshot">←</button><button id="next" aria-label="Next screenshot">→</button><span id="count"></span></div><figure data-screen="0" ><img src="30-home-simplified-menu.png" alt="Accueil screenshot"><figcaption>Accueil, Classements et Mes créations : les trois entrées principales. Paramètres et profil restent en bas.</figcaption></figure><figure data-screen="1" hidden><img src="31-my-creations-levels.png" alt="Mes créations · Niveaux screenshot"><figcaption>Création, modification et test des niveaux dans un seul espace.</figcaption></figure><figure data-screen="2" hidden><img src="32-my-creations-campaigns.png" alt="Mes créations · Campagnes screenshot"><figcaption>Les campagnes se trouvent dans le deuxième onglet. L’enregistrement ramène sur cet onglet.</figcaption></figure><figure data-screen="3" hidden><img src="33-my-creations-mobile.png" alt="Mes créations · Mobile screenshot"><figcaption>Les trois entrées du menu restent lisibles sur téléphone.</figcaption></figure><figure data-screen="4" hidden><img src="34-home-simplified-menu-mobile.png" alt="Accueil · Mobile screenshot"><figcaption>Les modes Solo, Multijoueur et Campagne restent accessibles depuis l’accueil.</figcaption></figure><script>const select=document.getElementById('screen'),views=[...document.querySelectorAll('figure')],prev=document.getElementById('prev'),next=document.getElementById('next');function show(index){select.value=String(index);views.forEach((v,i)=>v.hidden=i!==index);prev.disabled=index===0;next.disabled=index===views.length-1;document.getElementById('count').textContent=(index+1)+' / '+views.length;}select.addEventListener('change',()=>show(Number(select.value)));prev.addEventListener('click',()=>show(Number(select.value)-1));next.addEventListener('click',()=>show(Number(select.value)+1));show(0);</script></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      body {
+        margin: 0;
+        color: var(--foreground, #263039);
+        font-family: var(--font-sans, system-ui);
+        background: transparent;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      .controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      select {
+        min-width: 0;
+        flex: 1;
+        font: inherit;
+        font-size: 14px;
+        color: var(--foreground, #263039);
+        background: var(--card, #fff);
+        padding: 10px;
+        border: 1px solid var(--border, #ccc);
+        border-radius: 8px;
+      }
+      button {
+        font: inherit;
+        border: 1px solid var(--border, #ccc);
+        background: var(--card, #fff);
+        color: var(--foreground, #263039);
+        padding: 10px 13px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      figure {
+        margin: 0;
+      }
+      figure[hidden] {
+        display: none;
+      }
+      img {
+        display: block;
+        max-width: 100%;
+        width: auto;
+        max-height: 720px;
+        height: auto;
+        margin: 0 auto;
+        border-radius: 10px;
+      }
+      figcaption {
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--muted-foreground, #626b76);
+        margin: 12px 0 0;
+      }
+      #count {
+        font-size: 12px;
+        white-space: nowrap;
+        color: var(--muted-foreground, #626b76);
+      }
+      button:focus-visible,
+      select:focus-visible {
+        outline: 3px solid var(--primary, #00b2e1);
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="controls">
+      <select aria-label="Screenshot" id="screen">
+        <option value="0">Accueil</option>
+        <option value="1">Classements</option>
+        <option value="2">Mes créations</option>
+        <option value="3">Sélection solo</option>
+        <option value="4">Éditeur de niveau</option>
+        <option value="5">Éditeur de campagne</option>
+        <option value="6">Administration</option>
+        <option value="7">Accueil · Mobile</option></select
+      ><button id="prev" aria-label="Previous screenshot">←</button
+      ><button id="next" aria-label="Next screenshot">→</button
+      ><span id="count"></span>
+    </div>
+    <figure data-screen="0">
+      <img src="35-home-clean-copy.png" alt="Accueil screenshot" />
+      <figcaption>
+        Accroches retirées ; descriptions des modes conservées. Footer centré en
+        bas.
+      </figcaption>
+    </figure>
+    <figure data-screen="1" hidden>
+      <img src="36-rankings-consistent-nav.png" alt="Classements screenshot" />
+      <figcaption>
+        Même menu de 204 × 886 px à cette taille d’écran (1440 × 1000).
+      </figcaption>
+    </figure>
+    <figure data-screen="2" hidden>
+      <img
+        src="37-creations-consistent-nav.png"
+        alt="Mes créations screenshot"
+      />
+      <figcaption>Même menu et titre sans sous-titre superflu.</figcaption>
+    </figure>
+    <figure data-screen="3" hidden>
+      <img src="38-solo-consistent-nav.png" alt="Sélection solo screenshot" />
+      <figcaption>Navigation de mêmes dimensions que sur l’accueil.</figcaption>
+    </figure>
+    <figure data-screen="4" hidden>
+      <img
+        src="39-level-editor-consistent-nav.png"
+        alt="Éditeur de niveau screenshot"
+      />
+      <figcaption>Navigation de mêmes dimensions que sur l’accueil.</figcaption>
+    </figure>
+    <figure data-screen="5" hidden>
+      <img
+        src="40-campaign-editor-consistent-nav.png"
+        alt="Éditeur de campagne screenshot"
+      />
+      <figcaption>Navigation de mêmes dimensions que sur l’accueil.</figcaption>
+    </figure>
+    <figure data-screen="6" hidden>
+      <img src="41-admin-consistent-nav.png" alt="Administration screenshot" />
+      <figcaption>Navigation de mêmes dimensions que sur l’accueil.</figcaption>
+    </figure>
+    <figure data-screen="7" hidden>
+      <img
+        src="42-home-clean-copy-mobile.png"
+        alt="Accueil · Mobile screenshot"
+      />
+      <figcaption>Navigation compacte commune à toutes les pages.</figcaption>
+    </figure>
+    <script>
+      const select = document.getElementById("screen"),
+        views = [...document.querySelectorAll("figure")],
+        prev = document.getElementById("prev"),
+        next = document.getElementById("next");
+      function show(index) {
+        select.value = String(index);
+        views.forEach((v, i) => (v.hidden = i !== index));
+        prev.disabled = index === 0;
+        next.disabled = index === views.length - 1;
+        document.getElementById("count").textContent =
+          index + 1 + " / " + views.length;
+      }
+      select.addEventListener("change", () => show(Number(select.value)));
+      prev.addEventListener("click", () => show(Number(select.value) - 1));
+      next.addEventListener("click", () => show(Number(select.value) + 1));
+      show(0);
+    </script>
+  </body>
+</html>

@@ -140,14 +140,7 @@ export const LandingPage = () => {
   return (
     <div className="home-page">
       <header className="home-heading">
-        <div>
-          <IoTitle as="h1">
-            {user
-              ? t("landing.hello", { name: user.username })
-              : t("landing.helloGuest")}
-          </IoTitle>
-          <p>{t("landing.ready")}</p>
-        </div>
+        <IoTitle as="h1">{t("nav.home")}</IoTitle>
         <OnlineStatus />
       </header>
 
@@ -158,13 +151,8 @@ export const LandingPage = () => {
             data-featured-mode={featured}
           >
             <div className="home-feature-copy">
-              <SectionLabel>{t("landing.featured")}</SectionLabel>
               <IoTitle as="h2">{main.title}</IoTitle>
-              <p>
-                {campaignFeatured
-                  ? t("landing.campaignIntro")
-                  : t("landing.onlineIntro")}
-              </p>
+              <p>{main.sub}</p>
               <Button
                 variant="ghost"
                 size="lg"

@@ -54,21 +54,15 @@
     "customizeTank": "Personaliza tu tanque",
     "customize": "Personalizar",
     "leaderboard": "Tabla de Clasificación",
-    "noRankings": "Sin clasificaciones aún — sé el primero.",
+    "noRankings": "Sin clasificaciones aún.",
     "contact": "Contacto",
     "about": "Acerca de",
     "github": "GitHub",
-    "copyright": "OUI TANK © 2026 — un adorable juego de tanques io",
-    "hello": "¡Hola, {{name}}!",
-    "helloGuest": "¡Te toca jugar!",
-    "ready": "¿Listo para sacar chispas?",
-    "featured": "Tu próxima aventura",
+    "copyright": "OUI TANK © 2026",
     "yourName": "Tu nombre",
     "campaignTitle": "Campaña",
     "onlineTitle": "Multijugador",
     "soloTitle": "Solo",
-    "campaignIntro": "Una aventura y una reserva de vidas. ¿Hasta dónde llegarás?",
-    "onlineIntro": "Únete a la batalla con tus amigos y otros jugadores.",
     "play": "Jugar"
   },
   "auth": {
@@ -454,7 +448,6 @@
     "waitingForHost": "Esperando a que el anfitrión empiece…"
   },
   "creations": {
-    "subtitle": "Encuentra tus niveles y crea tus campañas.",
     "levels": "Niveles",
     "campaigns": "Campañas",
     "loginToManage": "Inicia sesión para crear y gestionar tus niveles y campañas."

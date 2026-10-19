@@ -54,21 +54,15 @@
     "customizeTank": "Personalizza carro",
     "customize": "Personalizza",
     "leaderboard": "Classifica",
-    "noRankings": "Ancora nessuna classifica — sii il primo.",
+    "noRankings": "Ancora nessuna classifica.",
     "contact": "Contatti",
     "about": "Chi siamo",
     "github": "GitHub",
-    "copyright": "OUI TANK © 2026 — un carino gioco di battaglia tra carri",
-    "hello": "Ciao {{name}}!",
-    "helloGuest": "Tocca a te giocare!",
-    "ready": "Pronto a fare scintille?",
-    "featured": "La tua prossima avventura",
+    "copyright": "OUI TANK © 2026",
     "yourName": "Il tuo nome",
     "campaignTitle": "Campagna",
     "onlineTitle": "Multigiocatore",
     "soloTitle": "Solo",
-    "campaignIntro": "Un’avventura, una riserva di vite. Fin dove arriverai?",
-    "onlineIntro": "Entra in battaglia con amici e altri giocatori.",
     "play": "Gioca"
   },
   "auth": {
@@ -454,7 +448,6 @@
     "waitingForHost": "In attesa che l'host avvii…"
   },
   "creations": {
-    "subtitle": "Ritrova i tuoi livelli e costruisci le tue campagne.",
     "levels": "Livelli",
     "campaigns": "Campagne",
     "loginToManage": "Accedi per creare e gestire i tuoi livelli e le tue campagne."

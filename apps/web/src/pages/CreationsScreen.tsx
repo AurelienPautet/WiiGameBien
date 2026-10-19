@@ -59,9 +59,6 @@ export const CreationsScreen = () => {
         <IoTitle as="h1" className="text-4xl">
           {t("nav.creations")}
         </IoTitle>
-        <p className="mt-3 text-ink-soft font-medium">
-          {t("creations.subtitle")}
-        </p>
       </header>
       {isLoading ? (
         <Panel className="p-8 text-center text-ink-soft">
@@ -89,14 +86,14 @@ export const CreationsScreen = () => {
             <TabsList aria-label={t("nav.creations")}>
               <TabsTrigger
                 value="levels"
-                className="flex items-center justify-center gap-2"
+                className="flex min-w-0 items-center justify-center gap-2 px-2 text-sm sm:px-4 sm:text-base"
               >
                 <PencilRuler size={20} />
                 {t("creations.levels")}
               </TabsTrigger>
               <TabsTrigger
                 value="campaigns"
-                className="flex items-center justify-center gap-2"
+                className="flex min-w-0 items-center justify-center gap-2 px-2 text-sm sm:px-4 sm:text-base"
               >
                 <Flag size={20} />
                 {t("creations.campaigns")}
