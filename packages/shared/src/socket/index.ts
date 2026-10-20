@@ -49,11 +49,16 @@ export interface ClientToServerEvents {
   // room_id is whatever id the client holds; the server indexes rooms[room_id],
   // which accepts a numeric id or its string form (rooms are also joined as
   // String(room.id)). The web GameContext likewise types roomId as number|string.
+  // paintc (optional, additive) is the hull paint/skin id bought in the tank
+  // shop (e.g. "stripes"). Old clients omit it; the server defaults it and the
+  // renderer resolves any unknown id to the plain hull, so the wire stays
+  // backward/forward compatible.
   play: (
     playerName: string,
     turretc: string,
     bodyc: string,
-    room_id: number | string
+    room_id: number | string,
+    paintc?: string
   ) => void;
   quit: () => void;
   // "tock" — the ~60fps player input. Keys verbatim: serverid, mysocketid,

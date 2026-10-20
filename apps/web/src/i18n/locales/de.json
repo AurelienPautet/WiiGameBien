@@ -29,7 +29,8 @@
     "admin": "Admin",
     "mainNavigation": "Hauptnavigation",
     "skipToContent": "Zum Inhalt springen",
-    "creations": "Meine Kreationen"
+    "creations": "Meine Kreationen",
+    "shop": "Shop"
   },
   "topbar": {
     "online": "online",
@@ -217,7 +218,62 @@
   "tankSelect": {
     "title": "Dein Tank",
     "body": "Körper",
-    "turret": "Geschütz"
+    "turret": "Geschütz",
+    "paint": "Lack",
+    "paintHint": "Schalte im Shop mit OuiCoins weitere Lacke frei.",
+    "openShop": "Shop"
+  },
+  "shop": {
+    "title": "Panzer-Shop",
+    "subtitle": "Lacke für deine Wanne, gekauft mit OuiCoins.",
+    "open": "Shop",
+    "openWithBalance": "Shop — {{count}} OuiCoins",
+    "coins": "OuiCoins",
+    "balance": "{{count}} OuiCoins",
+    "earnHint": "Verdiene Münzen, indem du Runden gewinnst, Level abschließt und Erfolge freischaltest.",
+    "buy": "Kaufen",
+    "equip": "Ausrüsten",
+    "equipped": "Ausgerüstet",
+    "owned": "Im Besitz",
+    "needMore": "Es fehlen {{count}}",
+    "insufficient": "Nicht genug Münzen",
+    "purchased": "{{name}} freigeschaltet!",
+    "coinsEarned": "+{{count}} OuiCoins",
+    "ownedCount": "{{owned}} / {{total}} Lacke im Besitz",
+    "paints": {
+      "plain": {
+        "name": "Uni",
+        "desc": "Werkslack. Gratis und immer deins."
+      },
+      "stripes": {
+        "name": "Rennstreifen",
+        "desc": "Diagonale Speed-Streifen."
+      },
+      "checker": {
+        "name": "Schachbrett",
+        "desc": "Klassische Arcade-Kacheln."
+      },
+      "hazard": {
+        "name": "Warnringe",
+        "desc": "Warnstreifen für alle."
+      },
+      "camo": {
+        "name": "Tarnmuster",
+        "desc": "Verschwinde im Schlachtfeld."
+      },
+      "bolt": {
+        "name": "Blitz",
+        "desc": "Ein Blitzschlag über die Wanne."
+      },
+      "stars": {
+        "name": "Sterne",
+        "desc": "Drei Sterne für einen Champion."
+      },
+      "flames": {
+        "name": "Nachbrenner",
+        "desc": "Flammen von der Front."
+      }
+    }
   },
   "settings": {
     "title": "Einstellungen",

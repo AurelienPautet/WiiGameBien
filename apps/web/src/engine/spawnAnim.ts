@@ -30,6 +30,8 @@ export interface DrawSpawnTankOpts {
   /** barrel direction in radians (already +PI calibrated by the caller) */
   angle: number;
   isBot?: boolean;
+  /** Hull paint id (shop cosmetic); unknown/absent renders plain. */
+  paint?: string;
   /** 0..1 progress over the whole spawn animation */
   progress: number;
 }
@@ -73,6 +75,7 @@ export function drawSpawnTank(
     turretColor,
     angle,
     isBot: !!isBot,
+    ...(o.paint !== undefined ? { paint: o.paint } : {}),
   });
 
   // After landing, the cut-away canopy drifts up and fades out above the tank.

@@ -38,14 +38,15 @@ describe("TankSelectModal", () => {
     setTank.mockClear();
   });
 
-  it("renders a dialog with a body and a turret radio swatch row", () => {
+  it("renders a dialog with body, turret and paint radio rows", () => {
     renderWithProviders(<TankSelectModal />);
     // Radix renders the dialog into a portal, so scope queries to the dialog.
     const dialog = screen.getByRole("dialog");
-    // Two radiogroups (body + turret), one radio swatch per colour in each.
-    expect(dialog.querySelectorAll('[role="radiogroup"]')).toHaveLength(2);
+    // Three radiogroups: body + turret swatches, plus the owned-paints picker
+    // (a fresh garage owns only the free "plain" hull paint).
+    expect(dialog.querySelectorAll('[role="radiogroup"]')).toHaveLength(3);
     expect(dialog.querySelectorAll('[role="radio"]')).toHaveLength(
-      TANK_COLORS.length * 2
+      TANK_COLORS.length * 2 + 1
     );
   });
 

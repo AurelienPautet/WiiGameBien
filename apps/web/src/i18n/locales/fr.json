@@ -29,7 +29,8 @@
     "admin": "Admin",
     "mainNavigation": "Navigation principale",
     "skipToContent": "Aller au contenu",
-    "creations": "Mes créations"
+    "creations": "Mes créations",
+    "shop": "Boutique"
   },
   "topbar": {
     "online": "en ligne",
@@ -219,7 +220,62 @@
   "tankSelect": {
     "title": "Ton char",
     "body": "Châssis",
-    "turret": "Tourelle"
+    "turret": "Tourelle",
+    "paint": "Peinture",
+    "paintHint": "Débloquez d'autres peintures avec des OuiCoins dans la boutique.",
+    "openShop": "Boutique"
+  },
+  "shop": {
+    "title": "Boutique de chars",
+    "subtitle": "Des peintures pour votre coque, à acheter avec des OuiCoins.",
+    "open": "Boutique",
+    "openWithBalance": "Boutique — {{count}} OuiCoins",
+    "coins": "OuiCoins",
+    "balance": "{{count}} OuiCoins",
+    "earnHint": "Gagnez des pièces en remportant des manches, en terminant des niveaux et en débloquant des succès.",
+    "buy": "Acheter",
+    "equip": "Équiper",
+    "equipped": "Équipée",
+    "owned": "Possédée",
+    "needMore": "Il manque {{count}}",
+    "insufficient": "Pas assez de pièces",
+    "purchased": "{{name}} débloquée !",
+    "coinsEarned": "+{{count}} OuiCoins",
+    "ownedCount": "{{owned}} / {{total}} peintures possédées",
+    "paints": {
+      "plain": {
+        "name": "Unie",
+        "desc": "Finition d'usine. Gratuite et toujours à vous."
+      },
+      "stripes": {
+        "name": "Rayures de course",
+        "desc": "Des lignes de vitesse en diagonale."
+      },
+      "checker": {
+        "name": "Damier",
+        "desc": "Les tuiles classiques de l'arcade."
+      },
+      "hazard": {
+        "name": "Anneaux de danger",
+        "desc": "Des rayures d'avertissement pour tout le monde."
+      },
+      "camo": {
+        "name": "Camouflage",
+        "desc": "Fondez-vous dans le champ de bataille."
+      },
+      "bolt": {
+        "name": "Éclair",
+        "desc": "Un éclair électrique sur la coque."
+      },
+      "stars": {
+        "name": "Étoiles",
+        "desc": "Trois étoiles pour un champion."
+      },
+      "flames": {
+        "name": "Postcombustion",
+        "desc": "Des flammes venues du front."
+      }
+    }
   },
   "settings": {
     "title": "Paramètres",

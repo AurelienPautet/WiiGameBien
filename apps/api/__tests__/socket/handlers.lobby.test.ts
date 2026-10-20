@@ -302,7 +302,13 @@ describe("coop join paths", () => {
     connect("s1").__emit("play", "Alice", "o", "b", 1);
     await flush();
     expect(room.ensure_spawn_capacity).toHaveBeenCalledWith(1);
-    expect(room.spawn_new_player).toHaveBeenCalledWith("Alice", "o", "b", "s1");
+    expect(room.spawn_new_player).toHaveBeenCalledWith(
+      "Alice",
+      "o",
+      "b",
+      "s1",
+      "plain"
+    );
     const ensureOrder = (room.ensure_spawn_capacity as jest.Mock).mock
       .invocationCallOrder[0]!;
     const spawnOrder = (room.spawn_new_player as jest.Mock).mock
@@ -328,7 +334,8 @@ describe("coop join paths", () => {
       "Late",
       "o",
       "b",
-      "s1"
+      "s1",
+      "plain"
     );
     expect(room.spawn_new_player).not.toHaveBeenCalled();
     // Still a full join: the client gets its id and room channel.
@@ -353,7 +360,8 @@ describe("coop join paths", () => {
       "JustInTime",
       "o",
       "b",
-      "s1"
+      "s1",
+      "plain"
     );
     expect(room.add_waiting_player).not.toHaveBeenCalled();
   });

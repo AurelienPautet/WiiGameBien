@@ -10,6 +10,7 @@ export { SectionLabel } from "./SectionLabel";
 export { Chip, type ChipProps } from "./Chip";
 export { StatPill } from "./StatPill";
 export { TankAvatar } from "./TankAvatar";
+export { CoinChip } from "./CoinChip";
 export { SegmentedControl, type SegmentOption } from "./SegmentedControl";
 export {
   Dialog,

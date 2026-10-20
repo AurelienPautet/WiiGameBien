@@ -29,7 +29,8 @@
     "admin": "Admin",
     "mainNavigation": "Navigazione principale",
     "skipToContent": "Vai al contenuto",
-    "creations": "Le mie creazioni"
+    "creations": "Le mie creazioni",
+    "shop": "Negozio"
   },
   "topbar": {
     "online": "online",
@@ -217,7 +218,62 @@
   "tankSelect": {
     "title": "Il Tuo Carro",
     "body": "Carrozzeria",
-    "turret": "Torretta"
+    "turret": "Torretta",
+    "paint": "Verniciatura",
+    "paintHint": "Sblocca altre verniciature con gli OuiCoins nel negozio.",
+    "openShop": "Negozio"
+  },
+  "shop": {
+    "title": "Negozio dei carri",
+    "subtitle": "Verniciature per lo scafo, acquistabili con OuiCoins.",
+    "open": "Negozio",
+    "openWithBalance": "Negozio — {{count}} OuiCoins",
+    "coins": "OuiCoins",
+    "balance": "{{count}} OuiCoins",
+    "earnHint": "Guadagna monete vincendo round, completando livelli e sbloccando obiettivi.",
+    "buy": "Acquista",
+    "equip": "Equipaggia",
+    "equipped": "Equipaggiata",
+    "owned": "Posseduta",
+    "needMore": "Mancano {{count}}",
+    "insufficient": "Monete insufficienti",
+    "purchased": "{{name}} sbloccata!",
+    "coinsEarned": "+{{count}} OuiCoins",
+    "ownedCount": "{{owned}} / {{total}} verniciature possedute",
+    "paints": {
+      "plain": {
+        "name": "Tinta unita",
+        "desc": "Finiture di fabbrica. Gratis e sempre tua."
+      },
+      "stripes": {
+        "name": "Strisce da corsa",
+        "desc": "Linee di velocità in diagonale."
+      },
+      "checker": {
+        "name": "Scacchiera",
+        "desc": "Le classiche piastrelle arcade."
+      },
+      "hazard": {
+        "name": "Anelli di pericolo",
+        "desc": "Strisce di avvertimento per tutti."
+      },
+      "camo": {
+        "name": "Mimetica",
+        "desc": "Mimetizzati nel campo di battaglia."
+      },
+      "bolt": {
+        "name": "Fulmine",
+        "desc": "Una saetta lungo lo scafo."
+      },
+      "stars": {
+        "name": "Stelle",
+        "desc": "Tre stelle per un campione."
+      },
+      "flames": {
+        "name": "Postbruciatore",
+        "desc": "Fiamme dal fronte."
+      }
+    }
   },
   "settings": {
     "title": "Impostazioni",

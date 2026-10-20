@@ -8,6 +8,7 @@ import {
   PencilRuler,
   Settings,
   Shield,
+  Store,
 } from "lucide-react";
 import {
   useModal,
@@ -17,7 +18,8 @@ import {
   MODALS,
 } from "../../contexts";
 import { tankColorsFrom } from "../../lib/settings";
-import { SelectionIndicator, TankAvatar } from "../ui/primitives";
+import { useWallet } from "../../hooks/useWallet";
+import { SelectionIndicator, TankAvatar, CoinChip } from "../ui/primitives";
 import { cn } from "../../lib/cn";
 import { tabPressHandlers } from "../../lib/tabPress";
 
@@ -49,6 +51,7 @@ export const Sidebar = () => {
   // Sidebar lives inside SettingsProvider, so a tank change (or an account
   // hydrate) re-renders it without any extra storage reads.
   const colors = tankColorsFrom(settings.tank);
+  const { equipped: paint, coins } = useWallet();
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
     cn("sidebar-link tab-pressable", isActive && "is-active");
@@ -123,6 +126,25 @@ export const Sidebar = () => {
             <Shield /> <span>{t("nav.admin")}</span>
           </NavLink>
         )}
+        <div className="sidebar-shop-wrap">
+          <button
+            type="button"
+            className={cn(
+              "sidebar-link tab-pressable",
+              activeModal === MODALS.SHOP && "is-active"
+            )}
+            onClick={() => openModal(MODALS.SHOP)}
+            aria-label={t("shop.openWithBalance", { count: coins })}
+            {...tabPressHandlers<HTMLButtonElement>()}
+          >
+            <Store /> <span>{t("nav.shop")}</span>
+          </button>
+          {/* Floats over the row so the long localized label never stretches
+              the button or pushes the balance out of the sidebar. */}
+          <span className="sidebar-shop-balance" aria-hidden="true">
+            <CoinChip coins={coins} size={14} className="sidebar-shop-chip" />
+          </span>
+        </div>
         <button
           type="button"
           className={cn(
@@ -146,6 +168,7 @@ export const Sidebar = () => {
         <TankAvatar
           bodyColor={colors.body}
           turretColor={colors.turret}
+          paint={paint}
           size={48}
         />
         <span className="min-w-0 text-left">

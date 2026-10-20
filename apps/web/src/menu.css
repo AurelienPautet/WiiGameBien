@@ -72,6 +72,25 @@
   flex-shrink: 0;
   stroke-width: 2.5;
 }
+/* The balance floats over the shop row instead of taking part in its layout:
+   the long localized label (French "Boutique") can never make the button
+   taller or push the pill past the sidebar. */
+.sidebar-shop-wrap {
+  position: relative;
+}
+.sidebar-shop-balance {
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.sidebar-shop-chip {
+  padding: 2px 6px;
+  gap: 3px;
+  font-size: 11px;
+  line-height: 16px;
+}
 .sidebar-link:hover {
   background: #eef6f9;
 }
@@ -674,6 +693,9 @@
     align-items: center;
   }
   .sidebar-utilities .sidebar-link span {
+    display: none;
+  }
+  .sidebar-shop-balance {
     display: none;
   }
   .sidebar-account {

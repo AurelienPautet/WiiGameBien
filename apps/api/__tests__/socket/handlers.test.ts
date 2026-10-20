@@ -428,12 +428,49 @@ describe("play — join validation", () => {
       "Alice",
       "orange",
       "blue",
-      "s1"
+      "s1",
+      "plain"
     );
     expect(socket.emit).toHaveBeenCalledWith("id", 1, expect.any(Number), "s1");
     expect(socket.join).toHaveBeenCalledWith("1");
     expect(room_list).toHaveBeenCalledWith(0);
     expect(io.__emits.some((e) => e.event === "player-connection")).toBe(true);
+  });
+
+  test("carries a valid hull paint id through play", async () => {
+    (levelsService.getLevel as jest.Mock).mockResolvedValue({ level_id: 101 });
+    const { socket, rooms } = setup();
+    const room = roomStub();
+    rooms[1] = room;
+
+    socket.__emit("play", "Alice", "orange", "blue", 1, "flames");
+    await flush();
+
+    expect(room.spawn_new_player).toHaveBeenCalledWith(
+      "Alice",
+      "orange",
+      "blue",
+      "s1",
+      "flames"
+    );
+  });
+
+  test("coerces malformed paint ids to the plain hull", async () => {
+    (levelsService.getLevel as jest.Mock).mockResolvedValue({ level_id: 101 });
+    const { socket, rooms } = setup();
+    const room = roomStub();
+    rooms[1] = room;
+
+    socket.__emit("play", "Alice", "orange", "blue", 1, "x".repeat(25));
+    await flush();
+
+    expect(room.spawn_new_player).toHaveBeenCalledWith(
+      "Alice",
+      "orange",
+      "blue",
+      "s1",
+      "plain"
+    );
   });
 });
 

@@ -74,6 +74,8 @@ export interface LobbyMember {
   name: string;
   turretc: string;
   bodyc: string;
+  // Hull paint/skin id; absent on old servers ⇒ plain hull.
+  paintc?: string;
   is_bot: boolean;
   is_host: boolean;
 }

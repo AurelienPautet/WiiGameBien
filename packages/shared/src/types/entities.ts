@@ -18,6 +18,8 @@ export interface Player {
   name: string;
   bodyc: string;
   turretc: string;
+  // Hull paint/skin id from the tank shop ("plain" when absent — old servers).
+  paintc?: string;
   position: Vector2;
   socketid: string;
   mytick: number;

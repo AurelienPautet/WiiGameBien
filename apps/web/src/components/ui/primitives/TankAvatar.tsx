@@ -7,6 +7,8 @@ interface TankAvatarProps {
   bodyColor: string;
   /** Barrel colour NAME; defaults to the body colour. */
   turretColor?: string;
+  /** Hull paint id from the tank shop (see constants/tankPaints). */
+  paint?: string;
   /** Rendered px size (square). */
   size?: number;
   /** Barrel direction in radians; defaults to pointing up. */
@@ -25,6 +27,7 @@ interface TankAvatarProps {
 export function TankAvatar({
   bodyColor,
   turretColor,
+  paint,
   size = 120,
   angle = -Math.PI / 2,
   className,
@@ -54,8 +57,9 @@ export function TankAvatar({
       bodyColor,
       turretColor: turret,
       angle,
+      ...(paint !== undefined ? { paint } : {}),
     });
-  }, [bodyColor, turret, size, angle, hidden]);
+  }, [bodyColor, turret, paint, size, angle, hidden]);
 
   if (hidden) return null;
 

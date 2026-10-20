@@ -4,6 +4,7 @@ import { achievementsApi } from "../../api";
 import { storage } from "../../lib/storage";
 import { useToast } from "../../contexts/ToastContext";
 import { achievementName } from "../../constants/achievements";
+import { coinsForAchievements, earnCoins } from "../../lib/wallet";
 import i18n from "../../i18n";
 
 /**
@@ -40,6 +41,8 @@ export const useNotifyAchievementUnlocks = () => {
         )
       );
       if (keys.length > 0) {
+        // Cosmetic currency bonus, one per newly unlocked achievement.
+        earnCoins(coinsForAchievements(keys.length));
         queryClient.invalidateQueries({ queryKey: ["achievements", "me"] });
       }
     },

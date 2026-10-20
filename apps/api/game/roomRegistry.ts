@@ -143,6 +143,7 @@ function createRoomRegistry({
         name: player.name,
         turretc: player.turretc,
         bodyc: player.bodyc,
+        paintc: player.paintc,
         is_bot: player.is_bot,
         is_host: socketid === room.hostid,
       });

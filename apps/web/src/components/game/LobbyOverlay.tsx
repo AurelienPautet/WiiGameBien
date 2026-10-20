@@ -94,6 +94,7 @@ export const LobbyOverlay = ({ state, roomId, onLeave }: LobbyOverlayProps) => {
               <TankAvatar
                 bodyColor={m.bodyc}
                 turretColor={m.turretc}
+                {...(m.paintc !== undefined ? { paint: m.paintc } : {})}
                 size={28}
                 title={m.name}
               />

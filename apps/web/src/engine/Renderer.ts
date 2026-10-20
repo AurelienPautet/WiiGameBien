@@ -172,6 +172,8 @@ interface RenderPlayer {
   angle: number;
   bodyc: string;
   turretc: string;
+  // Hull paint id from the tank shop; absent on old snapshots ⇒ plain hull.
+  paintc?: string;
   turretsize: Size;
   // Ammo gauge inputs: bullets currently in flight vs. the magazine size. The
   // hull desaturates as (max - count) shrinks toward 0. Both are serialized on
@@ -500,6 +502,7 @@ export class Renderer {
       angle: player.angle + Math.PI,
       isBot,
       ammoFraction: ammoFraction(player),
+      ...(player.paintc !== undefined ? { paint: player.paintc } : {}),
     });
   }
 
@@ -515,6 +518,7 @@ export class Renderer {
       angle: player.angle + Math.PI,
       isBot,
       progress,
+      ...(player.paintc !== undefined ? { paint: player.paintc } : {}),
     });
   }
 
