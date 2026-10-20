@@ -5,6 +5,7 @@
 import { palette, tankColors } from "../theme/palette";
 import { drawTank } from "./tankShape";
 import { clamp } from "./interpolation";
+import { drawWavingFlag, spawnFlagPresence } from "./flag";
 
 const INK = palette.ink;
 
@@ -57,7 +58,7 @@ export function drawSpawnTank(
 
   // The flag marks the landing spot for the whole animation, and the touchdown
   // dust sits on the ground — both drawn before the tank so it lands in front.
-  drawLandingFlag(c, cx, cy, r, body.fill);
+  drawLandingFlag(c, cx, cy, r, body.fill, progress);
   if (landed) drawDustRing(c, cx, cy, r, after);
 
   // While descending, the canopy is above (behind) the tank, swaying with the
@@ -81,41 +82,33 @@ export function drawSpawnTank(
   }
 }
 
-// A pennant on an ink pole, planted just beside the spawn point. The pennant
-// takes the tank's body colour so it reads as "your" spot.
+// A waving pennant on an ink pole, planted just beside the spawn point. The
+// pennant takes the tank's body colour so it reads as "your" spot. It animates
+// through its whole lifecycle with the countdown: it springs out of the ground
+// and unfurls as the drop begins, waves while the tank descends, then folds
+// away just before "GO" (see flag.ts for the shared cloth renderer).
 function drawLandingFlag(
   c: CanvasRenderingContext2D,
   cx: number,
   cy: number,
   r: number,
-  fill: string
+  fill: string,
+  progress: number
 ): void {
-  const baseX = cx - r * 0.95;
-  const baseY = cy + r * 0.5;
-  const topY = cy - r * 1.7;
-  c.save();
-  c.lineCap = "round";
-  c.lineJoin = "round";
-  c.strokeStyle = INK;
-
-  // Pole.
-  c.lineWidth = Math.max(2, r * 0.16);
-  c.beginPath();
-  c.moveTo(baseX, baseY);
-  c.lineTo(baseX, topY);
-  c.stroke();
-
-  // Triangular pennant.
-  c.beginPath();
-  c.moveTo(baseX, topY);
-  c.lineTo(baseX + r * 1.5, topY + r * 0.45);
-  c.lineTo(baseX, topY + r * 0.9);
-  c.closePath();
-  c.fillStyle = fill;
-  c.lineWidth = Math.max(2, r * 0.14);
-  c.fill();
-  c.stroke();
-  c.restore();
+  const { enter, exit } = spawnFlagPresence(progress);
+  drawWavingFlag(c, {
+    // Planted beside the tank's left shoulder, far enough out that the cloth
+    // stays clear of the hull while the tank falls in front of it, and tall
+    // enough that it finishes above the hull once the tank lands.
+    baseX: cx - r * 2.1,
+    baseY: cy + r * 0.55,
+    unit: r * 1.15,
+    fill,
+    // The spawn animation runs for 2.6s, so progress doubles as the wave clock.
+    time: progress * 2.6,
+    enter,
+    exit,
+  });
 }
 
 // A segmented umbrella canopy with shroud lines converging on a harness point
