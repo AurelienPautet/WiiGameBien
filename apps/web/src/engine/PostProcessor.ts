@@ -152,6 +152,10 @@ export class PostProcessor {
   bloomStrength = 1.15;
   vignette = 0.08;
   aberration = 0.012;
+  // How far the animated floor is pushed toward white. The game keeps the
+  // light, airy field; the level editor dials it down so the board is a solid
+  // surface and the editable grid is readable.
+  fieldWhiten = 0.7;
 
   // Per-effect on/off, driven by user settings (setEffects). Only the passes
   // this stage owns are tracked here; particles/sound are gated elsewhere.
@@ -166,6 +170,11 @@ export class PostProcessor {
     flashes: true,
     scenery: true,
   };
+
+  /** Tune how white the animated floor is (0 = raw field grey, 1 = white). */
+  setFieldWhiten(whiten: number): void {
+    this.fieldWhiten = whiten;
+  }
 
   /** Apply the user's effect toggles (the subset this stage owns). */
   setEffects(e: EffectSettings): void {
@@ -342,6 +351,7 @@ export class PostProcessor {
       FIELD.green / 255,
       FIELD.blue / 255
     );
+    gl.uniform1f(this.field.loc("uWhiten"), this.fieldWhiten);
     this._drawFullscreen();
 
     // 1a2. Environment geometry (holes, then wall fills + ink outlines), drawn

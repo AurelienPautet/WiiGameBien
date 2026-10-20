@@ -164,7 +164,12 @@ export function LevelSelector({
   }, [rawLevels, sortBy, sortOrder, showSoloFilters]);
 
   const handleCardClick = (level: LevelDTO) => {
-    if (showActions) return; // myLevels mode uses buttons instead
+    // Owner's list: the card itself opens the editor (the row also carries
+    // explicit play/edit/delete buttons).
+    if (showActions) {
+      onEdit?.(level.level_id);
+      return;
+    }
 
     if (isPick) {
       // Campaign editor: clicking a card adds it (pass full level for its name)
@@ -366,6 +371,50 @@ export function LevelSelector({
                 soloTimesPlayed={level.solo_times_played || 0}
                 soloSuccessRate={level.solo_success_rate || 0}
                 soloBestTimeMs={level.solo_best_time_ms}
+                actions={
+                  showActions ? (
+                    <>
+                      {onPlay && (
+                        <Button
+                          variant="green"
+                          size="sm"
+                          title={t("levelSelector.play")}
+                          className="px-2.5 sm:px-3"
+                          onClick={(e) => handlePlay(level.level_id, e)}
+                        >
+                          <Play size={16} />
+                          <span className="hidden lg:inline">
+                            {t("levelSelector.play")}
+                          </span>
+                        </Button>
+                      )}
+                      <Button
+                        variant="blue"
+                        size="sm"
+                        title={t("common.edit")}
+                        className="px-2.5 sm:px-3"
+                        onClick={(e) => handleEdit(level.level_id, e)}
+                      >
+                        <Pencil size={16} />
+                        <span className="hidden lg:inline">
+                          {t("common.edit")}
+                        </span>
+                      </Button>
+                      <Button
+                        variant="red"
+                        size="sm"
+                        title={t("common.delete")}
+                        className="px-2.5 sm:px-3"
+                        onClick={(e) => handleDelete(level.level_id, e)}
+                      >
+                        <Trash2 size={16} />
+                        <span className="hidden lg:inline">
+                          {t("common.delete")}
+                        </span>
+                      </Button>
+                    </>
+                  ) : undefined
+                }
               />
 
               {/* "Added" badge for pick mode */}
@@ -373,35 +422,6 @@ export function LevelSelector({
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 bg-blue text-white text-xs font-bold border-2 border-ink rounded-full px-2.5 py-1">
                   <Plus size={12} strokeWidth={3} />
                   {t("levelSelector.added")}
-                </div>
-              )}
-
-              {/* Action buttons for myLevels mode */}
-              {showActions && (
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {onPlay && (
-                    <Button
-                      variant="green"
-                      size="sm"
-                      onClick={(e) => handlePlay(level.level_id, e)}
-                    >
-                      <Play size={16} /> Play
-                    </Button>
-                  )}
-                  <Button
-                    variant="blue"
-                    size="sm"
-                    onClick={(e) => handleEdit(level.level_id, e)}
-                  >
-                    <Pencil size={16} /> Edit
-                  </Button>
-                  <Button
-                    variant="red"
-                    size="sm"
-                    onClick={(e) => handleDelete(level.level_id, e)}
-                  >
-                    <Trash2 size={16} /> Delete
-                  </Button>
                 </div>
               )}
             </div>

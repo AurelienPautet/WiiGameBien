@@ -189,8 +189,10 @@ export const CampaignEditor = () => {
 
   const canSave = !saving && !!name.trim() && picked.length >= 1;
 
+  // Same field rule as the level editor: the menu shell paints the grid, so
+  // this stage stays transparent instead of starting a second, misaligned one.
   return (
-    <div className="w-full h-full graph-paper text-ink flex flex-col">
+    <div className="w-full h-full text-ink flex flex-col">
       {/* Header */}
       <div className="h-24 bg-white flex items-center justify-between px-8 gap-4 border-b-4 border-ink shrink-0">
         <div className="flex items-center gap-3 whitespace-nowrap">
@@ -236,7 +238,7 @@ export const CampaignEditor = () => {
       </div>
 
       {/* Body */}
-      <div className="flex-1 flex min-h-0 gap-4 p-4 graph-paper">
+      <div className="flex-1 flex min-h-0 gap-4 p-4">
         {/* Level picker */}
         <div className="flex-1 min-w-0 flex flex-col bg-white border-4 border-ink rounded-arcade shadow-arcade p-4">
           <h2 className="text-lg font-bold text-ink mb-3">

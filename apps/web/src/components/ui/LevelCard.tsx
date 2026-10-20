@@ -28,6 +28,8 @@ interface LevelCardProps {
   soloTimesPlayed?: number;
   soloSuccessRate?: number;
   soloBestTimeMs?: number | null;
+  /** Right-hand action cluster (play/edit/delete) for the owner's list. */
+  actions?: React.ReactNode;
 }
 
 /** Arcade level preview card — thumbnail, title, rating, bot spawns, solo stats. */
@@ -45,6 +47,7 @@ export function LevelCard({
   soloTimesPlayed = 0,
   soloSuccessRate = 0,
   soloBestTimeMs = null,
+  actions,
 }: LevelCardProps) {
   const { t } = useTranslation();
   const botCounts = extractBotCounts(levelJson);
@@ -54,7 +57,7 @@ export function LevelCard({
   return (
     <Card
       className={cn(
-        "flex gap-4 p-3",
+        "flex flex-wrap gap-x-4 gap-y-2 p-3",
         selected ? "border-blue ring-3 ring-blue/30" : "border-ink",
         locked && "opacity-80"
       )}
@@ -137,6 +140,15 @@ export function LevelCard({
           </div>
         )}
       </div>
+
+      {/* Owner actions. On wide cards they sit in a right-hand column; when
+          space runs out (narrow/portrait) they wrap onto their own row instead
+          of squeezing the title away. */}
+      {actions && (
+        <div className="flex w-full justify-end gap-1.5 sm:w-auto sm:self-center sm:gap-2">
+          {actions}
+        </div>
+      )}
     </Card>
   );
 }

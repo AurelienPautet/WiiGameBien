@@ -60,6 +60,7 @@ varying vec2 vUv;
 uniform vec2 uRes;     // board pixels (1150 x 800)
 uniform float uTime;   // seconds
 uniform vec3 uField;   // base colour
+uniform float uWhiten; // 0 = raw field grey, 1 = whitewashed floor
 
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
@@ -86,10 +87,11 @@ void main() {
   float n = fbm(p + 1.6 * q + t * 0.25);            // ~0..1
 
   // Posterize into a few FLAT grey tones (cel-shaded), no hue. Base is the board
-  // colour pushed toward white for a lighter floor (WHITEN).
+  // colour pushed toward white for a lighter floor (WHITEN); the editor lowers
+  // it so the arena reads as a solid grey board instead of a blank white page.
   float LEVELS = 4.0;
   float step = floor(clamp(n, 0.0, 0.999) * LEVELS) / (LEVELS - 1.0); // 0,.33,.67,1
-  vec3 base = mix(uField, vec3(1.0), 0.7);          // WHITEN
+  vec3 base = mix(uField, vec3(1.0), uWhiten);
   vec3 col = base + (step - 0.5) * 0.03;            // CONTRAST
 
   // Thin darker contour line at each tone boundary — a cartoon "ink" outline

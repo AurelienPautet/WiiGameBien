@@ -170,7 +170,8 @@
     "noLevelsMine": "Noch keine Level. Erstelle deinen ersten Level!",
     "noLevels": "Keine Level gefunden",
     "added": "Hinzugefügt",
-    "confirmDelete": "Möchtest du diesen Level wirklich löschen?"
+    "confirmDelete": "Möchtest du diesen Level wirklich löschen?",
+    "play": "Spielen"
   },
   "levelCard": {
     "locked": "Level {{id}} gesperrt",
@@ -397,7 +398,10 @@
       "tooManySpawns": "Du kannst nicht mehr als 8 Spawn-Punkte haben!",
       "nameEmpty": "Levelname darf nicht leer sein!",
       "nameTooLong": "Levelname darf nicht länger als 30 Zeichen sein!"
-    }
+    },
+    "hintPlace": "Linksklick: platzieren",
+    "hintErase": "Rechtsklick: löschen",
+    "spawnCount": "{{count}} / 8 Spawns"
   },
   "campaignEditor": {
     "headerTitle": "KAMPAGNE",
@@ -452,6 +456,7 @@
   "creations": {
     "levels": "Level",
     "campaigns": "Kampagnen",
-    "loginToManage": "Melde dich an, um deine Level und Kampagnen zu erstellen und zu verwalten."
+    "loginToManage": "Melde dich an, um deine Level und Kampagnen zu erstellen und zu verwalten.",
+    "subtitle": "Deine Level und Kampagnen an einem Ort."
   }
 }
