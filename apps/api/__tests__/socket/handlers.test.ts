@@ -13,6 +13,11 @@ import { registerSocketHandlers } from "../../socket/handlers";
 import { verifySession } from "../../auth/session";
 import * as levelsService from "../../services/levels.service";
 import * as ratingsRepo from "../../repositories/ratings.repo";
+import {
+  applyQueuedInput,
+  clearInputQueue,
+  queuedInputCount,
+} from "../../game/inputQueue";
 import { users } from "../../shared_state";
 import { makeIo, makeSocket } from "../helpers/socketDoubles";
 
@@ -104,6 +109,8 @@ function playerStub() {
 
 afterEach(() => {
   for (const k of Object.keys(users)) delete users[k];
+  clearInputQueue("s1");
+  jest.restoreAllMocks();
 });
 
 describe("connect", () => {
@@ -295,6 +302,95 @@ describe("tock — input handling", () => {
     expect(() =>
       socket.__emit("tock", { serverid: SERVER_ID, room_id: 999 })
     ).not.toThrow();
+  });
+});
+
+describe("tock — sequenced inputs (client prediction)", () => {
+  test("queues input instead of applying it on arrival", () => {
+    const { socket, rooms } = setup();
+    const player = { ...playerStub(), last_input_seq: 0 };
+    rooms[1] = roomStub({ players: { s1: player } });
+
+    socket.__emit("tock", {
+      serverid: SERVER_ID,
+      room_id: 1,
+      seq: 1,
+      mytick: 5,
+      direction: { x: 1, y: 0 },
+    });
+    socket.__emit("tock", {
+      serverid: SERVER_ID,
+      room_id: 1,
+      seq: 2,
+      mytick: 6,
+      direction: { x: 0, y: -1 },
+    });
+
+    // Nothing is applied until the simulation steps.
+    expect(player.direction).toEqual({ x: 0, y: 0 });
+    expect(queuedInputCount("s1")).toBe(2);
+
+    expect(applyQueuedInput(rooms[1] as never, "s1")).toBe(true);
+    expect(player.direction).toEqual({ x: 1, y: 0 });
+    expect(player.mytick).toBe(5);
+    expect(player.last_input_seq).toBe(1);
+
+    expect(applyQueuedInput(rooms[1] as never, "s1")).toBe(true);
+    expect(player.direction).toEqual({ x: 0, y: -1 });
+    expect(player.last_input_seq).toBe(2);
+    expect(queuedInputCount("s1")).toBe(0);
+    expect(applyQueuedInput(rooms[1] as never, "s1")).toBe(false);
+  });
+
+  test("keeps the queue bounded by dropping the oldest input", () => {
+    const { socket, rooms } = setup();
+    const player = { ...playerStub(), last_input_seq: 0 };
+    rooms[1] = roomStub({ players: { s1: player } });
+
+    for (let seq = 1; seq <= 25; seq++) {
+      socket.__emit("tock", {
+        serverid: SERVER_ID,
+        room_id: 1,
+        seq,
+        direction: { x: 1, y: 0 },
+      });
+    }
+    expect(queuedInputCount("s1")).toBe(6);
+    applyQueuedInput(rooms[1] as never, "s1");
+    // Inputs 1..19 were dropped under the backlog cap.
+    expect(player.last_input_seq).toBe(20);
+  });
+
+  test("quit clears queued input", () => {
+    const { socket, rooms } = setup();
+    rooms[1] = roomStub({ players: { s1: playerStub() } });
+    socket.__emit("tock", {
+      serverid: SERVER_ID,
+      room_id: 1,
+      seq: 1,
+      direction: { x: 1, y: 0 },
+    });
+    expect(queuedInputCount("s1")).toBe(1);
+    socket.__emit("quit");
+    expect(queuedInputCount("s1")).toBe(0);
+  });
+
+  test("sequence numbers never move the acknowledgement backwards", () => {
+    const { socket, rooms } = setup();
+    const player = { ...playerStub(), last_input_seq: 0 };
+    rooms[1] = roomStub({ players: { s1: player } });
+    for (const seq of [2, 1, 3]) {
+      socket.__emit("tock", {
+        serverid: SERVER_ID,
+        room_id: 1,
+        seq,
+        direction: { x: 1, y: 0 },
+      });
+    }
+    applyQueuedInput(rooms[1] as never, "s1");
+    applyQueuedInput(rooms[1] as never, "s1");
+    applyQueuedInput(rooms[1] as never, "s1");
+    expect(player.last_input_seq).toBe(3);
   });
 });
 

@@ -27,10 +27,12 @@ import {
   withPose,
   sampleBuffer,
   pruneBuffer,
+  InterpolationClock,
   type Pose,
   type Posable,
   type TimedFrame,
 } from "./interpolation.js";
+import { LocalPredictor, type PredictionWorld } from "./prediction.js";
 import type { RoomPlayer, RenderBullet, RenderMine } from "./runtimeTypes.js";
 import type { Socket } from "socket.io-client";
 import type {
@@ -246,6 +248,16 @@ export class GameEngine {
   soloPrev: PoseFrame | null;
   soloCurr: PoseFrame | null;
   snapshotBuffer: TimedFrame<ServerFrame>[];
+  // Maps the server's tick timeline onto a smooth, monotonic playback clock so
+  // network jitter never distorts the displayed motion (see InterpolationClock).
+  netClock: InterpolationClock;
+  // Client-side prediction for our own tank: movement is applied locally at
+  // input time and reconciled with the authoritative snapshots.
+  predictor: LocalPredictor;
+  // The server's countdown/freeze flag from the newest snapshot. Input is
+  // ignored while the simulation is held (lobby + 3-2-1), so prediction must
+  // not move the tank either.
+  serverCountdownActive: boolean;
   // Input sampled once for the current frame (solo), applied to the fixed steps.
   private _frameInput: InputSnapshot | null;
 
@@ -343,6 +355,9 @@ export class GameEngine {
     this.soloPrev = null;
     this.soloCurr = null;
     this.snapshotBuffer = [];
+    this.netClock = new InterpolationClock();
+    this.predictor = new LocalPredictor();
+    this.serverCountdownActive = false;
     this._frameInput = null;
 
     // Solo mode state
@@ -568,6 +583,14 @@ export class GameEngine {
     // not match its own (the "wrongserver" guard), so without this the player
     // can join a room but never move or shoot.
     this.serverId = serverId;
+
+    // Fresh netcode state for this room: drop interpolation history and any
+    // prediction carried over from a previous match. The first snapshot flips
+    // `serverCountdownActive` to whatever the room is actually doing.
+    this.snapshotBuffer = [];
+    this.netClock.reset();
+    this.predictor.reset();
+    this.serverCountdownActive = true;
 
     const socket = this.socket;
     if (!socket) {
@@ -801,9 +824,23 @@ export class GameEngine {
   }
 
   // Centre (canvas coords) of the local player, used to project a relative touch
-  // aim-vector into an absolute aim point. Reads solo room state or the latest
-  // online snapshot — whichever this mode populates. null if not yet known.
+  // aim-vector into an absolute aim point. Prefers the predicted pose (that is
+  // where the tank is actually drawn) and falls back to the latest snapshot.
   _localPlayerCenter(): { x: number; y: number } | null {
+    if (this.mode === "online") {
+      const predicted = this.predictor.renderPose();
+      const size = this.mysocketid
+        ? (this.players[this.mysocketid]?.size as
+            | { w: number; h: number }
+            | undefined)
+        : undefined;
+      if (predicted && size) {
+        return {
+          x: predicted.position.x + size.w / 2,
+          y: predicted.position.y + size.h / 2,
+        };
+      }
+    }
     const p =
       this.mode === "solo"
         ? this.localRoom?.players[this.mysocketid!]
@@ -927,7 +964,16 @@ export class GameEngine {
       return;
     }
 
-    this.socket.emit("tock", {
+    // The server freezes the simulation in the lobby and during the 3-2-1; it
+    // discards input in those states, so don't spend bandwidth (or prediction
+    // steps) on packets that cannot move anything.
+    if (this.serverCountdownActive) return;
+
+    const aim = resolveAim(input, this._localPlayerCenter());
+    // Predict our own movement immediately, then stamp the packet with the same
+    // sequence so the snapshot's `last_input_seq` ack can trim the replay.
+    const seq = this.predictor.advance(input.direction, aim);
+    const packet: Parameters<ClientToServerEvents["tock"]>[0] = {
       serverid: this.serverId,
       mysocketid: this.mysocketid,
       playerid: this.playerId,
@@ -938,10 +984,12 @@ export class GameEngine {
       // Tap-to-fire: let the server aim at the nearest enemy itself — it holds
       // the authoritative positions and the coop ally rule.
       autoAim: input.autoAimFire,
-      aim: resolveAim(input, this._localPlayerCenter()),
+      aim,
       room_id: this.roomId,
       mytick: this.tick,
-    });
+    };
+    if (seq !== undefined) packet.seq = seq;
+    this.socket.emit("tock", packet);
   }
 
   _onTick(data: RoomSnapshot) {
@@ -953,20 +1001,38 @@ export class GameEngine {
     // map the renderer/state fields expect.
     this.players = data.players as unknown as Record<string, RoomPlayer>;
     this.holes = data.holes;
+    this.serverCountdownActive = data.countdown_active === true;
 
-    // Buffer the timestamped snapshot for render interpolation. The display
-    // renders ~INTERP_DELAY_MS in the past so there are always two server states
-    // to blend between, hiding network jitter. Keep ~1s of history.
+    // Buffer the snapshot on the SERVER's tick timeline, not on arrival time.
+    // Ticks advance at a constant rate, so the frames we interpolate between are
+    // evenly spaced even when packets arrive late or in bursts. The clock
+    // estimate maps that timeline onto `performance.now()`, and the display
+    // renders ~INTERP_DELAY_MS behind it to hide residual jitter.
     const now = performance.now();
+    const serverTime = data.tick * SIM_STEP_MS;
+    this.netClock.observe(serverTime, now);
     this.snapshotBuffer.push({
-      t: now,
+      t: serverTime,
       state: {
         players: this.players,
         bullets: this.bullets,
         mines: this.mines,
       },
     });
-    pruneBuffer(this.snapshotBuffer, now - 1000);
+    // Keep ~2 s of history (expresses in server-timeline milliseconds).
+    pruneBuffer(this.snapshotBuffer, serverTime - 2000);
+
+    // Reconcile local prediction with the authoritative position: rewind to the
+    // server's state and replay the inputs it has not acknowledged yet.
+    if (this.mysocketid) {
+      this.predictor.reconcile(
+        this.players[this.mysocketid] as unknown as Parameters<
+          LocalPredictor["reconcile"]
+        >[0],
+        this.mysocketid,
+        this._predictionWorld()
+      );
+    }
 
     // Death flash on our player's alive→dead transition; kill pop when our
     // kill count rises. Both read off our entry in the tick snapshot.
@@ -983,9 +1049,23 @@ export class GameEngine {
     }
   }
 
+  // Collision view for local prediction, built from the newest snapshot. The
+  // predictor registers itself under our socket id, so other tanks are the only
+  // entries it needs to carry here.
+  private _predictionWorld(): PredictionWorld {
+    return {
+      players: this.players as unknown as PredictionWorld["players"],
+      holes: this.holes,
+      Bcollision: this.Bcollision,
+    };
+  }
+
   _onLevelChange(data: LevelChange) {
     this.blocks = data.blocks;
     this.Bcollision = data.Bcollision;
+    // The room reloads the level and re-deals spawns: drop the old predicted
+    // pose instead of gliding it across the map.
+    this.predictor.reset();
   }
 
   // Fire the flying-cannon debris on any tank's alive→dead transition, then
@@ -1083,16 +1163,20 @@ export class GameEngine {
   }
 
   // Build the interpolated online entities from the snapshot buffer, rendering
-  // INTERP_DELAY_MS in the past so two server states always straddle the render
-  // time. Falls back to the latest snapshot when the buffer is too short.
+  // INTERP_DELAY_MS behind a jitter-corrected server clock so frames always
+  // straddle the render time. Falls back to the latest snapshot when the buffer
+  // is too short.
   private _interpolatedOnline() {
     const fallback = {
       players: this.players,
       bullets: this.bullets,
       mines: this.mines,
     };
-    const renderTime = performance.now() - INTERP_DELAY_MS;
-    const sample = sampleBuffer(this.snapshotBuffer, renderTime);
+    const renderTime = this.netClock.now(performance.now(), INTERP_DELAY_MS);
+    const sample =
+      renderTime === null
+        ? null
+        : sampleBuffer(this.snapshotBuffer, renderTime);
     if (!sample) return fallback;
     const { a, b, alpha } = sample;
 
@@ -1104,6 +1188,34 @@ export class GameEngine {
         alpha
       );
     }
+
+    // Our own tank is drawn from the client-side prediction (current input,
+    // not ~100 ms in the past). Everything else in the world stays on the
+    // interpolated timeline; other players and bullets are common-cause
+    // knowledge and interpolate consistently.
+    const predicted = this.predictor.renderPose();
+    const latestMe = this.mysocketid
+      ? this.players[this.mysocketid]
+      : undefined;
+    const renderedMe = this.mysocketid ? players[this.mysocketid] : undefined;
+    if (
+      predicted &&
+      renderedMe &&
+      this.mysocketid &&
+      latestMe?.alive !== false
+    ) {
+      const pose: Pose = {
+        x: predicted.position.x,
+        y: predicted.position.y,
+        angle: predicted.angle,
+      };
+      if (predicted.rotation !== undefined) pose.rotation = predicted.rotation;
+      players[this.mysocketid] = withPose(
+        renderedMe as unknown as Posable,
+        pose
+      ) as unknown as RoomPlayer;
+    }
+
     const bullets = b.state.bullets.map((bb) => {
       const ab =
         bb.id !== undefined
@@ -1269,6 +1381,10 @@ export class GameEngine {
     this.prevAlive = {};
     this.spawnAnimElapsed = null;
     this.sounds.clear();
+    this.snapshotBuffer = [];
+    this.netClock.reset();
+    this.predictor.reset();
+    this.serverCountdownActive = false;
 
     // Release WebGL resources / drop the context.
     if (this.post) {

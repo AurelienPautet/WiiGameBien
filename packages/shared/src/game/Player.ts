@@ -25,6 +25,12 @@ export class Player {
   position: Vec2;
   socketid: string;
   mytick: number;
+  // Highest client input sequence the server has consumed for this player. The
+  // client stamps every `tock` with a monotonically increasing `seq`, the
+  // server stores the last one it applied, and the snapshot carries it back so
+  // the client can replay only the inputs the server has not seen yet (client
+  // side prediction / reconciliation). 0 means "no input acknowledged".
+  last_input_seq: number;
   round_stats: Stats;
   spawnpos: Vec2;
   velocity: Vec2;
@@ -68,6 +74,7 @@ export class Player {
     this.position = position;
     this.socketid = socketid;
     this.mytick = 0;
+    this.last_input_seq = 0;
     this.round_stats = new Stats();
     this.spawnpos = {
       x: 0,

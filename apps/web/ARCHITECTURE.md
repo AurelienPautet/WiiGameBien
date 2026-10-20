@@ -81,6 +81,7 @@ apps/web/
     │   └── game/             GameCanvas (the React↔engine bridge), EndGameScreen, …
     ├── audio/                procedural Web Audio: synth primitives + named voices (game + UI)
     ├── engine/               GameEngine · Renderer · InputHandler · ParticleSystem · SoundManager
+    │                         interpolation.ts (server-timeline clock) · prediction.ts (local tank)
     └── pages/                LevelEditor, CampaignEditor (full-screen, route-based)
 ```
 
@@ -94,6 +95,16 @@ apps/web/
 - **Typed socket end-to-end.** `SocketContext` holds one
   `Socket<ServerToClientEvents, ClientToServerEvents>`; every `emit`/`on` is
   checked against `@ouigame/shared/socket`.
+- **Multiplayer netcode.** The server runs the authoritative `Room` at a fixed
+  60 Hz and broadcasts a full snapshot every tick. The client renders other
+  players/bullets ~100 ms in the past, but samples the snapshot buffer on the
+  **server tick timeline** (`InterpolationClock`), not on packet arrival times,
+  so network jitter cannot distort playback speed. Our own tank is **predicted**
+  locally with the shared `Player.update` movement code; each `tock` carries a
+  monotonic `seq`, the server consumes at most one queued input per simulation
+  step and echoes the consumed seq as `player.last_input_seq`, and the client
+  rewinds + replays only the unacknowledged inputs on every snapshot. Small
+  corrections are smoothed over ~80 ms; respawns/level reloads snap.
 - **Data layer.** `api/client.ts` is a small typed fetch wrapper (Bearer token
   from `lib/storage`); `hooks/api/*` wrap it in TanStack Query, with `data`
   inferring the DTOs from `@ouigame/shared/api`.

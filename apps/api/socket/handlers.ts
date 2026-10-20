@@ -7,7 +7,11 @@ import * as levelsService from "../services/levels.service";
 import * as ratingsRepo from "../repositories/ratings.repo";
 import * as playSessions from "./playSessions";
 import { beginCountdown } from "../game/countdown";
-import { nearestEnemyCentre } from "@ouigame/shared/game";
+import {
+  applyPlayerInput,
+  clearInputQueue,
+  enqueueInput,
+} from "../game/inputQueue";
 import { users } from "../shared_state";
 import type { Room, RoomMode } from "@ouigame/shared/game";
 import type { Block, CollisonsBox } from "@ouigame/shared/types";
@@ -93,6 +97,7 @@ function registerSocketHandlers({
   // Leave the game room without logging out - called on quit and disconnect.
   function leave_game(socket: AppSocket) {
     try {
+      clearInputQueue(socket.id);
       for (const r of Object.values(rooms)) {
         socket.leave(String(r.id));
         const wasMember = r.players[socket.id] !== undefined;
@@ -346,24 +351,41 @@ function registerSocketHandlers({
       if (!player || player.position == undefined) return;
       if (room.countdownActive) return; // can see, but not act, during countdown
 
-      if (Number.isFinite(data.mytick)) player.mytick = data.mytick;
-      if (isVector(data.direction)) player.direction = data.direction;
-      if (isVector(data.aim)) player.aim = data.aim;
-      // Tap-to-fire (touch fire button): aim at the nearest enemy ourselves
-      // rather than trusting the sent `aim` — the server holds the true
-      // positions, and the coop ally rule lives in the shared helper.
-      if (data.autoAim === true) {
-        const target = nearestEnemyCentre(room, socket.id);
-        if (target) player.aim = target;
+      // Sanitize once; both the queued (new client) and immediate (legacy)
+      // paths then share the same validated shape.
+      const direction = isVector(data.direction) ? data.direction : undefined;
+      const aim = isVector(data.aim) ? data.aim : undefined;
+      const mytick = Number.isFinite(data.mytick) ? data.mytick : undefined;
+      const click = data.click === true;
+      const plant = data.plant === true;
+      const autoAim = data.autoAim === true;
+
+      // Sequence-stamped clients are paced by the tick loop: one input per
+      // simulation step, in order, with `last_input_seq` acknowledging exactly
+      // the state the snapshot represents. This de-jitters movement and gives
+      // the client a truthful replay point for prediction.
+      if (typeof data.seq === "number" && Number.isFinite(data.seq)) {
+        enqueueInput(socket.id, {
+          seq: data.seq,
+          ...(mytick !== undefined ? { mytick } : {}),
+          ...(direction !== undefined ? { direction } : {}),
+          ...(aim !== undefined ? { aim } : {}),
+          ...(click ? { click: true } : {}),
+          ...(plant ? { plant: true } : {}),
+          ...(autoAim ? { autoAim: true } : {}),
+        });
+        return;
       }
-      if (data.click || data.autoAim === true) {
-        // `aim` may have just been re-pointed by this same packet (auto-aim, or
-        // a click whose aim arrived with it); refresh the barrel angle so the
-        // bullet leaves along it instead of last tick's aim.
-        player.CalculateAngle();
-        player.shoot(room);
-      }
-      if (data.plant) player.plant(room);
+
+      // Legacy clients (no seq): apply immediately, as before.
+      applyPlayerInput(room, player, socket.id, {
+        ...(mytick !== undefined ? { mytick } : {}),
+        ...(direction !== undefined ? { direction } : {}),
+        ...(aim !== undefined ? { aim } : {}),
+        ...(click ? { click: true } : {}),
+        ...(plant ? { plant: true } : {}),
+        ...(autoAim ? { autoAim: true } : {}),
+      });
     });
   });
 }

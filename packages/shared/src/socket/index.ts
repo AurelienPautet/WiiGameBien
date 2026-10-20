@@ -77,6 +77,12 @@ export interface ClientToServerEvents {
     autoAim?: boolean;
     room_id: number | string | null;
     mytick: number;
+    // Monotonic client input sequence (additive). The server echoes the last
+    // consumed value in each player's snapshot as `last_input_seq` so the
+    // client can replay unacknowledged inputs on top of the authoritative
+    // state (client-side prediction). Older clients omit it; the server then
+    // leaves the player's ack at 0.
+    seq?: number;
   }) => void;
 }
 
