@@ -8,6 +8,7 @@ import {
   withPose,
   sampleBuffer,
   pruneBuffer,
+  InterpolationClock,
   type TimedFrame,
 } from "../interpolation.js";
 
@@ -118,5 +119,74 @@ describe("pruneBuffer", () => {
     const buf: TimedFrame<number>[] = [{ t: 0, state: 0 }];
     pruneBuffer(buf, 9999);
     expect(buf).toHaveLength(1);
+  });
+});
+
+describe("InterpolationClock", () => {
+  it("has no playback position before the first observation", () => {
+    const clock = new InterpolationClock();
+    expect(clock.now(1000, 100)).toBeNull();
+  });
+
+  it("keeps playback evenly spaced when packets arrive in bursts", () => {
+    const clock = new InterpolationClock();
+    // Server times are perfectly regular; arrivals are not (late, then a
+    // burst of two in quick succession).
+    clock.observe(0, 1000);
+    clock.observe(16.7, 1035);
+    clock.observe(33.3, 1041);
+
+    const first = clock.now(1050, 100)!;
+    const deltas: number[] = [];
+    let previous = first;
+    for (let i = 1; i <= 12; i++) {
+      const next = clock.now(1050 + i * 16.7, 100)!;
+      deltas.push(next - previous);
+      previous = next;
+    }
+    // Playback advances at ~1x the wall clock, NOT at arrival times.
+    for (const delta of deltas) {
+      expect(delta).toBeGreaterThan(16);
+      expect(delta).toBeLessThan(17.5);
+    }
+  });
+
+  it("renders behind the newest frame by the requested delay", () => {
+    const clock = new InterpolationClock();
+    clock.observe(0, 1000); // offset 1000
+    // Server time = real time - 1000; with a 100 ms delay the sample sits 100 ms
+    // behind the server clock.
+    expect(clock.now(1100, 100)).toBeCloseTo(0, 6);
+  });
+
+  it("absorbs an improved-latency offset without jumping", () => {
+    const clock = new InterpolationClock();
+    clock.observe(0, 1050);
+    const before = clock.now(1050, 100)!;
+    // A packet from a faster path lowers the offset estimate by 20 ms.
+    clock.observe(16.7, 1046.7);
+    const after = clock.now(1066.7, 100)!;
+    const advanced = after - before;
+    // No snap: playback moved forward by roughly one frame, at a slightly
+    // faster rate to converge on the new estimate.
+    expect(advanced).toBeGreaterThan(16);
+    expect(advanced).toBeLessThan(20);
+  });
+
+  it("snaps across a large discontinuity (tab resume / stall)", () => {
+    const clock = new InterpolationClock();
+    clock.observe(0, 1000);
+    clock.now(1000, 100);
+    const resumed = clock.now(5000, 100)!;
+    // Target = 5000 - 1000 - 100.
+    expect(resumed).toBeCloseTo(3900, 6);
+  });
+
+  it("forgets history on reset", () => {
+    const clock = new InterpolationClock();
+    clock.observe(0, 1000);
+    expect(clock.now(1000, 100)).not.toBeNull();
+    clock.reset();
+    expect(clock.now(1000, 100)).toBeNull();
   });
 });

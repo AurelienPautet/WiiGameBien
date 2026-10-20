@@ -124,3 +124,108 @@ export function pruneBuffer<S>(buffer: TimedFrame<S>[], cutoff: number): void {
     buffer.shift();
   }
 }
+
+/**
+ * Maps the server's simulation timeline onto a smooth local playback clock.
+ *
+ * Online snapshots are stamped with the server tick, which advances exactly one
+ * `SIM_STEP_MS` per simulation step. Those game times are therefore perfectly
+ * evenly spaced, even though the packets carrying them arrive with network
+ * jitter. Stamping frames with their *arrival* time instead (the pre-smoothing
+ * behaviour) makes a late packet freeze the world and the following burst replay
+ * two steps at once — the classic online rubber-band stutter.
+ *
+ * `observe()` measures the offset between the server timeline and
+ * `performance.now()` for every arrival. Network delay is never negative, so the
+ * smallest offset seen in the recent window is the closest estimate of the true
+ * clock offset; larger samples are pure jitter. `now()` then returns a
+ * *monotonic* playback position that tracks that estimate at ~1x real time and
+ * absorbs small clock changes by nudging its rate (±8%) instead of jumping. A
+ * large discontinuity (backgrounded tab, socket stall) snaps.
+ */
+export class InterpolationClock {
+  /** How much arrival history feeds the offset estimate. */
+  private readonly windowMs: number;
+  private samples: { arrival: number; offset: number }[] = [];
+  private offsetMs: number | null = null;
+  private playbackMs: number | null = null;
+  private lastRealMs = 0;
+
+  // Drift corrections: converge `DRIFT_MS` of error by adjusting playback speed
+  // by at most `MAX_RATE_ADJUST`; anything past `SNAP_MS` is a discontinuity.
+  private static readonly DRIFT_MS = 500;
+  private static readonly MAX_RATE_ADJUST = 0.08;
+  private static readonly SNAP_MS = 500;
+
+  constructor(windowMs = 3000) {
+    this.windowMs = windowMs;
+  }
+
+  /**
+   * Record one server frame: `serverMs` is its simulation-timeline timestamp
+   * (tick × step), `arrivalMs` the `performance.now()` at which it arrived.
+   */
+  observe(serverMs: number, arrivalMs: number): void {
+    if (!Number.isFinite(serverMs) || !Number.isFinite(arrivalMs)) return;
+
+    this.samples.push({ arrival: arrivalMs, offset: arrivalMs - serverMs });
+    const cutoff = arrivalMs - this.windowMs;
+    let drop = 0;
+    while (
+      drop < this.samples.length - 1 &&
+      this.samples[drop]!.arrival < cutoff
+    ) {
+      drop++;
+    }
+    if (drop > 0) this.samples.splice(0, drop);
+
+    // The fastest arrival in the window wins: every sample carries at least the
+    // one-way delay, so the minimum is the least-delayed observation.
+    let minOffset = Infinity;
+    for (const sample of this.samples) {
+      if (sample.offset < minOffset) minOffset = sample.offset;
+    }
+    this.offsetMs = minOffset;
+  }
+
+  /**
+   * Playback position on the server timeline, rendered `delayMs` behind the
+   * live clock. Returns null until the first observation.
+   */
+  now(realMs: number, delayMs: number): number | null {
+    if (this.offsetMs === null) return null;
+
+    const target = realMs - this.offsetMs - delayMs;
+    if (this.playbackMs === null) {
+      this.playbackMs = target;
+      this.lastRealMs = realMs;
+      return this.playbackMs;
+    }
+
+    const elapsed = Math.max(0, realMs - this.lastRealMs);
+    this.lastRealMs = realMs;
+    const error = target - this.playbackMs;
+
+    if (Math.abs(error) > InterpolationClock.SNAP_MS) {
+      // A stall/tab-resume-style discontinuity: re-anchor rather than spend
+      // seconds sliding back into sync.
+      this.playbackMs = target;
+    } else {
+      const adjust = clamp(
+        error / InterpolationClock.DRIFT_MS,
+        -InterpolationClock.MAX_RATE_ADJUST,
+        InterpolationClock.MAX_RATE_ADJUST
+      );
+      this.playbackMs += elapsed * (1 + adjust);
+    }
+    return this.playbackMs;
+  }
+
+  /** Forget all history (new room/level or engine teardown). */
+  reset(): void {
+    this.samples = [];
+    this.offsetMs = null;
+    this.playbackMs = null;
+    this.lastRealMs = 0;
+  }
+}
