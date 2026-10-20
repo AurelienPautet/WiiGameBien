@@ -2,9 +2,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent } from "@testing-library/react";
 
 // closeModal must exist before vi.mock's hoisted factory runs.
-const { closeModal } = vi.hoisted(() => ({ closeModal: vi.fn() }));
+const { closeModal, setTank } = vi.hoisted(() => ({
+  closeModal: vi.fn(),
+  setTank: vi.fn(),
+}));
 
-// Replace only useModal; keep the real ModalProvider so renderWithProviders works.
+// Replace only useModal/useSettings; keep the real ModalProvider so
+// renderWithProviders works.
 vi.mock("../../../contexts", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../../contexts")>();
   return {
@@ -16,18 +20,22 @@ vi.mock("../../../contexts", async (importOriginal) => {
       modalData: null,
       isOpen: () => false,
     }),
+    useSettings: () => ({
+      settings: { tank: { bodyIndex: 1, turretIndex: 1 } },
+      setTank,
+    }),
   };
 });
 
 import { renderWithProviders } from "../../../test/renderWithProviders";
 import { TankSelectModal } from "../TankSelectModal";
-import { storage } from "../../../lib/storage";
 import { TANK_COLORS } from "../../../constants/tankColors";
 
 describe("TankSelectModal", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     closeModal.mockClear();
+    setTank.mockClear();
   });
 
   it("renders a dialog with a body and a turret radio swatch row", () => {
@@ -42,9 +50,6 @@ describe("TankSelectModal", () => {
   });
 
   it("persists the chosen colours and requests close on save", () => {
-    const setSpy = vi
-      .spyOn(storage, "setTankColors")
-      .mockImplementation(() => {});
     renderWithProviders(<TankSelectModal />);
 
     // Body swatches come first; pick index 2 (default selection is index 1).
@@ -56,19 +61,16 @@ describe("TankSelectModal", () => {
     expect(swatches[2]!.getAttribute("aria-checked")).toBe("true");
     fireEvent.click(screen.getByRole("button", { name: /save/i }));
 
-    expect(setSpy).toHaveBeenCalledWith(2, 1, TANK_COLORS[2], TANK_COLORS[1]);
+    expect(setTank).toHaveBeenCalledWith({ bodyIndex: 2, turretIndex: 1 });
     expect(closeModal).toHaveBeenCalledTimes(1);
   });
 
   it("closes without persisting on cancel", () => {
-    const setSpy = vi
-      .spyOn(storage, "setTankColors")
-      .mockImplementation(() => {});
     renderWithProviders(<TankSelectModal />);
 
     fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
 
     expect(closeModal).toHaveBeenCalledTimes(1);
-    expect(setSpy).not.toHaveBeenCalled();
+    expect(setTank).not.toHaveBeenCalled();
   });
 });

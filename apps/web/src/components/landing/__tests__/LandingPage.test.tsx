@@ -17,6 +17,11 @@ vi.mock("../../../contexts", () => ({
     openModal: state.openModal,
     activeModal: state.activeModal,
   }),
+  useSettings: () => ({
+    settings: {
+      tank: { bodyIndex: 1, turretIndex: 1 },
+    },
+  }),
   MODALS: {
     CAMPAIGN_SELECTOR: "campaignSelector",
     ROOM_SELECTOR: "roomSelector",

@@ -2,8 +2,14 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Play, Gamepad2, Flag, ArrowRight, Star, Heart } from "lucide-react";
-import { useModal, useAuth, useSocket, MODALS } from "../../contexts";
-import { colorFromIndex } from "../../constants/tankColors";
+import {
+  useModal,
+  useAuth,
+  useSocket,
+  useSettings,
+  MODALS,
+} from "../../contexts";
+import { tankColorsFrom } from "../../lib/settings";
 import { storage } from "../../lib/storage";
 import { useRankings } from "../../hooks/api";
 import {
@@ -85,17 +91,15 @@ function ArenaIllustration({ campaign }: { campaign: boolean }) {
 export const LandingPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { openModal, activeModal } = useModal();
+  const { openModal } = useModal();
   const { user } = useAuth();
+  const { settings } = useSettings();
   const { onlineCount } = useSocket();
   const { data: topPlayers = [] } = useRankings("KILLS");
   const [playerName, setPlayerName] = useState(
     () => storage.getPlayerName() || ""
   );
-  const [tankColors, setTankColors] = useState(() => ({
-    body: colorFromIndex(storage.getBodyIndex()),
-    turret: colorFromIndex(storage.getTurretIndex()),
-  }));
+  const tankColors = tankColorsFrom(settings.tank);
 
   useEffect(() => {
     if (user?.username) {
@@ -103,13 +107,6 @@ export const LandingPage = () => {
       setPlayerName(user.username);
     }
   }, [user]);
-
-  useEffect(() => {
-    setTankColors({
-      body: colorFromIndex(storage.getBodyIndex()),
-      turret: colorFromIndex(storage.getTurretIndex()),
-    });
-  }, [activeModal]);
 
   const campaignFeatured = onlineCount < MULTIPLAYER_FEATURE_THRESHOLD;
   const featured: PlayMode = campaignFeatured ? "campaign" : "online";

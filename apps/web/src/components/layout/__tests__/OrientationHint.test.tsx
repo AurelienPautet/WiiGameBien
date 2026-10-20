@@ -3,7 +3,12 @@ import { screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter, useNavigate } from "react-router-dom";
 import type { ReactNode } from "react";
 import { renderWithProviders } from "../../../test/renderWithProviders";
-import { GameProvider, SettingsProvider, useGame } from "../../../contexts";
+import {
+  GameProvider,
+  SettingsProvider,
+  AuthProvider,
+  useGame,
+} from "../../../contexts";
 import { OrientationHint } from "../OrientationHint";
 import { storage } from "../../../lib/storage";
 import { DEFAULT_SETTINGS } from "../../../lib/settings";
@@ -68,12 +73,14 @@ const renderHint = (
   storage.setSettings({ ...DEFAULT_SETTINGS, ...settings });
   return renderWithProviders(
     <MemoryRouter initialEntries={[path]}>
-      <SettingsProvider>
-        <GameProvider>
-          <OrientationHint />
-          {extra}
-        </GameProvider>
-      </SettingsProvider>
+      <AuthProvider>
+        <SettingsProvider>
+          <GameProvider>
+            <OrientationHint />
+            {extra}
+          </GameProvider>
+        </SettingsProvider>
+      </AuthProvider>
     </MemoryRouter>
   );
 };

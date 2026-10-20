@@ -19,7 +19,7 @@ import {
   Lock,
   Clock,
 } from "lucide-react";
-import { useModal, useAuth } from "../../contexts";
+import { useModal, useAuth, useSettings } from "../../contexts";
 import {
   usePlayerStats,
   useMySoloStats,
@@ -28,9 +28,8 @@ import {
 } from "../../hooks/api";
 import type { MyStats, MySoloStats } from "@ouigame/shared/api";
 import { ACHIEVEMENTS, type AchievementCategory } from "@ouigame/shared/api";
-import { storage } from "../../lib/storage";
 import { formatDurationMs } from "../../lib/formatTime";
-import { colorFromIndex } from "../../constants/tankColors";
+import { tankColorsFrom } from "../../lib/settings";
 import {
   ACHIEVEMENT_ICONS,
   ACHIEVEMENT_ICON_FALLBACK,
@@ -54,6 +53,7 @@ export const ProfileModal = () => {
   const { t } = useTranslation();
   const { closeModal } = useModal();
   const { user, logout } = useAuth();
+  const { settings } = useSettings();
   const { data: stats, isLoading } = usePlayerStats();
   const { data: soloStats, isLoading: soloLoading } = useMySoloStats();
   const { data: achievementsData, isLoading: achLoading } = useMyAchievements();
@@ -104,8 +104,9 @@ export const ProfileModal = () => {
   const soloTimeLabel = playtime ? formatDurationMs(playtime.soloMs) : "—";
   const onlineTimeLabel = playtime ? formatDurationMs(playtime.onlineMs) : "—";
 
-  const bodyColor = colorFromIndex(storage.getBodyIndex());
-  const turretColor = colorFromIndex(storage.getTurretIndex());
+  const { body: bodyColor, turret: turretColor } = tankColorsFrom(
+    settings.tank
+  );
 
   return (
     <Dialog

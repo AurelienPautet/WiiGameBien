@@ -5,6 +5,7 @@ const {
   timestamp,
   integer,
   boolean,
+  jsonb,
   check,
 } = require("drizzle-orm/pg-core");
 const { sql } = require("drizzle-orm");
@@ -44,4 +45,18 @@ const playerSessions = pgTable("OuiTank-player_sessions", {
   ),
 });
 
-module.exports = { players, playerSessions };
+// One row per player: the account-backed copy of the web client's settings blob
+// (keybindings, effects, volumes, touch controls, selected tank). Kept out of
+// the players table so authentication lookups stay lean and preferences are a
+// single upsert. `settings` is JSONB rather than columns: the client evolves
+// this shape often (new effects/toggles) and the API validates it with Zod.
+const playerSettings = pgTable("OuiTank-player_settings", {
+  playerId: integer("player_id")
+    .primaryKey()
+    // OWNERSHIP: preferences are meaningless without their player.
+    .references(() => players.id, { onDelete: "cascade" }),
+  settings: jsonb("settings").notNull(),
+  updatedTimestamp: timestamp("updated_timestamp").defaultNow().notNull(),
+});
+
+module.exports = { players, playerSessions, playerSettings };

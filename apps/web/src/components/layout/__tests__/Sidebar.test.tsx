@@ -12,6 +12,9 @@ vi.mock("../../../contexts", () => ({
   useAuth: () => ({ user: state.user }),
   useSocket: () => ({ isConnected: true, onlineCount: 1 }),
   useModal: () => ({ openModal: state.openModal, activeModal: null }),
+  useSettings: () => ({
+    settings: { tank: { bodyIndex: 1, turretIndex: 1 } },
+  }),
   MODALS: {
     MY_LEVELS: "myLevels",
     MY_CAMPAIGNS: "myCampaigns",

@@ -9,9 +9,14 @@ import {
   Settings,
   Shield,
 } from "lucide-react";
-import { useModal, useAuth, useSocket, MODALS } from "../../contexts";
-import { storage } from "../../lib/storage";
-import { colorFromIndex } from "../../constants/tankColors";
+import {
+  useModal,
+  useAuth,
+  useSocket,
+  useSettings,
+  MODALS,
+} from "../../contexts";
+import { tankColorsFrom } from "../../lib/settings";
 import { SelectionIndicator, TankAvatar } from "../ui/primitives";
 import { cn } from "../../lib/cn";
 import { tabPressHandlers } from "../../lib/tabPress";
@@ -39,13 +44,11 @@ export const Sidebar = () => {
   const { pathname } = useLocation();
   const { openModal, activeModal } = useModal();
   const { user } = useAuth();
+  const { settings } = useSettings();
   const groupId = useId();
-  // ModalContext rerenders this shell when customization closes, so read the
-  // saved colors directly rather than keeping a second copy in local state.
-  const colors = {
-    body: colorFromIndex(storage.getBodyIndex()),
-    turret: colorFromIndex(storage.getTurretIndex()),
-  };
+  // Sidebar lives inside SettingsProvider, so a tank change (or an account
+  // hydrate) re-renders it without any extra storage reads.
+  const colors = tankColorsFrom(settings.tank);
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
     cn("sidebar-link tab-pressable", isActive && "is-active");
