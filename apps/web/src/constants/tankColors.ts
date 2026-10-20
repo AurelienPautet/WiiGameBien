@@ -15,6 +15,13 @@ export const TANK_COLORS: string[] = [
 
 export const DEFAULT_TANK_COLOR: string = "orange";
 
+// Index of the default colour in TANK_COLORS (orange today). Derived instead of
+// hard-coded so reordering the palette can never silently desync the defaults.
+export const DEFAULT_TANK_INDEX: number = Math.max(
+  0,
+  TANK_COLORS.indexOf(DEFAULT_TANK_COLOR)
+);
+
 // Resolve a persisted index to a color name, falling back to the default.
 export function colorFromIndex(index: number | string | null): string {
   const i = Number(index);

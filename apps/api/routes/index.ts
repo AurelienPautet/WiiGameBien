@@ -2,6 +2,7 @@ import express from "express";
 const router = express.Router();
 
 import authRoutes from "./auth.routes";
+import settingsRoutes from "./settings.routes";
 import levelsRoutes from "./levels.routes";
 import statsRoutes from "./stats.routes";
 import rankingsRoutes from "./rankings.routes";
@@ -12,6 +13,7 @@ import achievementsRoutes from "./achievements.routes";
 import adminRoutes from "./admin";
 
 router.use("/auth", authRoutes);
+router.use("/settings", settingsRoutes);
 router.use("/levels", levelsRoutes);
 router.use("/stats", statsRoutes);
 router.use("/rankings", rankingsRoutes);

@@ -65,12 +65,12 @@ apps/web/
 └── src/
     ├── main.tsx · App.tsx
     ├── providers/            QueryProvider, ErrorBoundary
-    ├── contexts/             Socket · Auth · Game · Modal · Toast (+ index barrel)
+    ├── contexts/             Socket · Auth · Settings · Game · Modal · Toast (+ index barrel)
     ├── api/
     │   ├── client.ts         fetch wrapper; Bearer token from storage; VITE_API_URL
-    │   └── endpoints/        auth · levels · campaigns · solo · rankings · rooms · stats
+    │   └── endpoints/        auth · settings · levels · campaigns · solo · rankings · rooms · stats
     ├── hooks/api/            TanStack Query hooks (data infers the @ouigame/shared/api DTOs)
-    ├── lib/storage.ts        typed localStorage access
+    ├── lib/storage.ts        typed localStorage access (settings mirrored to the account when signed in)
     ├── constants/            campaign rules, tank colours
     ├── utils/                level helpers (hex→dataURL, bot extraction)
     ├── components/
@@ -108,6 +108,11 @@ apps/web/
 - **Data layer.** `api/client.ts` is a small typed fetch wrapper (Bearer token
   from `lib/storage`); `hooks/api/*` wrap it in TanStack Query, with `data`
   inferring the DTOs from `@ouigame/shared/api`.
+- **Account-backed settings.** `SettingsContext` keeps localStorage as the
+  anonymous source of truth and, for a signed-in player, hydrates the account
+  copy on login then mirrors every change (debounced) to `PUT /api/settings`.
+  The account wins on login; an empty account is seeded from the local blob.
+  The shared Zod schema is the single definition of the blob's shape.
 - **Contexts return non-null.** `useGame()/useModal()/useSocket()/…` throw if
   used outside their provider, so consumers don't null-check.
 - **Overlay UI, not routes** (except the full-screen editors): `ModalContext`

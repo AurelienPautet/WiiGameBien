@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useModal } from "../../contexts";
+import { useModal, useSettings } from "../../contexts";
 import { TANK_COLORS as COLORS } from "../../constants/tankColors";
-import { storage } from "../../lib/storage";
 import { tankColors } from "../../theme/palette";
 import {
   Dialog,
@@ -53,21 +52,16 @@ const SwatchRow = ({
 export const TankSelectModal = () => {
   const { t } = useTranslation();
   const { closeModal } = useModal();
+  const { settings, setTank } = useSettings();
   const [bodyIndex, setBodyIndex] = useState(() =>
-    clampIndex(storage.getBodyIndex())
+    clampIndex(settings.tank.bodyIndex)
   );
   const [turretIndex, setTurretIndex] = useState(() =>
-    clampIndex(storage.getTurretIndex())
+    clampIndex(settings.tank.turretIndex)
   );
 
   const handleSave = () => {
-    // Indices are always clamped to [0, COLORS.length - 1].
-    storage.setTankColors(
-      bodyIndex,
-      turretIndex,
-      COLORS[bodyIndex]!,
-      COLORS[turretIndex]!
-    );
+    setTank({ bodyIndex, turretIndex });
     closeModal();
   };
 

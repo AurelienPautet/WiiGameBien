@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { screen, fireEvent } from "@testing-library/react";
 import { renderWithProviders } from "../../../test/renderWithProviders";
-import { SettingsProvider } from "../../../contexts";
+import { AuthProvider, SettingsProvider } from "../../../contexts";
 import { PauseOverlay } from "../PauseOverlay";
 import { storage } from "../../../lib/storage";
 import { DEFAULT_SETTINGS, KEY_PRESETS } from "../../../lib/settings";
@@ -17,15 +17,17 @@ const renderPause = (
   storage.setSettings({ ...DEFAULT_SETTINGS, ...overrides });
   const noop = vi.fn();
   return renderWithProviders(
-    <SettingsProvider>
-      <PauseOverlay
-        onResume={props.onResume ?? noop}
-        onQuit={props.onQuit ?? noop}
-        onSettings={props.onSettings ?? noop}
-        onRetry={props.onRetry}
-        settingsOpen={props.settingsOpen ?? false}
-      />
-    </SettingsProvider>
+    <AuthProvider>
+      <SettingsProvider>
+        <PauseOverlay
+          onResume={props.onResume ?? noop}
+          onQuit={props.onQuit ?? noop}
+          onSettings={props.onSettings ?? noop}
+          onRetry={props.onRetry}
+          settingsOpen={props.settingsOpen ?? false}
+        />
+      </SettingsProvider>
+    </AuthProvider>
   );
 };
 
