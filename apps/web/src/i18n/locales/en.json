@@ -29,7 +29,8 @@
     "admin": "Admin",
     "mainNavigation": "Main navigation",
     "skipToContent": "Skip to content",
-    "creations": "My creations"
+    "creations": "My creations",
+    "shop": "Shop"
   },
   "topbar": {
     "online": "online",
@@ -219,7 +220,62 @@
   "tankSelect": {
     "title": "Your Tank",
     "body": "Body",
-    "turret": "Turret"
+    "turret": "Turret",
+    "paint": "Paint",
+    "paintHint": "Unlock more paints with OuiCoins in the shop.",
+    "openShop": "Shop"
+  },
+  "shop": {
+    "title": "Tank Shop",
+    "subtitle": "Paints for your hull, bought with OuiCoins.",
+    "open": "Shop",
+    "openWithBalance": "Shop — {{count}} OuiCoins",
+    "coins": "OuiCoins",
+    "balance": "{{count}} OuiCoins",
+    "earnHint": "Earn coins by winning rounds, clearing levels and unlocking achievements.",
+    "buy": "Buy",
+    "equip": "Equip",
+    "equipped": "Equipped",
+    "owned": "Owned",
+    "needMore": "Need {{count}} more",
+    "insufficient": "Not enough coins",
+    "purchased": "{{name}} unlocked!",
+    "coinsEarned": "+{{count}} OuiCoins",
+    "ownedCount": "{{owned}} / {{total}} paints owned",
+    "paints": {
+      "plain": {
+        "name": "Plain",
+        "desc": "Factory finish. Free and always yours."
+      },
+      "stripes": {
+        "name": "Racing Stripes",
+        "desc": "Diagonal speed lines."
+      },
+      "checker": {
+        "name": "Checkerboard",
+        "desc": "Classic arcade tiles."
+      },
+      "hazard": {
+        "name": "Hazard Rings",
+        "desc": "Warning stripes, aimed at everyone."
+      },
+      "camo": {
+        "name": "Jungle Camo",
+        "desc": "Blend into the battlefield."
+      },
+      "bolt": {
+        "name": "Volt Bolt",
+        "desc": "A lightning strike down the hull."
+      },
+      "stars": {
+        "name": "Star Rally",
+        "desc": "Three stars for a champion."
+      },
+      "flames": {
+        "name": "Afterburner",
+        "desc": "Flames from the front line."
+      }
+    }
   },
   "settings": {
     "title": "Settings",

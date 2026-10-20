@@ -29,7 +29,8 @@
     "admin": "Admin",
     "mainNavigation": "Navegación principal",
     "skipToContent": "Saltar al contenido",
-    "creations": "Mis creaciones"
+    "creations": "Mis creaciones",
+    "shop": "Tienda"
   },
   "topbar": {
     "online": "en línea",
@@ -217,7 +218,62 @@
   "tankSelect": {
     "title": "Tu Tanque",
     "body": "Cuerpo",
-    "turret": "Torreta"
+    "turret": "Torreta",
+    "paint": "Pintura",
+    "paintHint": "Desbloquea más pinturas con OuiCoins en la tienda.",
+    "openShop": "Tienda"
+  },
+  "shop": {
+    "title": "Tienda de tanques",
+    "subtitle": "Pinturas para tu casco, compradas con OuiCoins.",
+    "open": "Tienda",
+    "openWithBalance": "Tienda — {{count}} OuiCoins",
+    "coins": "OuiCoins",
+    "balance": "{{count}} OuiCoins",
+    "earnHint": "Gana monedas ganando rondas, superando niveles y desbloqueando logros.",
+    "buy": "Comprar",
+    "equip": "Equipar",
+    "equipped": "Equipada",
+    "owned": "En propiedad",
+    "needMore": "Te faltan {{count}}",
+    "insufficient": "Monedas insuficientes",
+    "purchased": "¡{{name}} desbloqueada!",
+    "coinsEarned": "+{{count}} OuiCoins",
+    "ownedCount": "{{owned}} / {{total}} pinturas en propiedad",
+    "paints": {
+      "plain": {
+        "name": "Lisa",
+        "desc": "Acabado de fábrica. Gratis y siempre tuya."
+      },
+      "stripes": {
+        "name": "Rayas de carrera",
+        "desc": "Líneas de velocidad en diagonal."
+      },
+      "checker": {
+        "name": "Damero",
+        "desc": "Las clásicas baldosas arcade."
+      },
+      "hazard": {
+        "name": "Anillos de peligro",
+        "desc": "Rayas de advertencia para todos."
+      },
+      "camo": {
+        "name": "Camuflaje",
+        "desc": "Fúndete con el campo de batalla."
+      },
+      "bolt": {
+        "name": "Rayo",
+        "desc": "Un rayo recorre el casco."
+      },
+      "stars": {
+        "name": "Estrellas",
+        "desc": "Tres estrellas para un campeón."
+      },
+      "flames": {
+        "name": "Postquemador",
+        "desc": "Llamas desde el frente."
+      }
+    }
   },
   "settings": {
     "title": "Configuración",

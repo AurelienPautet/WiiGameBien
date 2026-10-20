@@ -92,3 +92,16 @@ describe("solo selector state", () => {
     expect(storage.getSoloSelectorState()).toBeNull();
   });
 });
+
+describe("garage (wallet + paint ownership)", () => {
+  it("round-trips the JSON blob and returns null when absent/corrupt", () => {
+    expect(storage.getGarage()).toBeNull();
+    const garage = { coins: 400, owned: ["plain", "stars"], equipped: "stars" };
+    storage.setGarage(garage);
+    expect(storage.getGarage()).toEqual(garage);
+    expect(window.localStorage.getItem("garage")).toBe(JSON.stringify(garage));
+
+    window.localStorage.setItem("garage", "{not json");
+    expect(storage.getGarage()).toBeNull();
+  });
+});

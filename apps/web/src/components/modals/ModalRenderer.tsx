@@ -36,6 +36,7 @@ const TankSelectModal = named(
   () => import("./TankSelectModal"),
   "TankSelectModal"
 );
+const ShopModal = named(() => import("./ShopModal"), "ShopModal");
 const CampaignSelectorModal = named(
   () => import("./CampaignSelectorModal"),
   "CampaignSelectorModal"
@@ -59,6 +60,7 @@ export const ModalRenderer = () => {
       {activeModal === MODALS.LEVEL_SELECTOR && <LevelSelectorModal />}
       {activeModal === MODALS.MY_LEVELS && <MyLevelsModal />}
       {activeModal === MODALS.TANK_SELECT && <TankSelectModal />}
+      {activeModal === MODALS.SHOP && <ShopModal />}
       {activeModal === MODALS.CAMPAIGN_SELECTOR && <CampaignSelectorModal />}
       {activeModal === MODALS.MY_CAMPAIGNS && <MyCampaignsModal />}
       {activeModal === MODALS.SETTINGS && <SettingsModal />}

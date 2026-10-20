@@ -28,6 +28,12 @@ import { TouchControls } from "./TouchControls";
 import { FixedUiLayer } from "./FixedUiLayer";
 import { useTouchControlsEnabled } from "../../lib/touch";
 import { tankColors as resolveTankColors, palette } from "../../theme/palette";
+import {
+  coinsForCampaignRun,
+  coinsForOnlineRound,
+  coinsForSoloRound,
+  earnCoins,
+} from "../../lib/wallet";
 
 // History sentinel used to map the browser Back button to "quit the game".
 // While a game is mounted we push one entry carrying this flag; popping it
@@ -127,6 +133,25 @@ export const GameCanvas = () => {
     startErrorRef.current = handleStartError;
   });
 
+  // Award OuiCoins for a finished round/run and surface the amount as a toast.
+  // Every earn rule lives in lib/wallet (pure + unit-tested); this only binds
+  // them to the result callbacks below. Coins are cosmetics-only, but each call
+  // site is still guarded to fire exactly once per result (campaign runs pay
+  // their completion bonus separately from the per-level payouts).
+  const awardCoins = useCallback(
+    (amount: number) => {
+      if (!Number.isFinite(amount) || amount <= 0) return;
+      earnCoins(amount);
+      addToast(
+        TOAST_TYPES.COIN,
+        t("shop.coins"),
+        t("shop.coinsEarned", { count: amount }),
+        2400
+      );
+    },
+    [addToast, TOAST_TYPES, t]
+  );
+
   // In-game settings overlay (opened from the pause menu). Local state rather
   // than ModalContext, since ModalRenderer isn't mounted over the game stage.
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -166,6 +191,17 @@ export const GameCanvas = () => {
 
     const handleWinner = (data: WinnerPayload) => {
       setIsEndGameVisible(true);
+      // Round payout for the local player: kills always pay, a win (including
+      // a coop team win) adds the bonus. The wallet is cosmetic-only.
+      const mine = socket.id ? data.player_scores[socket.id] : undefined;
+      if (mine) {
+        awardCoins(
+          coinsForOnlineRound({
+            kills: mine.kills,
+            wins: data.coop === "win" ? Math.max(1, mine.wins) : mine.wins,
+          })
+        );
+      }
       // Hide after waiting time - countdown will be triggered by server
       setTimeout(() => {
         setIsEndGameVisible(false);
@@ -199,7 +235,7 @@ export const GameCanvas = () => {
       socket.off("countdown_start", handleCountdownStartServer);
       socket.off("lobby_state", handleLobbyState);
     };
-  }, [socket]);
+  }, [socket, awardCoins]);
 
   // A stale lobby panel must never survive into another room (GameCanvas does
   // not unmount between rooms — the engine-init effect just re-runs).
@@ -250,6 +286,17 @@ export const GameCanvas = () => {
         });
       }
 
+      // Per-level coin payout: kills always pay, clearing adds the win bonus.
+      // Campaign runs pay an additional completion bonus at the run's end.
+      if (!isTest) {
+        awardCoins(
+          coinsForSoloRound({
+            success: isWin,
+            kills: result.stats?.kills ?? 0,
+          })
+        );
+      }
+
       if (mode !== "campaign") {
         setSoloResult(result);
         setIsEndGameVisible(true);
@@ -286,6 +333,12 @@ export const GameCanvas = () => {
               completed: true,
               timeMs: outcome.timeMs,
             });
+            awardCoins(
+              coinsForCampaignRun({
+                completed: true,
+                levelsCleared: outcome.levelsCleared,
+              })
+            );
           }
           setIsEndGameVisible(true);
         } else {
@@ -315,6 +368,12 @@ export const GameCanvas = () => {
               completed: false,
               timeMs: outcome.timeMs,
             });
+            awardCoins(
+              coinsForCampaignRun({
+                completed: false,
+                levelsCleared: outcome.levelsCleared,
+              })
+            );
           }
           setIsEndGameVisible(true);
         } else {
@@ -343,6 +402,7 @@ export const GameCanvas = () => {
       submitCampaignRunMutation,
       campaignAdvance,
       campaignLoseLife,
+      awardCoins,
     ]
   );
 
@@ -391,6 +451,12 @@ export const GameCanvas = () => {
         completed: false,
         timeMs: Date.now() - runStartTime,
       });
+      awardCoins(
+        coinsForCampaignRun({
+          completed: false,
+          levelsCleared: campaignIndex,
+        })
+      );
     }
 
     setSoloResult(null);
@@ -420,6 +486,7 @@ export const GameCanvas = () => {
     campaignId,
     runStartTime,
     submitCampaignRunMutation,
+    awardCoins,
   ]);
 
   // Keep the latest quit handler reachable from the mount-only popstate effect

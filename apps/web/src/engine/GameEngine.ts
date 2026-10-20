@@ -65,6 +65,8 @@ type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 interface TankColors {
   turret: string;
   body: string;
+  /** Equipped hull paint id from the tank shop (optional for older callers). */
+  paint?: string;
 }
 
 interface SoloGameOverResult {
@@ -540,7 +542,8 @@ export class GameEngine {
       playerName,
       tankColors.turret,
       tankColors.body,
-      this.mysocketid!
+      this.mysocketid!,
+      tankColors.paint
     );
 
     // Spawn bots, skipping any already defeated earlier in the run.
@@ -601,8 +604,16 @@ export class GameEngine {
     socket.on("tick", this._onTick);
     socket.on("level_change", this._onLevelChange);
 
-    // Join the room
-    socket.emit("play", playerName, tankColors.turret, tankColors.body, roomId);
+    // Join the room. The trailing paint id is cosmetic and additive: older
+    // clients omit it (server defaults to the plain hull).
+    socket.emit(
+      "play",
+      playerName,
+      tankColors.turret,
+      tankColors.body,
+      roomId,
+      tankColors.paint
+    );
 
     // Wait for 'id' event confirming we joined
     return new Promise<void>((resolve, reject) => {

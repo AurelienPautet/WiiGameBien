@@ -7,8 +7,10 @@ import {
   type ReactNode,
 } from "react";
 import { colorFromIndex } from "../constants/tankColors";
+import { DEFAULT_PAINT } from "../constants/tankPaints";
 import { STARTING_LIVES, LIFE_EVERY } from "../constants/campaign";
 import { storage } from "../lib/storage";
+import { getGarage } from "../lib/wallet";
 
 export type GameMode = "solo" | "online" | "campaign";
 
@@ -19,6 +21,8 @@ export const TEST_LEVEL_ID = -1;
 export interface TankColors {
   body: string;
   turret: string;
+  /** Equipped hull paint id from the tank shop (see constants/tankPaints). */
+  paint: string;
 }
 
 export interface CampaignRunResult {
@@ -88,6 +92,7 @@ const initialState: GameState = {
   tankColors: {
     body: "orange",
     turret: "orange",
+    paint: DEFAULT_PAINT,
   },
   theme: 1,
   // Campaign run state (mode === 'campaign')
@@ -104,6 +109,7 @@ const initialState: GameState = {
 const localColors = (): TankColors => ({
   body: colorFromIndex(storage.getBodyIndex()),
   turret: colorFromIndex(storage.getTurretIndex()),
+  paint: getGarage().equipped,
 });
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {

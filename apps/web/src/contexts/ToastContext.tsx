@@ -13,6 +13,7 @@ import { useSocket } from "./SocketContext";
 import i18n from "../i18n";
 import { playSfx, type VoiceName } from "../audio";
 import { achievementName } from "../constants/achievements";
+import { coinsForAchievements, earnCoins } from "../lib/wallet";
 
 // Toast types with their colors and icons
 export const TOAST_TYPES = {
@@ -24,6 +25,7 @@ export const TOAST_TYPES = {
   ERROR: "error",
   SUCCESS: "success",
   ACHIEVEMENT: "achievement",
+  COIN: "coin",
 } as const;
 
 export type ToastType = (typeof TOAST_TYPES)[keyof typeof TOAST_TYPES];
@@ -38,6 +40,7 @@ const TOAST_SOUNDS: Record<ToastType, VoiceName> = {
   [TOAST_TYPES.ERROR]: "uiError",
   [TOAST_TYPES.SUCCESS]: "uiSuccess",
   [TOAST_TYPES.ACHIEVEMENT]: "uiSuccess",
+  [TOAST_TYPES.COIN]: "uiSuccess",
 };
 
 export interface Toast {
@@ -172,6 +175,8 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
         );
       });
       if (keys.length > 0) {
+        // Cosmetic currency bonus, one per newly unlocked achievement.
+        earnCoins(coinsForAchievements(keys.length));
         queryClient.invalidateQueries({ queryKey: ["achievements", "me"] });
       }
     };

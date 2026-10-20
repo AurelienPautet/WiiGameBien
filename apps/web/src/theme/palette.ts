@@ -105,6 +105,21 @@ export function hexToRgb(hex: string): Rgb {
   };
 }
 
+/** Rec. 601 perceptual luma (0..255) of a #rrggbb colour. */
+export function luma(hex: string): number {
+  const { red, green, blue } = hexToRgb(hex);
+  return 0.299 * red + 0.587 * green + 0.114 * blue;
+}
+
+/**
+ * A tone that reads against `hex`: darken light hulls toward ink, lighten dark
+ * ones toward white. Hull paints are drawn with this so a pattern stays visible
+ * on every team colour (including the black and white bot hues).
+ */
+export function contrastTone(hex: string, amount = 0.5): string {
+  return mixHex(hex, luma(hex) > 140 ? palette.ink : palette.white, amount);
+}
+
 /** Blend two #rrggbb colours: t=0 → a, t=1 → b. */
 export function mixHex(a: string, b: string, t: number): string {
   const ca = hexToRgb(a);

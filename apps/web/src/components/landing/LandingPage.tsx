@@ -1,7 +1,15 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Play, Gamepad2, Flag, ArrowRight, Star, Heart } from "lucide-react";
+import {
+  Play,
+  Gamepad2,
+  Flag,
+  ArrowRight,
+  Star,
+  Heart,
+  Coins,
+} from "lucide-react";
 import {
   useModal,
   useAuth,
@@ -11,6 +19,7 @@ import {
 } from "../../contexts";
 import { tankColorsFrom } from "../../lib/settings";
 import { storage } from "../../lib/storage";
+import { useWallet } from "../../hooks/useWallet";
 import { useRankings } from "../../hooks/api";
 import {
   Button,
@@ -100,6 +109,9 @@ export const LandingPage = () => {
     () => storage.getPlayerName() || ""
   );
   const tankColors = tankColorsFrom(settings.tank);
+  // The equipped paint + balance come from the wallet store, so buying in the
+  // shop updates the hero tank and this button without reopening the page.
+  const { equipped: paint, coins } = useWallet();
 
   useEffect(() => {
     if (user?.username) {
@@ -196,6 +208,7 @@ export const LandingPage = () => {
                 <TankAvatar
                   bodyColor={tankColors.body}
                   turretColor={tankColors.turret}
+                  paint={paint}
                   size={user ? 230 : 200}
                 />
               </FloatY>
@@ -223,6 +236,18 @@ export const LandingPage = () => {
                 onClick={() => openModal(MODALS.TANK_SELECT)}
               >
                 {t("landing.customize")}
+              </Button>
+              <Button
+                variant="yellow"
+                size="sm"
+                onClick={() => openModal(MODALS.SHOP)}
+                aria-label={t("shop.openWithBalance", { count: coins })}
+              >
+                <Coins size={18} />
+                {t("shop.open")}
+                <span className="rounded-full bg-white/70 border-2 border-ink px-2 text-sm tabular-nums">
+                  {coins}
+                </span>
               </Button>
             </div>
           </Panel>

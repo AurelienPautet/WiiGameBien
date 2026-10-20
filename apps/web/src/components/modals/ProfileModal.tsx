@@ -46,7 +46,9 @@ import {
   TabsContent,
   Button,
   TankAvatar,
+  CoinChip,
 } from "../ui/primitives";
+import { useWallet } from "../../hooks/useWallet";
 import { cn } from "../../lib/cn";
 
 export const ProfileModal = () => {
@@ -107,6 +109,7 @@ export const ProfileModal = () => {
   const { body: bodyColor, turret: turretColor } = tankColorsFrom(
     settings.tank
   );
+  const { equipped: paint, coins } = useWallet();
 
   return (
     <Dialog
@@ -124,6 +127,7 @@ export const ProfileModal = () => {
             <TankAvatar
               bodyColor={bodyColor}
               turretColor={turretColor}
+              paint={paint}
               size={56}
             />
           </div>
@@ -145,6 +149,10 @@ export const ProfileModal = () => {
                 {t("profile.timeInGame")}
                 <span className="text-ink normal-case">{timeInGameLabel}</span>
               </span>
+              <CoinChip
+                coins={coins}
+                label={t("shop.balance", { count: coins })}
+              />
             </div>
           </div>
           <div className="flex-1" />
