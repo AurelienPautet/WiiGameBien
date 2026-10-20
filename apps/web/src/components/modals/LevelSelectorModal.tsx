@@ -3,8 +3,8 @@ import { useModal, useGame } from "../../contexts";
 import { LevelSelector } from "../ui";
 import { Dialog, DialogContent, DialogTitle } from "../ui/primitives";
 
-// Kept for the in-game "play another solo level" flow (GameCanvas). The menu
-// entry point is the dedicated /levels screen.
+// Used both as the menu "Play Solo" entry point and for the in-game
+// "play another solo level" flow (GameCanvas).
 export const LevelSelectorModal = () => {
   const { t } = useTranslation();
   const { closeModal } = useModal();

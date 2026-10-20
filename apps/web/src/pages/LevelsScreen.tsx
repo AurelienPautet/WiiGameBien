@@ -4,7 +4,7 @@ import { useGame } from "../contexts";
 import { LevelSelector } from "../components/ui";
 import { IoTitle, SectionLabel } from "../components/ui/primitives";
 
-/** Dedicated full-screen solo level browser (was the LEVEL_SELECTOR modal). */
+/** Full-screen solo level browser linked from the Topbar "Play Solo" nav. */
 export const LevelsScreen = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
