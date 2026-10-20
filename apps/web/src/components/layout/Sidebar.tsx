@@ -129,7 +129,7 @@ export const Sidebar = () => {
         <button
           type="button"
           className={cn(
-            "sidebar-link tab-pressable",
+            "sidebar-link sidebar-shop tab-pressable",
             activeModal === MODALS.SHOP && "is-active"
           )}
           onClick={() => openModal(MODALS.SHOP)}

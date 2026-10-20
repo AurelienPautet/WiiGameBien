@@ -72,6 +72,13 @@
   flex-shrink: 0;
   stroke-width: 2.5;
 }
+/* Long localized labels (e.g. French "Boutique") plus the balance pill do not
+   fit on one line in the narrow sidebar. Let the pill drop to its own, right-
+   aligned line instead of spilling past the card. */
+.sidebar-shop {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
 .sidebar-link:hover {
   background: #eef6f9;
 }

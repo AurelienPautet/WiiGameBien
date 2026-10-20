@@ -94,6 +94,21 @@ competition — leaderboards and achievements remain server-side. A future
 server-authoritative wallet can reuse the pure earn rules and the same paint
 catalogue.
 
+## Sidebar overflow fix
+
+The OuiCoins pill next to the shop label spilled past the sidebar on narrow
+desktop widths and longer locales (French "Boutique"). The shop row now wraps
+the pill onto its own right-aligned line when it does not fit, so the balance
+stays inside the card.
+
+| Before — fr, 1440px                       | After — fr, 1440px                      |
+| ----------------------------------------- | --------------------------------------- |
+| ![Before](09-sidebar-overflow-before.png) | ![After](10-sidebar-overflow-after.png) |
+
+Narrow desktop (fr, 1100px):
+
+![After at 1100px](11-sidebar-overflow-after-narrow.png)
+
 ## Verification
 
 - `pnpm test:unit` — web + shared Vitest suites.
