@@ -1,5 +1,9 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 // Single root Vitest config using Vitest's `test.projects` (replaces the old
 // vitest.workspace.ts). Two projects only — `web` (jsdom) and `shared` (node).
@@ -28,6 +32,19 @@ export default defineConfig({
     projects: [
       {
         plugins: [react()],
+        // The web unit job runs without building @ouigame/shared, whose
+        // "./game" export points at dist/. Resolve it to the isomorphic source
+        // instead so tests that import the simulation (e.g. the engine's
+        // prediction module) run on a clean checkout, exactly like the app's
+        // own sources do through the workspace.
+        resolve: {
+          alias: {
+            "@ouigame/shared/game": path.resolve(
+              rootDir,
+              "packages/shared/src/game/index.ts"
+            ),
+          },
+        },
         test: {
           name: "web",
           root: "apps/web",
