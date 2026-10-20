@@ -15,6 +15,11 @@ import * as ratingsRepo from "../repositories/ratings.repo";
 import * as statsRepo from "../repositories/stats.repo";
 import * as achievementsService from "../services/achievements.service";
 import { beginCountdown } from "./countdown";
+import {
+  applyQueuedInput,
+  clearInputQueue,
+  queuedInputCount,
+} from "./inputQueue";
 import { users } from "../shared_state";
 import type { AppServer } from "../socket/types";
 import type { RoundStats } from "@ouigame/shared/api";
@@ -153,6 +158,27 @@ function createTickLoop({
     }
   }
 
+  // Feed each human at most one queued input per simulation step. During a
+  // countdown the simulation is frozen and input is ignored; drop anything
+  // queued so the first live tick does not replay pre-countdown movement.
+  function pumpQueuedInputs(room: Room) {
+    if (room.countdownActive) {
+      for (const socketid in room.players) {
+        if (!room.players[socketid]?.is_bot) clearInputQueue(socketid);
+      }
+      return;
+    }
+    for (const socketid in room.players) {
+      if (room.players[socketid]?.is_bot) continue;
+      applyQueuedInput(room, socketid);
+      // If the client's fixed-step clock runs a hair ahead of ours, the queue
+      // would otherwise keep a permanent couple of frames of latency. Drain a
+      // second input while the backlog is above two so controls stay close to
+      // the wire; both inputs' effects are folded into this one step.
+      if (queuedInputCount(socketid) > 2) applyQueuedInput(room, socketid);
+    }
+  }
+
   function stepAllRooms() {
     const now = performance.now();
     // Drop round clocks whose room was deleted mid-round (the round will never
@@ -172,6 +198,8 @@ function createTickLoop({
       ) {
         roundStartedAt.set(room.id, now);
       }
+
+      pumpQueuedInputs(room);
 
       if (room.update(SIM_STEP_S)) {
         // Round over: its full duration is now known. A missing clock (e.g. a
