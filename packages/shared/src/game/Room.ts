@@ -576,6 +576,7 @@ export class Room {
       name: this.name,
       holes: this.holes,
       tick: this.tick,
+      countdown_active: this.countdownActive,
     });
     this.emit_to_room("tick_sounds", this.sounds);
 

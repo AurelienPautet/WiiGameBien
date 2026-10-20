@@ -21,6 +21,10 @@ export interface Player {
   position: Vector2;
   socketid: string;
   mytick: number;
+  // Highest player input sequence the server has consumed (client prediction).
+  // Optional for old-server tolerance: servers before netcode smoothing never
+  // set it, and the client then reconciles without replaying inputs.
+  last_input_seq?: number;
   round_stats: SerializedStats;
   spawnpos: Vector2;
   velocity: Vector2;

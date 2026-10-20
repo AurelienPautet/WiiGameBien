@@ -33,7 +33,9 @@ export const MAX_SUBSTEPS = 5;
 // tries to fast-forward minutes of real time at once.
 export const MAX_FRAME_MS = 250;
 
-// Render-side interpolation delay (ms) used by the online client: snapshots are
-// displayed this far in the past so there are always two server states to
-// interpolate between, hiding network jitter. ~2 server ticks.
+// Render-side interpolation delay (ms) used by the online client. Snapshots are
+// timestamped on the server's tick timeline (which is perfectly regular) and
+// rendered this far behind a jitter-corrected playback clock, so there are
+// always two server states to interpolate between even when packets arrive in
+// bursts. See apps/web/src/engine/interpolation.ts (InterpolationClock).
 export const INTERP_DELAY_MS = 100;

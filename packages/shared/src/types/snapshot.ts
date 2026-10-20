@@ -18,6 +18,10 @@ export interface RoomSnapshot {
   name: string;
   holes: Hole[];
   tick: number;
+  // True while the room is frozen (pre-game lobby hold or the 3-2-1 countdown).
+  // Additive: older clients ignore it. The web client uses it to hold client-
+  // side prediction in step with the authoritative simulation.
+  countdown_active?: boolean;
 }
 
 // The `tick_sounds` payload — per-tick boolean flags emitted right after `tick`.
