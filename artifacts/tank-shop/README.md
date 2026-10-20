@@ -97,9 +97,10 @@ catalogue.
 ## Sidebar overflow fix
 
 The OuiCoins pill next to the shop label spilled past the sidebar on narrow
-desktop widths and longer locales (French "Boutique"). The shop row now wraps
-the pill onto its own right-aligned line when it does not fit, so the balance
-stays inside the card.
+desktop widths and longer locales (French "Boutique"). It now floats over the
+right end of the row, outside the button's layout, so the row stays one line
+and the balance stays inside the card. The pill is `aria-hidden` (the button's
+label already includes the balance) and lets clicks through to the shop.
 
 | Before — fr, 1440px                       | After — fr, 1440px                      |
 | ----------------------------------------- | --------------------------------------- |
