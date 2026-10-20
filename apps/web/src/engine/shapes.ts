@@ -146,16 +146,57 @@ export function drawBlocks(
   ctx.restore();
 }
 
-/** Near-black rounded pit with a thick ink rim. */
+/**
+ * Round event-horizon pit — the 2D twin of the WebGL hole shader (used by the
+ * no-WebGL fallback and the static level thumbnails). The GL path animates the
+ * spiral arms; here they are baked as two subtle arcs so a saved preview still
+ * reads as a swirling pit rather than a flat black dot.
+ */
 export function drawHole(ctx: CanvasRenderingContext2D, h: HoleShape): void {
-  const r = Math.min(h.size.w, h.size.h) * 0.18;
+  const cx = h.position.x + h.size.w / 2;
+  const cy = h.position.y + h.size.h / 2;
+  const r = Math.min(h.size.w, h.size.h) / 2;
+  const t = Math.PI * 2;
+
+  ctx.save();
+
+  // Throat: near-black core → deep indigo → a thin teal band at the rim.
+  const throat = ctx.createRadialGradient(cx, cy, r * 0.05, cx, cy, r);
+  throat.addColorStop(0, "#07060f");
+  throat.addColorStop(0.45, "#12102e");
+  throat.addColorStop(0.78, "#1b1550");
+  throat.addColorStop(0.93, "#0b5a6e");
+  throat.addColorStop(1, "#0b0d16");
   ctx.beginPath();
-  ctx.roundRect(h.position.x, h.position.y, h.size.w, h.size.h, r);
-  ctx.fillStyle = "#13161b";
+  ctx.arc(cx, cy, r, 0, t);
+  ctx.fillStyle = throat;
   ctx.fill();
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = "#000";
+
+  // Spiral wisps (blue + violet), echoed by the animated GL vortex.
+  ctx.lineCap = "round";
+  ctx.lineWidth = Math.max(1, r * 0.08);
+  ctx.strokeStyle = "rgba(0, 178, 225, 0.55)";
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.62, -0.5, 1.9);
   ctx.stroke();
+  ctx.strokeStyle = "rgba(191, 127, 245, 0.5)";
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.36, 1.7, 4.3);
+  ctx.stroke();
+
+  // Hot event-horizon ring, just inside a thin ink edge.
+  ctx.lineWidth = Math.max(1, r * 0.06);
+  ctx.strokeStyle = "#9ff6ff";
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - r * 0.1, 0, t);
+  ctx.stroke();
+  ctx.lineWidth = Math.max(1.5, r * 0.08);
+  ctx.strokeStyle = "#05060a";
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - 0.5, 0, t);
+  ctx.stroke();
+
+  ctx.restore();
 }
 
 /** Spawn-point marker — a little yellow pennant on an ink pole (editor only). */

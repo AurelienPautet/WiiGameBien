@@ -107,9 +107,17 @@ void main() {
 `;
 
 /**
- * Holes — plain black for now. The shared depth-field texture still gives the
- * continuous, rounded, gently-wobbling, block-sized shape (adjacent tiles merge
- * into one pit); the interior is just flat black via the alpha mask.
+ * Holes — round, event-horizon pits rather than square tiles.
+ *
+ * A pre-baked signed-distance field (see PostProcessor._ensureHoleField) gives
+ * each hole tile an inscribed circle and smooth-unions neighbouring circles, so
+ * a lone hole is perfectly round and a cluster melts into one continuous pit.
+ * The field also stores the nearest pit centre, letting the shader draw a
+ * rotating spiral vortex inside the throat.
+ *
+ * The look: a near-black core, slowly swirling blue/violet arms, drifting
+ * glints, a hot cyan event-horizon ring, and a soft outer halo. The bright,
+ * saturated rim is picked up by the bloom pass for free.
  */
 export const HOLE_VERT = `
 attribute vec2 aPos;
@@ -123,23 +131,56 @@ void main() {
 
 export const HOLE_FRAG = `
 ${FRAG_PRECISION}
-varying vec2 vBoard;
-uniform sampler2D uDepth;  // 0 at the rim → 1 deep (continuous, linear-filtered)
-uniform vec2 uTexel;       // unused (kept for the shared geometry layout)
+varying vec2 vBoard;       // board-space UV (0..1)
+uniform sampler2D uField;  // R = signed distance to the rim (board px), GB = nearest centre
+uniform vec2 uRes;         // board size in px
 uniform float uTime;
+uniform vec3 uRim;         // hot inner ring
+uniform vec3 uHalo;        // soft outer glow
+uniform vec3 uSwirlA;      // vortex colour A
+uniform vec3 uSwirlB;      // vortex colour B
+uniform vec3 uCore;        // dark throat
+
 void main() {
-  float d = texture2D(uDepth, vBoard).r;            // 0 rim → 1 deep
+  vec4 field = texture2D(uField, vBoard);
+  // Signed distance in board px: negative inside the pit, 0 on the rim.
+  float d = field.r * 80.0 - 64.0;
+  vec2 centre = field.gb * uRes;
+  vec2 p = vBoard * uRes - centre;
+  float r = length(p);
+  float a = atan(p.y, p.x);
+  float t = uTime;
 
-  // The pit boundary is a depth iso-contour. Inset is kept tiny so the hole
-  // fills its tile like a wall block (not thinner) — just the corners round
-  // slightly and a flowing wobble makes the rim ripple.
-  float wob = sin(vBoard.x * 42.0 + uTime * 1.6)
-            * sin(vBoard.y * 34.0 - uTime * 1.3) * 0.03;
-  float edge = 0.04 + wob;
-  float alpha = smoothstep(edge - 0.025, edge + 0.025, d);
+  // Gentle angular ripple on the rim — alive, but still unmistakably round.
+  d += (sin(a * 5.0 + t * 1.4) * 0.45 + sin(a * 9.0 - t * 2.0) * 0.25)
+       * (1.0 - smoothstep(0.0, 10.0, abs(d)));
 
-  // Plain black for now.
-  gl_FragColor = vec4(0.0, 0.0, 0.0, alpha);
+  float inside = 1.0 - smoothstep(-1.25, 1.25, d);
+  float depth = clamp(-d / 30.0, 0.0, 1.0);   // 0 at the rim → 1 deep
+
+  // Log-polar spiral arms rotating into the throat.
+  float spiral = sin(a * 3.0 + log(max(r, 1.0)) * 6.5 - t * 1.5);
+  float arms = smoothstep(0.15, 0.92, spiral);
+  float band = smoothstep(0.02, 0.22, depth) * (1.0 - smoothstep(0.55, 1.0, depth));
+  vec3 vortex = mix(uSwirlA, uSwirlB, 0.5 + 0.5 * sin(a * 2.0 + r * 0.05 - t * 0.7));
+  vec3 col = uCore + vortex * arms * band * 0.45;
+
+  // Faint glints sinking through the throat — a smooth lattice, no sharp cells.
+  float glint = pow(max(0.0, sin(p.x * 0.19 + t * 2.0) * sin(p.y * 0.17 - t * 1.7)), 24.0);
+  col += vec3(0.55, 0.9, 1.0) * glint * depth * 0.45;
+
+  // Event horizon: a tight hot ring plus a soft halo that tints the floor just
+  // outside the pit. The halo is offset by its value at the field's far clamp
+  // (+16px) so it reaches exactly zero inside the quad instead of leaving a
+  // faint rectangular veil where the geometry ends.
+  float rim = exp(-abs(d) * 0.55);
+  float halo = max(0.0, exp(-max(d, 0.0) * 0.22) - 0.0296) * (1.0 - inside);
+  col = mix(col, uRim, clamp(rim, 0.0, 1.0) * 0.9);
+  col = mix(col, uHalo, halo * 0.55);
+
+  float alpha = max(inside, halo * 0.55);
+  if (alpha <= 0.004) discard;
+  gl_FragColor = vec4(col, alpha);
 }
 `;
 
