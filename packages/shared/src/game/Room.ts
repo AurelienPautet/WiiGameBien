@@ -214,7 +214,8 @@ export class Room {
     playerName: string,
     turretc: string,
     bodyc: string,
-    socketid: string
+    socketid: string,
+    paintc?: string
   ): void {
     console.log(
       "Spawning new player:",
@@ -228,7 +229,8 @@ export class Room {
       socketid,
       playerName,
       turretc,
-      bodyc
+      bodyc,
+      paintc
     );
     this.spawn_new(new_player, socketid, this.spawns);
     this.human_players.push(socketid);
@@ -457,14 +459,16 @@ export class Room {
     playerName: string,
     turretc: string,
     bodyc: string,
-    socketid: string
+    socketid: string,
+    paintc?: string
   ): void {
     const player = new Player(
       { x: -100, y: -100 },
       socketid,
       playerName,
       turretc,
-      bodyc
+      bodyc,
+      paintc
     );
     player.alive = false;
     player.pending_spawn = true;

@@ -27,6 +27,18 @@ function isVector(v: unknown): v is { x: number; y: number } {
   );
 }
 
+// Hull paint ids are short shop keys ("stripes", "checker", …). Anything longer
+// is a malformed client; coerce it to the plain hull rather than echoing an
+// unbounded string into every tick snapshot.
+const MAX_PAINT_ID_LENGTH = 24;
+function sanitizePaint(paint: unknown): string {
+  return typeof paint === "string" &&
+    paint.length > 0 &&
+    paint.length <= MAX_PAINT_ID_LENGTH
+    ? paint
+    : "plain";
+}
+
 // Lightweight per-socket flood guard. Normal play sends ~60 tock/s; anything
 // past MAX_EVENTS_PER_WINDOW is dropped to blunt event spam.
 const MAX_EVENTS_PER_WINDOW = 150;
@@ -262,7 +274,10 @@ function registerSocketHandlers({
       socket.join("lobby" + serverid);
     });
 
-    socket.on("play", (playerName, turretc, bodyc, room_id) => {
+    socket.on("play", (playerName, turretc, bodyc, room_id, paintc) => {
+      // Hull paint is cosmetic; sanitize the id here so a malformed client can't
+      // bloat every tick snapshot (the renderer resolves unknowns to plain).
+      const paint = sanitizePaint(paintc);
       // room_id arrives as a number or its string form; the rooms registry is
       // keyed by numeric id, so normalize before the lookup.
       const room = rooms[Number(room_id)];
@@ -284,14 +299,14 @@ function registerSocketHandlers({
           // Mid-round coop joiner: registered but off-field until the next
           // respawn deals them in (spawning into a live bot crossfire is a
           // death sentence).
-          room.add_waiting_player(playerName, turretc, bodyc, socket.id);
+          room.add_waiting_player(playerName, turretc, bodyc, socket.id, paint);
         } else {
           if (room.mode === "coop") {
             // Solo levels are authored with one player spawn; grow the pool
             // deterministically around it so every teammate fits.
             room.ensure_spawn_capacity(room.human_count() + 1);
           }
-          room.spawn_new_player(playerName, turretc, bodyc, socket.id);
+          room.spawn_new_player(playerName, turretc, bodyc, socket.id, paint);
         }
         // First human in becomes the lobby host (the creator auto-joins their
         // own room right after room_created, so in practice this is them).

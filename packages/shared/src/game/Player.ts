@@ -22,6 +22,10 @@ export class Player {
   name: string;
   bodyc: string;
   turretc: string;
+  // Hull paint/skin id from the tank shop. Cosmetic-only and part of the tick
+  // snapshot, so opponents render the same paint the owner equipped. Unknown
+  // ids resolve to the plain hull client-side.
+  paintc: string;
   position: Vec2;
   socketid: string;
   mytick: number;
@@ -66,11 +70,13 @@ export class Player {
     socketid: string,
     name: string,
     turretc: string,
-    bodyc: string
+    bodyc: string,
+    paintc: string = "plain"
   ) {
     this.name = name;
     this.bodyc = bodyc;
     this.turretc = turretc;
+    this.paintc = paintc;
     this.position = position;
     this.socketid = socketid;
     this.mytick = 0;
