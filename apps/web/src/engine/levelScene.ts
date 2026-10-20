@@ -72,13 +72,15 @@ export function extractEntities(layout: number[]): LevelSceneEntities {
 }
 
 // Draw the overlay markers (spawn flags + bot tanks) — same primitives the game
-// uses for tanks, so they bloom/composite identically.
+// uses for tanks, so they bloom/composite identically. `time` (seconds) drives
+// the flags' idle wave; omit it for a static thumbnail snapshot.
 export function drawFlagsAndBots(
   ctx: CanvasRenderingContext2D,
   flags: { x: number; y: number }[],
-  bots: { x: number; y: number; color: string }[]
+  bots: { x: number; y: number; color: string }[],
+  time = 0
 ): void {
-  flags.forEach((f) => drawFlag(ctx, f.x, f.y, CELL_SIZE));
+  flags.forEach((f) => drawFlag(ctx, f.x, f.y, CELL_SIZE, time));
   bots.forEach((b) =>
     drawTank(ctx, {
       cx: b.x + CELL_SIZE / 2,

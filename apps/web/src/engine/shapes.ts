@@ -4,6 +4,7 @@
 // the exact same code that draws the live game (no drift).
 import { palette, mixHex } from "../theme/palette";
 import { drawTank } from "./tankShape";
+import { drawWavingFlag } from "./flag";
 
 export { drawTank };
 
@@ -158,30 +159,26 @@ export function drawHole(ctx: CanvasRenderingContext2D, h: HoleShape): void {
   ctx.stroke();
 }
 
-/** Spawn-point marker — a little yellow pennant on an ink pole (editor only). */
+/**
+ * Spawn-point marker — a waving yellow flag on an ink pole, planted in the cell.
+ * The editor and level thumbnails use this wrapper; the round-start animation
+ * calls the same renderer (flag.ts) directly with its own lifecycle.
+ *
+ * `x`/`y` are the cell's top-left and `s` its side. `time` (seconds) drives the
+ * gentle idle wave; omit it for a posed, static snapshot (level thumbnails).
+ */
 export function drawFlag(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  s: number
+  s: number,
+  time = 0
 ): void {
-  const px = x + s * 0.34;
-  ctx.save();
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(px, y + s * 0.2);
-  ctx.lineTo(px, y + s * 0.82);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(px, y + s * 0.22);
-  ctx.lineTo(x + s * 0.74, y + s * 0.36);
-  ctx.lineTo(px, y + s * 0.5);
-  ctx.closePath();
-  ctx.fillStyle = palette.yellow;
-  ctx.fill();
-  ctx.stroke();
-  ctx.restore();
+  drawWavingFlag(ctx, {
+    baseX: x + s * 0.34,
+    baseY: y + s * 0.82,
+    unit: s * 0.3,
+    fill: palette.yellow,
+    time,
+  });
 }

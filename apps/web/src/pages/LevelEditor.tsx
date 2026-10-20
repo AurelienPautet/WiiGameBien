@@ -308,7 +308,9 @@ export const LevelEditor = () => {
         holes.forEach((h) => drawHole(ctx, h));
       }
       drawEditorGrid(ctx);
-      drawFlagsAndBots(ctx, flags, bots);
+      // Flags wave on their own clock so the preview feels alive even while
+      // the palette/mouse are idle.
+      drawFlagsAndBots(ctx, flags, bots, performance.now() / 1000);
 
       // Placement ghost.
       if (onCanvas && mouseGridPos.x >= 0 && mouseGridPos.y >= 0) {
