@@ -1,4 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { TANK_PAINTS } from "../../constants/tankPaints";
+
+const STRIPES_PRICE = TANK_PAINTS.find((p) => p.id === "stripes")!.price;
+const CHEAPEST_PRICE = Math.min(
+  ...TANK_PAINTS.filter((p) => p.price > 0).map((p) => p.price)
+);
 
 // lib/wallet keeps a module-level snapshot (useSyncExternalStore needs a stable
 // identity), so each test imports a FRESH copy after installing its own
@@ -76,6 +82,13 @@ describe("economy rules", () => {
     expect(wallet.coinsForAchievements(2)).toBe(
       2 * wallet.ACHIEVEMENT_COIN_BONUS
     );
+  });
+
+  it("keeps the first paint behind a real grind", () => {
+    const typicalWin = wallet.coinsForOnlineRound({ kills: 5, wins: 1 });
+    expect(typicalWin).toBeGreaterThan(0);
+    expect(CHEAPEST_PRICE / typicalWin).toBeGreaterThanOrEqual(10);
+    expect(wallet.STARTING_COINS).toBeLessThan(CHEAPEST_PRICE);
   });
 
   it("clamps malformed inputs instead of minting coins", () => {
@@ -167,23 +180,23 @@ describe("wallet store", () => {
   });
 
   it("rejects purchases you cannot afford without mutating state", () => {
-    expect(wallet.getGarage().coins).toBeLessThan(200);
+    expect(wallet.getGarage().coins).toBeLessThan(STRIPES_PRICE);
     expect(wallet.buyPaint("stripes")).toBe("poor");
     expect(wallet.getGarage().coins).toBe(wallet.STARTING_COINS);
     expect(wallet.ownsPaint("stripes")).toBe(false);
   });
 
   it("buys, equips and persists in one step; repeated buys are free", () => {
-    wallet.earnCoins(200);
+    wallet.earnCoins(STRIPES_PRICE);
     const before = wallet.getGarage().coins;
 
     expect(wallet.buyPaint("stripes")).toBe("bought");
-    expect(wallet.getGarage().coins).toBe(before - 200);
+    expect(wallet.getGarage().coins).toBe(before - STRIPES_PRICE);
     expect(wallet.ownsPaint("stripes")).toBe(true);
     expect(wallet.getGarage().equipped).toBe("stripes");
 
     expect(wallet.buyPaint("stripes")).toBe("owned");
-    expect(wallet.getGarage().coins).toBe(before - 200);
+    expect(wallet.getGarage().coins).toBe(before - STRIPES_PRICE);
   });
 
   it("rejects unknown paint ids on buy and equip", () => {

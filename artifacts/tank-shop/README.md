@@ -3,7 +3,8 @@
 Proof shots and notes for the hull-paint cosmetics, the OuiCoins wallet and the
 new Tank Shop. Screenshots were taken on this branch with Playwright; the
 wallet balance and owned paints were seeded in `localStorage` before capture so
-the shop demo is one click from a fresh browser profile.
+the shop's purchase states are visible. A fresh garage starts with **50**
+OuiCoins, not the seeded demo balance shown in the shots.
 
 ## Before / after
 
@@ -69,14 +70,19 @@ pure functions in `apps/web/src/lib/wallet.ts` and unit-tested:
 
 | Source                                 | Coins |
 | -------------------------------------- | ----: |
-| Online kill                            |    10 |
-| Online round win (incl. coop team win) |   +50 |
-| Solo/campaign level kill               |    10 |
-| Solo/campaign level clear              |   +30 |
-| Campaign level cleared (run payout)    |   +10 |
-| Campaign run completed                 |  +100 |
-| Achievement unlocked                   |   +25 |
-| New player welcome balance             |   150 |
+| Online kill                            |     1 |
+| Online round win (incl. coop team win) |   +10 |
+| Solo/campaign level kill               |     1 |
+| Solo level clear                       |   +10 |
+| Campaign level cleared (run payout)    |    +5 |
+| Campaign run completed                 |   +25 |
+| Achievement unlocked                   |    +5 |
+| New player welcome balance             |    50 |
+
+A typical 5-kill winning online round pays **15** OuiCoins, so the 200-coin
+first paint takes roughly 13 wins; Afterburner (750) is a long-term goal. The
+economy is deliberately slow — cosmetics are meant to be earned, not bought
+after a couple of rounds.
 
 Editor test runs never earn coins, so the level editor can't be used as a
 money printer.

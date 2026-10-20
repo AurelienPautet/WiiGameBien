@@ -12,15 +12,15 @@
 import { DEFAULT_PAINT, TANK_PAINTS, isPaintId } from "../constants/tankPaints";
 import { storage } from "./storage";
 
-/** Welcome balance so the first paint is one good round away. */
-export const STARTING_COINS = 150;
+/** Small welcome balance; the cheapest paint still takes a real session. */
+export const STARTING_COINS = 50;
 
-export const COINS_PER_KILL = 10;
-export const ONLINE_WIN_BONUS = 50;
-export const SOLO_WIN_BONUS = 30;
-export const CAMPAIGN_CLEAR_BONUS = 10;
-export const CAMPAIGN_COMPLETE_BONUS = 100;
-export const ACHIEVEMENT_COIN_BONUS = 25;
+export const COINS_PER_KILL = 1;
+export const ONLINE_WIN_BONUS = 10;
+export const SOLO_WIN_BONUS = 10;
+export const CAMPAIGN_CLEAR_BONUS = 5;
+export const CAMPAIGN_COMPLETE_BONUS = 25;
+export const ACHIEVEMENT_COIN_BONUS = 5;
 
 export interface GarageState {
   /** Spendable OuiCoins. */
