@@ -24,10 +24,21 @@ WORKDIR /app
 #                         reliable — the app talks to 127.0.0.1 instead).
 #   - mc (MinIO client) : pulls the production snapshot from S3-compatible storage.
 # See scripts/preview-db-init.sh.
+#
+# The old dl.min.io/client/mc/release/... path now returns HTTP 410 Gone, so
+# fetch the pinned official GitHub release asset and verify its checksum.
+ARG MC_VERSION=RELEASE.2025-08-13T08-35-41Z
 RUN apt-get update \
   && apt-get install -y --no-install-recommends postgresql curl ca-certificates \
-  && curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc \
-  && chmod +x /usr/local/bin/mc \
+  && curl -fsSL --retry 3 --retry-all-errors \
+       "https://github.com/minio/mc/releases/download/${MC_VERSION}/mc.linux-amd64.${MC_VERSION}" \
+       -o /tmp/mc \
+  && curl -fsSL --retry 3 --retry-all-errors \
+       "https://github.com/minio/mc/releases/download/${MC_VERSION}/mc.linux-amd64.${MC_VERSION}.sha256sum" \
+       -o /tmp/mc.sha256sum \
+  && echo "$(cut -d ' ' -f1 /tmp/mc.sha256sum)  /tmp/mc" | sha256sum -c - \
+  && install -m 0755 /tmp/mc /usr/local/bin/mc \
+  && rm -f /tmp/mc /tmp/mc.sha256sum \
   && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies first for better layer caching. Copy every workspace
