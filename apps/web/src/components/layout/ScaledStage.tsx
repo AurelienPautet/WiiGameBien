@@ -52,6 +52,11 @@ export const ScaledStage = ({
     return () => observer.disconnect();
   }, [embedded]);
   const scale = embedded ? containerScale : windowScale;
+  // Embedded editors pin the stage to the top of the menu content column so
+  // their header card sits next to the navigation card, and stay transparent:
+  // the menu shell already paints the graph paper, and a second grid starting
+  // at this box's origin (plus a third inside the scaled stage) drifts out of
+  // phase with it. Gameplay keeps its own field and stays vertically centred.
   return (
     // Size the stage box to the *dynamic* viewport (dvw/dvh), NOT 100vw/100vh.
     // useWindowScale fits the 1150×800 arena into window.innerWidth/innerHeight
@@ -80,7 +85,9 @@ export const ScaledStage = ({
     // it, so the whole arena stays visible at every window size.
     <div
       ref={hostRef}
-      className="overflow-hidden graph-paper flex items-center justify-center"
+      className={`overflow-hidden flex justify-center ${
+        embedded ? "items-start" : "items-center graph-paper"
+      }`}
       style={
         embedded
           ? { width: "100%", height: "100%" }

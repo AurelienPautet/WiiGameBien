@@ -548,11 +548,15 @@ export const LevelEditor = () => {
 
   const spawnCount = layout.filter((block) => block === BLOCKS.FLAG).length;
 
+  // No `graph-paper` on the root: the menu shell already paints the field, and
+  // a second grid inside the scaled stage starts at another origin (and at
+  // another scale), so its lines drift against the shell's.
   return (
-    <div className="relative w-full h-full graph-paper text-ink flex flex-col">
-      {/* Header — same white rail as the campaign editor, with a colour badge
-          so the editor has an anchor instead of a floating slab of white. */}
-      <div className="h-24 shrink-0 bg-white border-b-4 border-ink flex items-center justify-between gap-4 px-8">
+    <div className="relative w-full h-full text-ink flex flex-col p-4 gap-4">
+      {/* Header — its own rounded card like the palette and the canvas, with a
+          colour badge so the editor has an anchor instead of a white slab
+          butting against the page edges. */}
+      <div className="h-20 shrink-0 bg-white border-4 border-ink rounded-arcade shadow-arcade flex items-center justify-between gap-4 px-5">
         <div className="flex items-center gap-3 whitespace-nowrap">
           <span className="bg-yellow text-ink border-[3px] border-ink rounded-[11px] p-2">
             <PencilRuler size={22} strokeWidth={2.5} />
@@ -603,9 +607,9 @@ export const LevelEditor = () => {
         </div>
       </div>
 
-      {/* Body: two solid cards on the graph-paper desk, mirroring the campaign
-          editor. No translucent surfaces — the board sits on a field-grey mat. */}
-      <div className="flex-1 flex min-h-0 gap-4 p-4">
+      {/* Body: two solid cards on the graph-paper desk, below the header card.
+          No translucent surfaces — the board sits on a field-grey mat. */}
+      <div className="flex-1 flex min-h-0 gap-4">
         {/* Block Palette */}
         <aside className="w-48 shrink-0 flex flex-col bg-white border-4 border-ink rounded-arcade shadow-arcade p-3 min-h-0">
           <h2 className="text-xs font-bold uppercase tracking-widest text-ink-soft text-center mb-3">
