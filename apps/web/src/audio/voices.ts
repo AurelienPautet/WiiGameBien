@@ -54,118 +54,120 @@ export const voices: Record<VoiceName, Voice> = {
   // Tank cannon: a sharp crack over a punchy blast and a low thump — weighty
   // and real (transient + body + sub-bass + smoke tail).
   shoot() {
-    const j = rand(0.96, 1.05);
-    // Crack — the snappy transient.
+    const j = rand(0.97, 1.04);
+    // Crack — band-limited so it reads as a snap, not a hiss.
     noise({
-      duration: 0.045,
+      duration: 0.035,
       gain: 0.5,
-      attack: 0.0005,
-      filter: "highpass",
-      freq: 1800,
-      drive: 2.2,
+      attack: 0.001,
+      filter: "bandpass",
+      freq: 2400 * j,
+      q: 0.9,
+      drive: 1.3,
     });
     // Blast body.
     noise({
-      duration: 0.13,
-      gain: 0.4,
-      attack: 0.001,
+      duration: 0.14,
+      gain: 0.5,
+      attack: 0.002,
       filter: "lowpass",
-      freq: 2200 * j,
-      freqEnd: 280,
-      q: 0.9,
-      drive: 1.6,
+      freq: 1900 * j,
+      freqEnd: 240,
+      q: 1.1,
+      drive: 1.0,
     });
     // Sub thump — the weight.
     tone({
       type: "sine",
-      freq: 190 * j,
-      freqEnd: 46,
-      duration: 0.16,
-      gain: 0.6,
-      attack: 0.001,
-      drive: 1.5,
+      freq: 185 * j,
+      freqEnd: 48,
+      duration: 0.17,
+      gain: 0.8,
+      attack: 0.002,
+      drive: 0.9,
     });
     // Smoke tail.
     noise({
-      duration: 0.2,
+      duration: 0.22,
       gain: 0.12,
       filter: "lowpass",
-      freq: 700,
-      freqEnd: 120,
+      freq: 650,
+      freqEnd: 140,
       delay: 0.02,
     });
   },
 
   // Bullet bouncing off a wall: a metallic zing with a percussive "thock".
   ricochet() {
-    const p = rand(0.95, 1.1);
+    const p = rand(0.95, 1.08);
     // Low thock — gives the bounce a body/impact.
     tone({
       type: "triangle",
-      freq: 300,
-      freqEnd: 120,
-      duration: 0.07,
-      gain: 0.32,
-      attack: 0.001,
-      drive: 1.6,
+      freq: 280,
+      freqEnd: 110,
+      duration: 0.075,
+      gain: 0.4,
+      attack: 0.0015,
+      drive: 1.0,
     });
-    // Metallic zing, pitch-dropping.
+    // Metallic zing, pitch-dropping and slightly darker.
     tone({
       type: "triangle",
-      freq: 2300 * p,
-      freqEnd: 1300 * p,
-      duration: 0.12,
-      gain: 0.16,
-      attack: 0.0008,
-      drive: 1.3,
+      freq: 1900 * p,
+      freqEnd: 1100 * p,
+      duration: 0.11,
+      gain: 0.18,
+      attack: 0.002,
+      drive: 0.8,
     });
     // Resonant metallic ring.
     noise({
-      duration: 0.09,
-      gain: 0.16,
+      duration: 0.085,
+      gain: 0.15,
       filter: "bandpass",
-      freq: 2700 * p,
-      q: 9,
-      drive: 1.4,
+      freq: 2200 * p,
+      q: 6,
+      drive: 0.9,
     });
   },
 
   // Mine placed: a solid mechanical thunk + click.
   plant() {
     noise({
-      duration: 0.03,
-      gain: 0.28,
-      attack: 0.0005,
-      filter: "highpass",
-      freq: 1500,
-      drive: 1.6,
+      duration: 0.025,
+      gain: 0.3,
+      attack: 0.001,
+      filter: "bandpass",
+      freq: 1700,
+      q: 0.9,
+      drive: 1.0,
     });
     tone({
       type: "sine",
-      freq: 260,
-      freqEnd: 78,
-      duration: 0.16,
-      gain: 0.5,
-      attack: 0.001,
-      drive: 1.5,
+      freq: 250,
+      freqEnd: 72,
+      duration: 0.18,
+      gain: 0.62,
+      attack: 0.002,
+      drive: 0.9,
     });
     tone({
       type: "triangle",
-      freq: 520,
+      freq: 500,
       duration: 0.05,
       gain: 0.1,
-      delay: 0.04,
+      delay: 0.045,
     });
   },
 
   // Mine fuse tick — a crisp warning click.
   fuse() {
-    noise({ duration: 0.012, gain: 0.16, filter: "highpass", freq: 2600 });
+    noise({ duration: 0.01, gain: 0.14, filter: "bandpass", freq: 2400, q: 2 });
     tone({
       type: "sine",
-      freq: 900,
-      duration: 0.045,
-      gain: 0.13,
+      freq: 880,
+      duration: 0.04,
+      gain: 0.12,
       attack: 0.001,
     });
   },
@@ -173,66 +175,81 @@ export const voices: Record<VoiceName, Voice> = {
   // Explosion (tank or mine): a sharp onset, a deep saturated rumble, sub-bass
   // weight and a debris tail.
   explose() {
-    // Onset transient.
+    // Onset transient — a band-limited thump instead of a full-spectrum hiss.
     noise({
-      duration: 0.05,
-      gain: 0.6,
-      attack: 0.0004,
-      filter: "highpass",
-      freq: 1200,
-      drive: 2.6,
+      duration: 0.045,
+      gain: 0.55,
+      attack: 0.0015,
+      filter: "bandpass",
+      freq: 1500,
+      q: 0.7,
+      drive: 1.5,
     });
     // Body rumble.
     noise({
       duration: 0.6,
-      gain: 0.5,
-      attack: 0.002,
+      gain: 0.55,
+      attack: 0.003,
       filter: "lowpass",
-      freq: 1100,
-      freqEnd: 40,
-      q: 0.6,
-      drive: 1.9,
+      freq: 900,
+      freqEnd: 38,
+      q: 0.8,
+      drive: 1.1,
     });
     // Sub-bass weight.
     tone({
       type: "sine",
-      freq: 95,
+      freq: 88,
       freqEnd: 24,
-      duration: 0.7,
-      gain: 0.75,
-      attack: 0.002,
-      drive: 1.6,
+      duration: 0.72,
+      gain: 0.8,
+      attack: 0.003,
+      drive: 0.9,
     });
     tone({
       type: "triangle",
-      freq: 200,
-      freqEnd: 48,
-      duration: 0.22,
+      freq: 190,
+      freqEnd: 46,
+      duration: 0.24,
       gain: 0.2,
-      drive: 1.4,
+      drive: 0.8,
     });
     // Debris crackle tail.
     noise({
-      duration: 0.35,
+      duration: 0.38,
       gain: 0.16,
       filter: "lowpass",
-      freq: 2600,
-      freqEnd: 400,
+      freq: 2000,
+      freqEnd: 320,
       delay: 0.03,
     });
   },
 
   // Kill confirmed: a snappy two-note hit.
   kill() {
-    noise({ duration: 0.02, gain: 0.2, filter: "highpass", freq: 2200 });
-    tone({ type: "triangle", freq: C5, duration: 0.1, gain: 0.16, drive: 1.2 });
+    noise({
+      duration: 0.018,
+      gain: 0.2,
+      filter: "bandpass",
+      freq: 1700,
+      q: 1.1,
+    });
+    tone({
+      type: "triangle",
+      freq: C5,
+      duration: 0.1,
+      gain: 0.22,
+      attack: 0.002,
+      drive: 0.8,
+    });
     tone({
       type: "triangle",
       freq: G5,
       duration: 0.14,
-      gain: 0.14,
+      gain: 0.18,
       delay: 0.07,
-      drive: 1.2,
+      attack: 0.002,
+      drive: 0.8,
     });
   },
 

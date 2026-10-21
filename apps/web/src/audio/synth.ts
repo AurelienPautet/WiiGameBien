@@ -19,7 +19,10 @@ export const rand = (min: number, max: number): number =>
 // Exponential ramps can't reach 0, so envelopes decay to this near-silence.
 const MIN_GAIN = 0.0001;
 
-// Shared soft-clip (tanh) curve for the optional `drive` saturation.
+// Shared soft-clip (tanh) curve for the optional `drive` saturation. The curve
+// is unit-slope at the origin so `drive` alone controls how hard a recipe hits
+// it: low values add warmth, without the near-square clipping a steep curve
+// produced on noise bursts.
 let shaperCurve: Float32Array<ArrayBuffer> | null = null;
 function softClipCurve(): Float32Array<ArrayBuffer> {
   if (shaperCurve) return shaperCurve;
@@ -27,7 +30,7 @@ function softClipCurve(): Float32Array<ArrayBuffer> {
   const curve = new Float32Array(n);
   for (let i = 0; i < n; i++) {
     const x = (i / (n - 1)) * 2 - 1;
-    curve[i] = Math.tanh(2.5 * x);
+    curve[i] = Math.tanh(x);
   }
   shaperCurve = curve;
   return curve;
