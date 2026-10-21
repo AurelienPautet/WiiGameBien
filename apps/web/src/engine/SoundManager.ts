@@ -14,6 +14,7 @@ export interface SoundEvents {
   explose?: boolean;
   plant?: boolean;
   ricochet?: boolean;
+  bounce_explode?: boolean;
 }
 
 /** Minimal shape the fuse scheduler needs from a live mine. */
@@ -34,6 +35,7 @@ export class SoundManager {
     if (soundEvents.explose) playSfx("explose");
     if (soundEvents.plant) playSfx("plant");
     if (soundEvents.ricochet) playSfx("ricochet");
+    if (soundEvents.bounce_explode) playSfx("bulletBurst");
   }
 
   // Play one mine warning beep; `urgency` (0..1) rises as the blast nears.

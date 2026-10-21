@@ -32,6 +32,9 @@ export interface TickSounds {
   shoot: boolean;
   ricochet: boolean;
   explose: boolean;
+  // A bullet hit its bounce limit and burst — a distinct pop from the ricochet
+  // zing. Older servers omit it (clients treat it as false).
+  bounce_explode: boolean;
 }
 
 // The `level_change` payload. The wire key is "Bcollision" (capital B).

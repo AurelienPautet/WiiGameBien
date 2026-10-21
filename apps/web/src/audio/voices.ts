@@ -13,6 +13,7 @@ export type VoiceName =
   // In-game events
   | "shoot"
   | "ricochet"
+  | "bulletBurst"
   | "plant"
   | "explose"
   | "kill"
@@ -127,6 +128,50 @@ export const voices: Record<VoiceName, Voice> = {
       freq: 2200 * p,
       q: 6,
       drive: 0.9,
+    });
+  },
+
+  // Final bounce: the bullet burst at the wall instead of bouncing — a compact
+  // detonation pop with a short debris tail, lighter than the tank/mine explose.
+  bulletBurst() {
+    const p = rand(0.96, 1.05);
+    // Snappy band-limited onset.
+    noise({
+      duration: 0.035,
+      gain: 0.34,
+      attack: 0.001,
+      filter: "bandpass",
+      freq: 1300 * p,
+      q: 0.8,
+      drive: 1.3,
+    });
+    // Short low body — weight without the long tail of a real explosion.
+    tone({
+      type: "sine",
+      freq: 210 * p,
+      freqEnd: 62,
+      duration: 0.16,
+      gain: 0.42,
+      attack: 0.0015,
+      drive: 1.0,
+    });
+    tone({
+      type: "triangle",
+      freq: 420 * p,
+      freqEnd: 120,
+      duration: 0.09,
+      gain: 0.16,
+      attack: 0.0015,
+      drive: 0.9,
+    });
+    // Tiny debris crackle so it reads as a rupture, not a thud.
+    noise({
+      duration: 0.12,
+      gain: 0.1,
+      filter: "lowpass",
+      freq: 2200,
+      freqEnd: 500,
+      delay: 0.02,
     });
   },
 

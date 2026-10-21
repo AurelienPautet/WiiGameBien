@@ -815,7 +815,13 @@ export class GameEngine {
         player.aim = resolveAim(input, this._localPlayerCenter());
       }
       if (input.plant) {
+        const minesBefore = player.minecount as number;
         player.plant(room);
+        // Room.update() resets `room.sounds` before emitting, and this plant ran
+        // outside the sim step, so play its sound here — same as the shot below.
+        if ((player.minecount as number) > minesBefore) {
+          this.sounds.playSounds({ plant: true });
+        }
       }
       // `click` is a one-shot tap; `firing` is the held touch auto-fire;
       // `autoAimFire` is the fire button's tap-to-shoot. All flow through
@@ -892,9 +898,9 @@ export class GameEngine {
     if (myKills > this.prevMyKills) this.post?.killFlash(1);
     this.prevMyKills = myKills;
 
-    // Room.sounds is a runtime sound-events object (the web's loose ambient type
-    // only knows it as unknown[]).
-    this.sounds.playSounds(room.sounds as unknown as SoundEvents);
+    // Simulation sounds (bots shooting/planting, kills, ricochets, explosions)
+    // are broadcast through LocalIO as `tick_sounds` inside update() above — do
+    // not re-play `room.sounds` here or every sim sound fires twice.
 
     // Record this step's poses for display interpolation.
     this._captureSolo();

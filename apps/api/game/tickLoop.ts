@@ -158,6 +158,20 @@ function createTickLoop({
     }
   }
 
+  // `Room.update()` zeroes the per-tick sound flags at the start of every step,
+  // so anything raised between steps (by the inputs pumped below) would be
+  // lost. The loop clears the flags itself before pumping, so it can snapshot
+  // exactly what the inputs did and rebroadcast them after the sim step.
+  function resetRoomSounds(room: Room) {
+    const sounds = room.sounds;
+    sounds.plant = false;
+    sounds.kill = false;
+    sounds.shoot = false;
+    sounds.ricochet = false;
+    sounds.explose = false;
+    sounds.bounce_explode = false;
+  }
+
   // Feed each human at most one queued input per simulation step. During a
   // countdown the simulation is frozen and input is ignored; drop anything
   // queued so the first live tick does not replay pre-countdown movement.
@@ -199,7 +213,15 @@ function createTickLoop({
         roundStartedAt.set(room.id, now);
       }
 
+      // Human one-shots (shoot/plant) are applied from the queue here, but
+      // Room.update() zeroes its per-tick sound flags before broadcasting
+      // `tick_sounds`, so anything the inputs raise would be lost — every human
+      // shot/plant would be silent online. Snapshot what the inputs did and
+      // rebroadcast it after the step (the sim's own events are broadcast
+      // inside update()).
+      resetRoomSounds(room);
       pumpQueuedInputs(room);
+      const inputSounds = { ...room.sounds };
 
       if (room.update(SIM_STEP_S)) {
         // Round over: its full duration is now known. A missing clock (e.g. a
@@ -245,6 +267,13 @@ function createTickLoop({
         }
 
         scheduleRespawn(room);
+      }
+
+      // The human input flags zeroed above never make it into the update's own
+      // broadcast; send them in a second `tick_sounds` for this step so every
+      // client (including the shooter) hears the shot/plant.
+      if (Object.values(inputSounds).some(Boolean)) {
+        room.emit_to_room("tick_sounds", inputSounds);
       }
     }
   }

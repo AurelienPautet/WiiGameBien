@@ -47,6 +47,9 @@ describe("Room.update_bullets", () => {
     expect(room.bullets).toHaveLength(0);
     expect(emitter.bulletcount).toBe(0); // ctor ++ then cleanup --
     expect(emitted.some((e) => e.event === "bullet_explosion")).toBe(true);
+    // The final bounce is a burst, not a ricochet: the sim flags the distinct
+    // burst sound for clients instead of the bounce zing.
+    expect(room.sounds.bounce_explode).toBe(true);
   });
 
   it("arms a mine when a bullet overlaps it and removes the bullet", () => {
@@ -150,5 +153,29 @@ describe("Room.update — countdown input gate", () => {
     room.countdownActive = false;
     room.update(1, null, false);
     expect(p.position.x).toBeGreaterThan(200); // moves once the countdown ends
+  });
+});
+
+describe("Room.update — tick_sounds broadcast", () => {
+  it("broadcasts the flags raised during the step, wiping flags set before it", () => {
+    const { io, emitted } = makeRecordingIo();
+    const room = mkRoom(io);
+    room.status = "lobby"; // keep the win/level-load path out of this unit
+    const emitter = new Player({ x: 0, y: 0 }, "e", "Emitter", "o", "b");
+    const mine = new Mine({ x: 60, y: 60 }, emitter, room); // ctor sets plant
+    mine.timealive = room.timetoeplode; // due to blow on this step
+    emitted.length = 0;
+
+    room.update(1 / 60);
+
+    const sounds = emitted.filter((e) => e.event === "tick_sounds");
+    expect(sounds).toHaveLength(1);
+    // The step's own event (the mine blowing up) rides the broadcast — this is
+    // how solo's LocalIO and online clients hear simulation sounds.
+    expect(sounds[0]!.data.explose).toBe(true);
+    // Flags raised OUTSIDE the step are wiped by update()'s reset before the
+    // broadcast: that is why the solo plant sound and the online queued inputs
+    // are played/rebroadcast around it instead of relying on this payload.
+    expect(sounds[0]!.data.plant).toBe(false);
   });
 });

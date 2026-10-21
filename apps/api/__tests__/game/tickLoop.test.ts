@@ -15,6 +15,7 @@ jest.mock("../../services/achievements.service", () => ({
 }));
 
 import { createTickLoop } from "../../game/tickLoop";
+import { enqueueInput } from "../../game/inputQueue";
 import * as levelsService from "../../services/levels.service";
 import * as ratingsRepo from "../../repositories/ratings.repo";
 import * as statsRepo from "../../repositories/stats.repo";
@@ -63,6 +64,18 @@ function makeRoom(id: number, roundEnds: boolean) {
     countdownActive: false,
     waitingrespawn: false,
     countdownDuration: 3000,
+    // Real Room fields the tick loop now touches: it clears the sound flags
+    // before pumping inputs and rebroadcasts whatever the inputs raised after
+    // the sim step (Room.update() would otherwise wipe them).
+    sounds: {
+      plant: false,
+      kill: false,
+      shoot: false,
+      ricochet: false,
+      explose: false,
+      bounce_explode: false,
+    },
+    emit_to_room: jest.fn(),
     update: jest.fn().mockReturnValueOnce(roundEnds).mockReturnValue(false),
     respawn_the_room: jest.fn(),
   };
@@ -362,4 +375,45 @@ test("aborts the respawn if the room was deleted during the wait", async () => {
   await jest.advanceTimersByTimeAsync(5100);
 
   expect(room.respawn_the_room).not.toHaveBeenCalled();
+});
+
+test("rebroadcasts the sounds raised by queued human inputs (online shots/plants)", async () => {
+  const room = makeRoom(7, false);
+  const player = {
+    is_bot: false,
+    position: { x: 0, y: 0 },
+    mytick: 0,
+    last_input_seq: 0,
+    direction: { x: 0, y: 0 },
+    aim: { x: 0, y: 0 },
+    CalculateAngle: jest.fn(),
+    shoot: jest.fn(() => {
+      room.sounds.shoot = true;
+    }),
+    plant: jest.fn(() => {
+      room.sounds.plant = true;
+    }),
+  };
+  room.players = { p1: player };
+  const loop = createTickLoop({
+    io: makeIo() as never,
+    rooms: { 7: room } as never,
+    roomTimers: new Map(),
+  });
+
+  enqueueInput("p1", { seq: 1, click: true, plant: true, aim: { x: 5, y: 5 } });
+
+  perfSpy.mockReturnValue(1100); // first tick sees ~100ms elapsed → fixed steps run
+  loop.start();
+  await jest.advanceTimersByTimeAsync(20);
+
+  // The queued input was consumed...
+  expect(player.shoot).toHaveBeenCalled();
+  expect(player.plant).toHaveBeenCalled();
+  // ...and its sound flags — which Room.update() wipes on the real room before
+  // its own broadcast — are rebroadcast so every client hears the shot/plant.
+  expect(room.emit_to_room).toHaveBeenCalledWith(
+    "tick_sounds",
+    expect.objectContaining({ shoot: true, plant: true })
+  );
 });
