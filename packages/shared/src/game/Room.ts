@@ -25,6 +25,9 @@ interface SoundFlags {
   shoot: boolean;
   ricochet: boolean;
   explose: boolean;
+  // The "last bounce": the bullet hit its bounce limit and bursts at the wall
+  // instead of ricocheting, so it gets a distinct pop rather than the zing.
+  bounce_explode: boolean;
 }
 
 // Which bot AI a room spawns. "legacy" is the constructor default FOREVER so
@@ -154,6 +157,7 @@ export class Room {
       shoot: false,
       ricochet: false,
       explose: false,
+      bounce_explode: false,
     };
     this.levelid = 0;
     this.human_players = [];
@@ -549,6 +553,7 @@ export class Room {
       shoot: false,
       ricochet: false,
       explose: false,
+      bounce_explode: false,
     };
     this.tick++;
     this.dt = dt;
@@ -746,6 +751,9 @@ export class Room {
     bulleting: for (let i = 0; i < this.bullets.length; i++) {
       this.bullets[i]!.update(this, this.dt);
       if (this.bullets[i]!.bounce >= this.bullets[i]!.max_bounce) {
+        // Last bounce: the bullet bursts rather than reflects, so flag the
+        // burst pop (played as `bulletBurst`) instead of the ricochet zing.
+        this.sounds.bounce_explode = true;
         this.emit_to_room("bullet_explosion", {
           position: {
             x: this.bullets[i]!.position.x,

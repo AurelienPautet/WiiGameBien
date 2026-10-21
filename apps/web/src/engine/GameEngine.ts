@@ -18,6 +18,7 @@ import {
   MAX_SUBSTEPS,
   MAX_FRAME_MS,
   INTERP_DELAY_MS,
+  MINE_FUSE_TICKS,
 } from "@ouigame/shared/game";
 import type { RoomIo } from "@ouigame/shared/game";
 import {
@@ -51,7 +52,11 @@ import { resolveBotSystem } from "../lib/botSystem";
 import { InputHandler, type InputSnapshot } from "./InputHandler.js";
 import { ParticleSystem } from "./ParticleSystem.js";
 import { DebrisSystem } from "./Debris.js";
-import { SoundManager, type SoundEvents } from "./SoundManager.js";
+import {
+  SoundManager,
+  type FuseMine,
+  type SoundEvents,
+} from "./SoundManager.js";
 import { setMusicIntensity } from "../audio";
 import { PostProcessor, tryCreatePostProcessor } from "./PostProcessor.js";
 import type { EnvBlock, EnvHole } from "./PostProcessor.js";
@@ -810,7 +815,13 @@ export class GameEngine {
         player.aim = resolveAim(input, this._localPlayerCenter());
       }
       if (input.plant) {
+        const minesBefore = player.minecount as number;
         player.plant(room);
+        // Room.update() resets `room.sounds` before emitting, and this plant ran
+        // outside the sim step, so play its sound here — same as the shot below.
+        if ((player.minecount as number) > minesBefore) {
+          this.sounds.playSounds({ plant: true });
+        }
       }
       // `click` is a one-shot tap; `firing` is the held touch auto-fire;
       // `autoAimFire` is the fire button's tap-to-shoot. All flow through
@@ -869,14 +880,12 @@ export class GameEngine {
     const room = this.localRoom;
     if (!room) return;
 
-    // Fuse sound logic for mines. Room.mines is loosely typed (unknown[]) by the
+    // Fuse warnings for mines. Room.mines is loosely typed (unknown[]) by the
     // ambient runtime contract; narrow to the render shape we read here.
-    (room.mines as RenderMine[]).forEach((mine) => {
-      // 220 is when visual flashing starts (300 is explosion)
-      if (mine.timealive > 220 && mine.timealive % 40 === 0) {
-        this.sounds.playFuse();
-      }
-    });
+    this.sounds.playFuses(
+      room.mines as unknown as FuseMine[],
+      room.timetoeplode
+    );
 
     // Advance one fixed step. The bots' AI reads game state from the room it is
     // passed; the canvas context + debug flag are threaded in for the bots'
@@ -889,9 +898,9 @@ export class GameEngine {
     if (myKills > this.prevMyKills) this.post?.killFlash(1);
     this.prevMyKills = myKills;
 
-    // Room.sounds is a runtime sound-events object (the web's loose ambient type
-    // only knows it as unknown[]).
-    this.sounds.playSounds(room.sounds as unknown as SoundEvents);
+    // Simulation sounds (bots shooting/planting, kills, ricochets, explosions)
+    // are broadcast through LocalIO as `tick_sounds` inside update() above — do
+    // not re-play `room.sounds` here or every sim sound fires twice.
 
     // Record this step's poses for display interpolation.
     this._captureSolo();
@@ -1007,6 +1016,9 @@ export class GameEngine {
     this.bullets = data.bullets;
     this.mines = data.mines;
     this.tick = data.tick;
+    // Online rooms don't run the local sim, so drive the same accelerated fuse
+    // warning from the snapshot's mine ages.
+    this.sounds.playFuses(data.mines as unknown as FuseMine[], MINE_FUSE_TICKS);
     // Server-tick players are serialized snapshots (no shoot/plant methods); the
     // engine only reads render fields off them, so widen to the loose RoomPlayer
     // map the renderer/state fields expect.

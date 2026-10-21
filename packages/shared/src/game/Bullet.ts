@@ -240,8 +240,11 @@ export class Bullet {
       this.side = dx < 0 ? "left" : "right";
     }
     this.bounce += 1;
-    room.sounds.ricochet = true;
+    // Once the bounce limit is reached the bullet bursts at the wall instead of
+    // ricocheting (Room.update_bullets removes it and flags `bounce_explode`),
+    // so the final hit must not play the ricochet zing.
     if (this.bounce < this.max_bounce) {
+      room.sounds.ricochet = true;
       room.emit_to_room("ricochet_explosion", {
         position: { x: hit.x, y: hit.y },
         angle: this.angle,

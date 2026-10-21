@@ -133,5 +133,8 @@ describe("Bullet.update — continuous (swept) wall collision", () => {
     expect(b.bounce).toBe(4); // still counts
     expect(b.velocity.x).toBeLessThan(0); // still reflects
     expect(room.emitted).toEqual([]); // but no ricochet_explosion
+    // ...and no ricochet zing either: the bullet bursts instead (the sim flags
+    // `bounce_explode` and the client plays the burst pop).
+    expect(room.sounds.ricochet).toBeUndefined();
   });
 });
