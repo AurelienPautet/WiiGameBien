@@ -38,14 +38,15 @@ class AudioBus {
     const ctx = new Ctor();
     const master = ctx.createGain();
     master.gain.value = 1;
-    // Master glue/limiter — tames peaks so layered shots/explosions stay loud
-    // and punchy without hard-clipping at the destination.
+    // Master glue/limiter — gently tames peaks so layered shots/explosions stay
+    // loud and punchy without hard-clipping at the destination. Soft ratio so
+    // transient-heavy SFX keep their dynamics instead of pumping.
     const comp = ctx.createDynamicsCompressor();
-    comp.threshold.value = -8;
-    comp.knee.value = 6;
-    comp.ratio.value = 8;
-    comp.attack.value = 0.003;
-    comp.release.value = 0.18;
+    comp.threshold.value = -6;
+    comp.knee.value = 10;
+    comp.ratio.value = 4;
+    comp.attack.value = 0.005;
+    comp.release.value = 0.22;
     master.connect(comp);
     comp.connect(ctx.destination);
     const sfx = ctx.createGain();
@@ -53,14 +54,9 @@ class AudioBus {
     sfx.connect(master);
     const music = ctx.createGain();
     music.gain.value = this.musicLevel;
-    // Gentle low-pass to round off the soundtrack — warm and soft rather than
-    // bright/8-bit.
-    const warmth = ctx.createBiquadFilter();
-    warmth.type = "lowpass";
-    warmth.frequency.value = 2600;
-    warmth.Q.value = 0.4;
-    music.connect(warmth);
-    warmth.connect(master);
+    // The Tone soundtrack does its own tone-shaping (filter, chorus, reverb),
+    // so the bus stays out of the way and just handles level/mix.
+    music.connect(master);
     this.context = ctx;
     this.master = master;
     this.sfx = sfx;

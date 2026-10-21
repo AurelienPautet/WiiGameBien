@@ -24,7 +24,7 @@ export default defineConfig({
         "**/index.{ts,js}",
         "apps/web/src/main.tsx",
         "apps/web/src/test/**",
-        // Canvas drawing + Howler audio: jsdom stubs make assertions meaningless.
+        // Canvas drawing + Web Audio: jsdom stubs make assertions meaningless.
         "apps/web/src/engine/Renderer.ts",
         "apps/web/src/engine/SoundManager.ts",
       ],

@@ -87,6 +87,11 @@ app.use(
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "https://accounts.google.com"],
+        // Tone.js uses a blob: Web Worker for its audio clock; without an
+        // explicit worker-src the browser falls back to script-src and blocks
+        // it. The soundtrack also sets a timeout clock as a fallback, but
+        // allowing the worker keeps timing stable in background tabs.
+        workerSrc: ["'self'", "blob:"],
         // Google Identity Services injects a <link> to its own stylesheet
         // (accounts.google.com/gsi/style) into this page; 'unsafe-inline' only
         // covers inline styles, not that external sheet, so the origin must be
