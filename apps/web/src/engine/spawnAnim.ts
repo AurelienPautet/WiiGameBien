@@ -85,11 +85,26 @@ export function drawSpawnTank(
   }
 }
 
-// A waving pennant on an ink pole, planted just beside the spawn point. The
-// pennant takes the tank's body colour so it reads as "your" spot. It animates
-// through its whole lifecycle with the countdown: it springs out of the ground
-// and unfurls as the drop begins, waves while the tank descends, then folds
-// away just before "GO" (see flag.ts for the shared cloth renderer).
+/**
+ * Pole foot for the spawn flag: the flag is planted exactly on the tank's
+ * spawn point (the hull centre), so the marker never reads as belonging to a
+ * neighbouring cell. The foot sits a touch below the centre so the pole still
+ * meets the ground behind the hull; it is hidden by the tank once it lands.
+ * Pure so the alignment can be unit tested without a canvas.
+ */
+export function spawnFlagBase(
+  cx: number,
+  cy: number,
+  r: number
+): { x: number; y: number } {
+  return { x: cx, y: cy + r * 0.55 };
+}
+
+// A waving pennant on an ink pole, planted on the spawn point. The pennant
+// takes the tank's body colour so it reads as "your" spot. It animates through
+// its whole lifecycle with the countdown: it springs out of the ground and
+// unfurls as the drop begins, waves while the tank descends, then folds away
+// just before "GO" (see flag.ts for the shared cloth renderer).
 function drawLandingFlag(
   c: CanvasRenderingContext2D,
   cx: number,
@@ -99,12 +114,10 @@ function drawLandingFlag(
   progress: number
 ): void {
   const { enter, exit } = spawnFlagPresence(progress);
+  const base = spawnFlagBase(cx, cy, r);
   drawWavingFlag(c, {
-    // Planted beside the tank's left shoulder, far enough out that the cloth
-    // stays clear of the hull while the tank falls in front of it, and tall
-    // enough that it finishes above the hull once the tank lands.
-    baseX: cx - r * 2.1,
-    baseY: cy + r * 0.55,
+    baseX: base.x,
+    baseY: base.y,
     unit: r * 1.15,
     fill,
     // The spawn animation runs for 2.6s, so progress doubles as the wave clock.

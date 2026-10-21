@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Spawn flag position — before / after</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0f1216;
+        --panel: #171b21;
+        --text: #e8eaee;
+        --muted: #a7afba;
+        --before: #f14e54;
+        --after: #00e06a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 32px 20px 56px;
+        background: var(--bg);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(22px, 3vw, 32px);
+      }
+      p {
+        margin: 0 0 24px;
+        max-width: 76ch;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .pair {
+        display: grid;
+        gap: 20px;
+      }
+      figure {
+        margin: 0;
+        overflow: hidden;
+        border-radius: 12px;
+        background: var(--panel);
+      }
+      figure img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      figcaption {
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+        padding: 14px 16px;
+        font-size: 14px;
+        border-left: 6px solid var(--tone);
+      }
+      figcaption strong {
+        color: var(--tone);
+        letter-spacing: 0.08em;
+      }
+      .before {
+        --tone: var(--before);
+      }
+      .after {
+        --tone: var(--after);
+      }
+      .closeup {
+        margin-top: 32px;
+      }
+      .closeup figure {
+        max-width: 720px;
+        margin: 0 auto;
+      }
+      code {
+        color: var(--text);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>The spawn flag is back on the spawn point</h1>
+      <p>
+        Real <code>drawSpawnTank</code> output. The magenta cross and dashed
+        hull circle mark the tank's spawn point; the only difference between the
+        two strips is the pole x. Before: <code>cx - r * 2.1</code> (≈ 48 px
+        left, almost the neighbouring cell). After: <code>cx</code>.
+      </p>
+
+      <div class="pair">
+        <figure class="before">
+          <a href="before.png"
+            ><img
+              src="before.png"
+              alt="Before: the flag pole is planted left of the spawn crosshair."
+          /></a>
+          <figcaption>
+            <strong>BEFORE</strong>
+            <span
+              >The pole sits ≈ 48 px left of the spawn point; the cloth ends on
+              the spawn.</span
+            >
+          </figcaption>
+        </figure>
+        <figure class="after">
+          <a href="after.png"
+            ><img
+              src="after.png"
+              alt="After: the flag pole is planted exactly on the spawn crosshair."
+          /></a>
+          <figcaption>
+            <strong>AFTER</strong>
+            <span
+              >The pole stands exactly on the spawn point (hull centre).</span
+            >
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="closeup">
+        <figure>
+          <a href="before-after-closeup.png"
+            ><img
+              src="before-after-closeup.png"
+              alt="Close-up of the progress 0.20 frame, before and after the fix."
+          /></a>
+          <figcaption>
+            <strong style="color: var(--text)">CLOSE-UP · 2×</strong>
+            <span>Progress 0.20, before (left) and after (right).</span>
+          </figcaption>
+        </figure>
+      </div>
+    </main>
+  </body>
+</html>
