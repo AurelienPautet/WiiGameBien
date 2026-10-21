@@ -12,7 +12,7 @@
  * If WebGL is unavailable the constructor throws and the caller (GameEngine)
  * falls back to showing the plain 2D canvases.
  */
-import { hexToRgb, palette } from "../theme/palette";
+import { hexToRgb, palette, type Rgb } from "../theme/palette";
 import type { EffectSettings } from "../lib/settings";
 import {
   createSourceTexture,
@@ -35,7 +35,12 @@ import {
   WALL_FRAG,
   WALL_VERT,
 } from "./postfx/shaders";
-import { BLOCK_RADIUS } from "./shapes";
+import {
+  BLOCK_RADIUS,
+  HOLE_CORE_HEX,
+  HOLE_INSET_PX,
+  HOLE_INK_HEX,
+} from "./shapes";
 
 interface Vec2 {
   x: number;
@@ -76,6 +81,12 @@ const WALL_STONE = hexToRgb("#7d848e");
 const WALL_SAND = hexToRgb("#cbb287");
 const INK = hexToRgb(palette.ink);
 
+// Hole palette: a flat near-black core with a slightly lighter ink rim, shared
+// with the 2D fallback. There are no gradients or internal markings — a hole is
+// a plain round pit, and the rim is its only edge treatment.
+const HOLE_INK = hexToRgb(HOLE_INK_HEX);
+const HOLE_CORE = hexToRgb(HOLE_CORE_HEX);
+
 // Outline thickness (board px), matching the 2D block stroke (lineWidth 4).
 const OUTLINE_PX = 4;
 
@@ -84,13 +95,17 @@ const OUTLINE_PX = 4;
 // straddling the silhouette. One radius plus the outline clears both.
 const WALL_MARGIN = BLOCK_RADIUS + OUTLINE_PX;
 
-// Hole depth field: a distance-from-the-shore transform over the hole region,
-// sampled (linearly) by the hole shader to merge tiles into one pit with depth.
-// Resolution is a quarter-tile (12.5px) so the rim follows the hole shape, and
-// MAX_PX is the distance at which a pit reads fully deep.
-// Finer cells (5px) so the rounded, animated pit rim resolves smoothly.
-const HOLE_CELL = 5;
-const HOLE_DEPTH_MAX_PX = 40;
+// Hole field: a baked signed-distance field over the whole board. Every hole
+// contributes exactly one independent inscribed circle; neighbouring circles
+// are never joined with capsules, so a hole is always a circle and never grows
+// into a stadium or leaks into the next tile. The field stores only distance:
+//   R — signed distance to the rim in board px, encoded over [-64, +16]
+//   G,B — unused (zero)
+// The 2px cell keeps the field cheap while linear filtering + the shader's SDF
+// alpha still resolve a smooth, sub-pixel rim.
+const HOLE_CELL = 2;
+const HOLE_SDF_MIN_PX = -64;
+const HOLE_SDF_SPAN_PX = 80;
 
 // Screen shake: peak whole-frame offset (UV units) at trauma = 1, and how long
 // trauma takes to bleed off. Offset scales with trauma² so small knocks barely
@@ -109,9 +124,9 @@ export class PostProcessor {
   private readonly H: number;
   private readonly qW: number;
   private readonly qH: number;
-  // Hole depth-field grid dimensions (board / HOLE_CELL).
-  private readonly hgW: number;
-  private readonly hgH: number;
+  // Hole SDF-field grid dimensions (board / HOLE_CELL).
+  private readonly hfW: number;
+  private readonly hfH: number;
 
   // GL objects (rebuilt on context restore).
   private quad: WebGLBuffer | null = null;
@@ -127,9 +142,9 @@ export class PostProcessor {
   // and holes (block geometry changes as walls are destroyed).
   private holeBuf: WebGLBuffer | null = null;
   private wallFillBuf: WebGLBuffer | null = null;
-  // Hole depth-field texture + the signature of the holes it was built from
+  // Hole SDF-field texture + the signature of the holes it was built from
   // (rebuilt only when the hole set changes — holes are static within a level).
-  private holeDepthTex: WebGLTexture | null = null;
+  private holeFieldTex: WebGLTexture | null = null;
   private holeSig = "";
   private frontTex!: WebGLTexture;
   private scene!: RenderTarget;
@@ -204,8 +219,8 @@ export class PostProcessor {
     this.H = height;
     this.qW = Math.max(1, Math.floor(width * BLOOM_SCALE));
     this.qH = Math.max(1, Math.floor(height * BLOOM_SCALE));
-    this.hgW = Math.max(1, Math.round(width / HOLE_CELL));
-    this.hgH = Math.max(1, Math.round(height / HOLE_CELL));
+    this.hfW = Math.max(1, Math.round(width / HOLE_CELL));
+    this.hfH = Math.max(1, Math.round(height / HOLE_CELL));
     canvas.width = width;
     canvas.height = height;
 
@@ -259,10 +274,10 @@ export class PostProcessor {
 
     this.holeBuf = gl.createBuffer();
     this.wallFillBuf = gl.createBuffer();
-    // Depth-field texture: linear-filtered so the per-cell distances smooth into
-    // a continuous pit. Data is uploaded lazily by _ensureHoleDepth; reset the
+    // Hole SDF texture: linear-filtered so the per-cell distances smooth into a
+    // continuous pit. Data is uploaded lazily by _ensureHoleField; reset the
     // signature so a fresh (or context-restored) texture re-uploads.
-    this.holeDepthTex = createSourceTexture(gl);
+    this.holeFieldTex = createSourceTexture(gl);
     this.holeSig = "";
 
     this.frontTex = createSourceTexture(gl);
@@ -359,15 +374,22 @@ export class PostProcessor {
     // entities). Rebuilt from current geometry each frame.
     const env = this._buildEnv(blocks, holes);
     if (env.holeVerts > 0) {
-      this._ensureHoleDepth(holes); // (re)build the depth field if holes changed
+      this._ensureHoleField(holes); // (re)build the SDF field if holes changed
       this.holeP.use();
       gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, this.holeDepthTex);
-      gl.uniform1i(this.holeP.loc("uDepth"), 0);
-      gl.uniform2f(this.holeP.loc("uTexel"), 1 / this.hgW, 1 / this.hgH);
-      gl.uniform1f(this.holeP.loc("uTime"), animT);
-      // Straight-alpha "over" the field so the rounded, animated rim shows the
-      // floor through the corners.
+      gl.bindTexture(gl.TEXTURE_2D, this.holeFieldTex);
+      gl.uniform1i(this.holeP.loc("uField"), 0);
+      const setColor = (name: string, c: Rgb) =>
+        gl.uniform3f(
+          this.holeP.loc(name),
+          c.red / 255,
+          c.green / 255,
+          c.blue / 255
+        );
+      setColor("uInk", HOLE_INK);
+      setColor("uCore", HOLE_CORE);
+      // Straight-alpha "over" the field so the round rim shows the floor
+      // through the cell corners.
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       this._drawHoles(env.holeVerts);
@@ -497,7 +519,7 @@ export class PostProcessor {
     if (this.quad) gl.deleteBuffer(this.quad);
     if (this.holeBuf) gl.deleteBuffer(this.holeBuf);
     if (this.wallFillBuf) gl.deleteBuffer(this.wallFillBuf);
-    if (this.holeDepthTex) gl.deleteTexture(this.holeDepthTex);
+    if (this.holeFieldTex) gl.deleteTexture(this.holeFieldTex);
     this.field?.dispose();
     this.holeP?.dispose();
     this.wallP?.dispose();
@@ -594,20 +616,24 @@ export class PostProcessor {
     const cx = (x: number) => (x / W) * 2 - 1;
     const cy = (y: number) => 1 - (y / H) * 2; // board-top → clip-top
 
-    // Holes: a quad per pit, carrying a board-space UV so all tiles sample one
-    // continuous depth field (no per-tile seams).
+    // Holes: one quad per tile, exactly covering its cell. Each vertex carries
+    // its board-space UV, so all tiles sample one continuous SDF field while
+    // each pit stays inside its own tile. The quad does not expand past the
+    // tile, so the pit can never tint or overlap a neighbouring block.
     const hole: number[] = [];
     for (const h of holes) {
       const { x, y } = h.position;
+      const x0 = x;
+      const y0 = y;
       const x1 = x + h.size.w;
       const y1 = y + h.size.h;
-      const ax = cx(x);
+      const ax = cx(x0);
       const bx = cx(x1);
-      const ay = cy(y);
+      const ay = cy(y0);
       const by = cy(y1);
-      const u0 = x / W;
+      const u0 = x0 / W;
       const u1 = x1 / W;
-      const v0 = y / H;
+      const v0 = y0 / H;
       const v1 = y1 / H;
       // prettier-ignore
       hole.push(
@@ -669,88 +695,90 @@ export class PostProcessor {
   }
 
   /**
-   * (Re)build the hole depth field when the hole set changes. Rasterises holes
-   * onto a quarter-tile grid, runs a two-pass chamfer distance transform from
-   * the "shore" (non-hole cells) so each hole cell holds its distance-to-edge,
-   * normalises that to 0..1 depth, and uploads it as a linear-filtered texture.
-   * The result merges adjacent hole tiles into one continuous pit with depth.
+   * (Re)build the hole SDF field when the hole set changes.
+   *
+   * Every hole contributes one independent inscribed circle. We deliberately
+   * never add capsules between touching holes: a hole is always a circle, even
+   * when it sits directly next to another one. The field is the minimum of
+   * those separate circles, and only the distance is encoded. The shader no
+   * longer needs a pit centre, so G/B stay zero.
    */
-  private _ensureHoleDepth(holes: EnvHole[]): void {
+  private _ensureHoleField(holes: EnvHole[]): void {
     const sig = holes
       .map((h) => `${h.position.x},${h.position.y},${h.size.w},${h.size.h}`)
       .join(";");
     if (sig === this.holeSig) return;
     this.holeSig = sig;
 
-    const GW = this.hgW;
-    const GH = this.hgH;
-    const INF = 1e9;
-    const dist = new Float32Array(GW * GH);
-    // Seed: non-hole cells are the shore (0); hole cells start at infinity.
-    for (let gy = 0; gy < GH; gy++) {
-      for (let gx = 0; gx < GW; gx++) {
-        const px = (gx + 0.5) * HOLE_CELL;
+    const GW = this.hfW;
+    const GH = this.hfH;
+    const data = new Uint8Array(GW * GH * 4);
+    // Extra px baked around each circle so the shader has a valid distance
+    // just outside the rim.
+    const PAD = 10;
+
+    const circles = holes.map((h) => {
+      const cx = h.position.x + h.size.w * 0.5;
+      const cy = h.position.y + h.size.h * 0.5;
+      const r = Math.max(1, Math.min(h.size.w, h.size.h) * 0.5 - HOLE_INSET_PX);
+      return {
+        cx,
+        cy,
+        r,
+        // Only these cells can affect this circle's part of the field.
+        minX: cx - r - PAD,
+        maxX: cx + r + PAD,
+        minY: cy - r - PAD,
+        maxY: cy + r + PAD,
+      };
+    });
+
+    // Build the field one circle at a time. min() with the sentinel seeds the
+    // far field without an extra initialisation pass, and keeping the circles
+    // separate guarantees they can never merge into a capsule.
+    const N = GW * GH;
+    const sdf = new Float32Array(N).fill(HOLE_SDF_SPAN_PX);
+    for (const c of circles) {
+      const gx0 = Math.max(0, Math.ceil(c.minX / HOLE_CELL - 0.5));
+      const gx1 = Math.min(GW - 1, Math.floor(c.maxX / HOLE_CELL - 0.5));
+      const gy0 = Math.max(0, Math.ceil(c.minY / HOLE_CELL - 0.5));
+      const gy1 = Math.min(GH - 1, Math.floor(c.maxY / HOLE_CELL - 0.5));
+      for (let gy = gy0; gy <= gy1; gy++) {
         const py = (gy + 0.5) * HOLE_CELL;
-        let inside = false;
-        for (const h of holes) {
-          if (
-            px >= h.position.x &&
-            px < h.position.x + h.size.w &&
-            py >= h.position.y &&
-            py < h.position.y + h.size.h
-          ) {
-            inside = true;
-            break;
-          }
+        for (let gx = gx0; gx <= gx1; gx++) {
+          const px = (gx + 0.5) * HOLE_CELL;
+          const dx = px - c.cx;
+          const dy = py - c.cy;
+          const cd = Math.sqrt(dx * dx + dy * dy) - c.r;
+          const i = gy * GW + gx;
+          sdf[i] = Math.min(sdf[i]!, cd);
         }
-        dist[gy * GW + gx] = inside ? INF : 0;
       }
     }
-    // Two-pass chamfer (orthogonal cost 1, diagonal √2 ≈ near-Euclidean).
-    const D = Math.SQRT2;
-    const at = (x: number, y: number) => dist[y * GW + x]!;
-    for (let y = 0; y < GH; y++) {
-      for (let x = 0; x < GW; x++) {
-        let d = dist[y * GW + x]!;
-        if (x > 0) d = Math.min(d, at(x - 1, y) + 1);
-        if (y > 0) d = Math.min(d, at(x, y - 1) + 1);
-        if (x > 0 && y > 0) d = Math.min(d, at(x - 1, y - 1) + D);
-        if (x < GW - 1 && y > 0) d = Math.min(d, at(x + 1, y - 1) + D);
-        dist[y * GW + x] = d;
-      }
+
+    // Encode. Only R is read by the shader; G/B remain zero.
+    for (let i = 0; i < N; i++) {
+      const o = i * 4;
+      const sd = (sdf[i]! - HOLE_SDF_MIN_PX) / HOLE_SDF_SPAN_PX;
+      data[o] = Math.round(Math.max(0, Math.min(1, sd)) * 255);
+      data[o + 1] = 0;
+      data[o + 2] = 0;
+      data[o + 3] = 255;
     }
-    for (let y = GH - 1; y >= 0; y--) {
-      for (let x = GW - 1; x >= 0; x--) {
-        let d = dist[y * GW + x]!;
-        if (x < GW - 1) d = Math.min(d, at(x + 1, y) + 1);
-        if (y < GH - 1) d = Math.min(d, at(x, y + 1) + 1);
-        if (x < GW - 1 && y < GH - 1) d = Math.min(d, at(x + 1, y + 1) + D);
-        if (x > 0 && y < GH - 1) d = Math.min(d, at(x - 1, y + 1) + D);
-        dist[y * GW + x] = d;
-      }
-    }
-    // Normalise distance (cells → px → 0..1 depth) into a single-channel image.
-    const data = new Uint8Array(GW * GH);
-    for (let i = 0; i < data.length; i++) {
-      const depthPx = dist[i]! * HOLE_CELL;
-      data[i] = Math.max(
-        0,
-        Math.min(255, Math.round((depthPx / HOLE_DEPTH_MAX_PX) * 255))
-      );
-    }
+
     const gl = this.gl;
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.holeDepthTex);
+    gl.bindTexture(gl.TEXTURE_2D, this.holeFieldTex);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); // data is already board-oriented
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
     gl.texImage2D(
       gl.TEXTURE_2D,
       0,
-      gl.LUMINANCE,
+      gl.RGBA,
       GW,
       GH,
       0,
-      gl.LUMINANCE,
+      gl.RGBA,
       gl.UNSIGNED_BYTE,
       data
     );

@@ -18,6 +18,19 @@ const PLATFORM_FILL = "#cbb287";
 // WebGL wall shader (postfx/shaders.ts) uses the same value.
 export const BLOCK_RADIUS = 10;
 
+// A hole's visual disc is inset from its 50px cell by this much. The inset keeps
+// the circle clear of the rounded inner corners of surrounding wall blocks (a
+// full-cell circle gets clipped into a rounded square when ringed by walls) and
+// leaves a clean floor margin, so adjacent holes stay visibly separate. Collision
+// still uses the full cell. Shared with the WebGL SDF bake in PostProcessor.
+export const HOLE_INSET_PX = 5;
+
+// Hole throat colours, shared by the 2D fallback/thumbnails and the WebGL shader
+// so both paths stay in sync. The rim is a shade darker than the wall ink so a
+// pit reads as a void rather than a raised tyre.
+export const HOLE_INK_HEX = "#0a0c12";
+export const HOLE_CORE_HEX = "#07080d";
+
 // Lighter floor than the raw palette field, so the in-game board reads whiter.
 // Matches the WebGL field shader's WHITEN (postfx/shaders.ts) toward white.
 const FIELD_WHITEN = 0.7;
@@ -147,16 +160,39 @@ export function drawBlocks(
   ctx.restore();
 }
 
-/** Near-black rounded pit with a thick ink rim. */
+/**
+ * Round ink-drawn pits — the 2D twin of the WebGL hole shader (used by the
+ * no-WebGL fallback and the static level thumbnails). Every hole is drawn
+ * independently as one circle; adjacent holes are never merged into capsules.
+ * The interior is flat: an ink rim and a near-black core, with no spiral,
+ * bevel or other internal pattern.
+ */
+export function drawHoles(
+  ctx: CanvasRenderingContext2D,
+  holes: readonly HoleShape[]
+): void {
+  for (const h of holes) drawHole(ctx, h);
+}
+
+/** Draw one hole as a plain round pit. */
 export function drawHole(ctx: CanvasRenderingContext2D, h: HoleShape): void {
-  const r = Math.min(h.size.w, h.size.h) * 0.18;
+  const s = Math.min(h.size.w, h.size.h);
+  const inset = Math.min(HOLE_INSET_PX, s * 0.1);
+  const r = Math.max(1, s / 2 - inset);
+  const cx = h.position.x + h.size.w / 2;
+  const cy = h.position.y + h.size.h / 2;
+  const rim = Math.max(1, r * 0.12);
+
+  ctx.save();
   ctx.beginPath();
-  ctx.roundRect(h.position.x, h.position.y, h.size.w, h.size.h, r);
-  ctx.fillStyle = "#13161b";
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = HOLE_INK_HEX;
   ctx.fill();
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = "#000";
-  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, Math.max(1, r - rim), 0, Math.PI * 2);
+  ctx.fillStyle = HOLE_CORE_HEX;
+  ctx.fill();
+  ctx.restore();
 }
 
 /**

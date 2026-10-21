@@ -22,6 +22,7 @@ import {
   paintField,
   drawBlocks,
   drawHole,
+  drawHoles,
   drawFlag,
   drawTank,
 } from "../engine/shapes";
@@ -305,7 +306,7 @@ export const LevelEditor = () => {
       if (!post) {
         paintField(ctx, CANVAS_WIDTH, CANVAS_HEIGHT, CELL_SIZE);
         drawBlocks(ctx, blocks);
-        holes.forEach((h) => drawHole(ctx, h));
+        drawHoles(ctx, holes);
       }
       drawEditorGrid(ctx);
       // Flags wave on their own clock so the preview feels alive even while

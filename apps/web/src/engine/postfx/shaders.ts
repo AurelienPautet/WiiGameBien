@@ -107,9 +107,16 @@ void main() {
 `;
 
 /**
- * Holes — plain black for now. The shared depth-field texture still gives the
- * continuous, rounded, gently-wobbling, block-sized shape (adjacent tiles merge
- * into one pit); the interior is just flat black via the alpha mask.
+ * Holes — plain, round ink pits.
+ *
+ * A pre-baked signed-distance field (see PostProcessor._ensureHoleField) gives
+ * every hole tile one inscribed circle. Neighbouring circles are deliberately
+ * never unioned, so a run of hole tiles reads as a row of separate discs rather
+ * than one capsule. The quads also cover exactly one tile, keeping the effect
+ * off the surrounding blocks.
+ *
+ * The interior is a flat near-black fill with a thin ink rim: no spiral, bevel,
+ * highlight, glow or texture. The circle itself is the whole design.
  */
 export const HOLE_VERT = `
 attribute vec2 aPos;
@@ -123,23 +130,25 @@ void main() {
 
 export const HOLE_FRAG = `
 ${FRAG_PRECISION}
-varying vec2 vBoard;
-uniform sampler2D uDepth;  // 0 at the rim → 1 deep (continuous, linear-filtered)
-uniform vec2 uTexel;       // unused (kept for the shared geometry layout)
-uniform float uTime;
+varying vec2 vBoard;       // board-space UV (0..1)
+uniform sampler2D uField;  // R = signed distance to the rim (board px)
+uniform vec3 uInk;         // thin edge, a shade lighter than the core
+uniform vec3 uCore;        // flat near-black pit
+
 void main() {
-  float d = texture2D(uDepth, vBoard).r;            // 0 rim → 1 deep
+  vec4 field = texture2D(uField, vBoard);
+  // Signed distance in board px: negative inside the pit, 0 on the rim.
+  float d = field.r * 80.0 - 64.0;
+  float inside = 1.0 - smoothstep(-0.9, 0.9, d);
+  if (inside <= 0.004) discard;
 
-  // The pit boundary is a depth iso-contour. Inset is kept tiny so the hole
-  // fills its tile like a wall block (not thinner) — just the corners round
-  // slightly and a flowing wobble makes the rim ripple.
-  float wob = sin(vBoard.x * 42.0 + uTime * 1.6)
-            * sin(vBoard.y * 34.0 - uTime * 1.3) * 0.03;
-  float edge = 0.04 + wob;
-  float alpha = smoothstep(edge - 0.025, edge + 0.025, d);
+  // Flat interior. The only detail is a crisp ink edge, fully inside the
+  // silhouette so it cannot bleed into a neighbouring tile.
+  vec3 col = uCore;
+  float rim = smoothstep(-3.0, -1.6, d) * (1.0 - smoothstep(-0.9, 0.0, d));
+  col = mix(col, uInk, rim);
 
-  // Plain black for now.
-  gl_FragColor = vec4(0.0, 0.0, 0.0, alpha);
+  gl_FragColor = vec4(col, inside);
 }
 `;
 
