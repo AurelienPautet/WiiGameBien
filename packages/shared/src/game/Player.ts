@@ -130,7 +130,6 @@ export class Player {
     this.bullet_type = 1;
   }
   spawn(spawn_pos: Vec2): void {
-    console.log("Spawning player at", spawn_pos);
     this.alive = true;
     this.pending_spawn = false;
     this.minecount = 0;

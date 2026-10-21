@@ -217,13 +217,6 @@ export class Room {
     socketid: string,
     paintc?: string
   ): void {
-    console.log(
-      "Spawning new player:",
-      playerName,
-      "with socket ID:",
-      socketid
-    );
-
     const new_player = new Player(
       { x: 0, y: 0 },
       socketid,
@@ -289,11 +282,6 @@ export class Room {
   // still advanced for skipped slots, so a surviving bot keeps the same id it
   // had on the first attempt (ids are positional, not affected by who is gone).
   spawn_all_bots(skipIds: Set<string> = new Set()): void {
-    console.log(
-      "Spawning bots in room:",
-      this.bot1_spawns,
-      this.bot1_spawns.length
-    );
     // One config-driven loop replacing the former Bot1-4 subclasses. Per-kind
     // tuning lives in BOT_CONFIGS (Bot.js) / ai/archetypes.ts; colours stay
     // sourced from Room.bot_colors. Preserves the exact socketid numbering: a
