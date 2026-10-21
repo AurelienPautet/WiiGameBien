@@ -1,0 +1,4 @@
+review:
+  # Three passes with a majority vote: cheap per pass, and the vote filters
+  # the plausible-but-wrong findings a single pass produces.
+  ensemble_runs: 3
