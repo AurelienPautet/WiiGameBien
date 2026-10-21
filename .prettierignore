@@ -11,8 +11,7 @@ pnpm-lock.yaml
 *.tsbuildinfo
 coverage
 
-# claude-code-action validates these workflow files are byte-identical to the
+# claude-code-action validates this workflow file is byte-identical to the
 # version on the default branch (a secrets-exfiltration guard), so reformatting
-# them breaks its run. Keep them out of Prettier's reach.
+# it breaks its run. Keep it out of Prettier's reach.
 .github/workflows/claude.yml
-.github/workflows/claude-code-review.yml
