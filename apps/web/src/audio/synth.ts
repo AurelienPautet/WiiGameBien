@@ -48,6 +48,29 @@ function disposeLater(...nodes: (Disposable | null)[]): void {
   }
 }
 
+/**
+ * Route `head` through an optional pre-gain + tanh waveshaper. The gain is the
+ * requested drive amount, so recipes asking for heavier saturation actually
+ * hit the curve harder (the previous native implementation did the same).
+ */
+function saturate(
+  T: typeof ToneNS,
+  head: ToneNS.ToneAudioNode,
+  drive?: number
+): {
+  head: ToneNS.ToneAudioNode;
+  pre: ToneNS.Gain | null;
+  shaper: ToneNS.WaveShaper | null;
+} {
+  if (drive == null) return { head, pre: null, shaper: null };
+  const pre = new T.Gain(drive);
+  const shaper = new T.WaveShaper(softClipCurve(), 1024);
+  shaper.oversample = "2x";
+  head.connect(pre);
+  pre.connect(shaper);
+  return { head: shaper, pre, shaper };
+}
+
 export interface ToneOpts {
   /** Start frequency (Hz). */
   freq: number;
@@ -103,14 +126,8 @@ export function tone(opts: ToneOpts): void {
   env.gain.exponentialRampToValueAtTime(peak, start + attack);
   env.gain.exponentialRampToValueAtTime(MIN_GAIN, end);
 
-  let head: ToneNS.ToneAudioNode = osc;
-  let shaper: ToneNS.WaveShaper | null = null;
-  if (opts.drive != null) {
-    shaper = new T.WaveShaper(softClipCurve(), 1024);
-    head.connect(shaper);
-    head = shaper;
-  }
-  head.connect(env);
+  const sat = saturate(T, osc, opts.drive);
+  sat.head.connect(env);
 
   let panner: ToneNS.Panner | null = null;
   if (opts.pan != null) {
@@ -121,7 +138,7 @@ export function tone(opts: ToneOpts): void {
     env.connect(out);
   }
 
-  osc.onstop = () => disposeLater(osc, env, shaper, panner);
+  osc.onstop = () => disposeLater(osc, env, sat.pre, sat.shaper, panner);
   osc.start(start);
   osc.stop(end + 0.03);
 }
@@ -181,13 +198,8 @@ export function noise(opts: NoiseOpts): void {
     head = filter;
   }
 
-  let shaper: ToneNS.WaveShaper | null = null;
-  if (opts.drive != null) {
-    shaper = new T.WaveShaper(softClipCurve(), 1024);
-    head.connect(shaper);
-    head = shaper;
-  }
-  head.connect(env);
+  const sat = saturate(T, head, opts.drive);
+  sat.head.connect(env);
 
   let panner: ToneNS.Panner | null = null;
   if (opts.pan != null) {
@@ -198,7 +210,8 @@ export function noise(opts: NoiseOpts): void {
     env.connect(out);
   }
 
-  src.onstop = () => disposeLater(src, env, filter, shaper, panner);
+  src.onstop = () =>
+    disposeLater(src, env, filter, sat.pre, sat.shaper, panner);
   src.start(start);
   src.stop(end + 0.03);
 }
