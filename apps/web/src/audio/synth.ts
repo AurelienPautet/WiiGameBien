@@ -1,9 +1,13 @@
 /**
- * Low-level procedural synthesis primitives. Each schedules a few short-lived
- * Web Audio nodes on the shared bus and lets them stop themselves — no pooling,
- * no audio files to load. The named sounds in `voices.ts` layer these together.
+ * Low-level procedural synthesis primitives, running on Tone.js.
+ *
+ * Each call schedules a few short-lived Tone sources + envelopes on the shared
+ * Tone context and disposes them when they stop — no pooling, no audio files.
+ * The named sounds in `voices.ts` layer these together. Keeping this API narrow
+ * means the voice recipes stay readable and untouched.
  */
-import { audioBus } from "./AudioBus";
+import type * as ToneNS from "tone";
+import { getSfxDestination, getTone } from "./tone";
 
 export const clamp = (v: number, lo: number, hi: number): number =>
   v < lo ? lo : v > hi ? hi : v;
@@ -12,75 +16,36 @@ export const clamp = (v: number, lo: number, hi: number): number =>
 export const rand = (min: number, max: number): number =>
   min + Math.random() * (max - min);
 
-// One reusable white-noise buffer, cached against the context that owns it (an
-// AudioBuffer can't be played on a different context). Rebuilt if the bus ever
-// hands us a new context.
-let noiseBuf: AudioBuffer | null = null;
-let noiseCtx: AudioContext | null = null;
-function whiteNoise(ctx: AudioContext): AudioBuffer {
-  if (noiseBuf && noiseCtx === ctx) return noiseBuf;
-  const len = Math.floor(ctx.sampleRate * 0.5);
-  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
-  noiseBuf = buf;
-  noiseCtx = ctx;
-  return buf;
-}
-
 // Exponential ramps can't reach 0, so envelopes decay to this near-silence.
 const MIN_GAIN = 0.0001;
 
-// Wire `node` → (optional stereo pan) → master.
-function routeTo(
-  ctx: AudioContext,
-  node: AudioNode,
-  out: AudioNode,
-  pan?: number
-): void {
-  if (pan != null) {
-    const panner = ctx.createStereoPanner();
-    panner.pan.value = clamp(pan, -1, 1);
-    node.connect(panner);
-    panner.connect(out);
-  } else {
-    node.connect(out);
-  }
-}
-
-// Shared soft-clip (tanh) curve for the optional `drive` saturation. Pushing a
-// signal through it before its envelope adds harmonics and perceived loudness —
-// the "punch" that makes shots/impacts feel real rather than thin.
+// Shared soft-clip (tanh) curve for the optional `drive` saturation.
 let shaperCurve: Float32Array<ArrayBuffer> | null = null;
 function softClipCurve(): Float32Array<ArrayBuffer> {
   if (shaperCurve) return shaperCurve;
   const n = 1024;
-  const c = new Float32Array(n);
+  const curve = new Float32Array(n);
   for (let i = 0; i < n; i++) {
     const x = (i / (n - 1)) * 2 - 1;
-    c[i] = Math.tanh(2.5 * x);
+    curve[i] = Math.tanh(2.5 * x);
   }
-  shaperCurve = c;
-  return c;
+  shaperCurve = curve;
+  return curve;
 }
 
-// Insert a pre-gain → waveshaper before the envelope when `drive` is set,
-// returning the node to feed the envelope. `drive` > 1 pushes harder into the
-// nonlinear region for more saturation/grit.
-function saturate(
-  ctx: AudioContext,
-  node: AudioNode,
-  drive?: number
-): AudioNode {
-  if (drive == null) return node;
-  const pre = ctx.createGain();
-  pre.gain.value = drive;
-  const shaper = ctx.createWaveShaper();
-  shaper.curve = softClipCurve();
-  shaper.oversample = "2x";
-  node.connect(pre);
-  pre.connect(shaper);
-  return shaper;
+interface Disposable {
+  dispose: () => unknown;
+}
+
+function disposeLater(...nodes: (Disposable | null)[]): void {
+  for (const node of nodes) {
+    if (!node) continue;
+    try {
+      node.dispose();
+    } catch {
+      // Already disposed with its source — nothing to do.
+    }
+  }
 }
 
 export interface ToneOpts {
@@ -88,7 +53,7 @@ export interface ToneOpts {
   freq: number;
   /** Optional glide target (Hz), reached at the end of the sound. */
   freqEnd?: number;
-  type?: OscillatorType;
+  type?: "sine" | "square" | "sawtooth" | "triangle";
   /** Delay before the sound starts, in seconds. */
   delay?: number;
   /** Total length, in seconds. */
@@ -108,17 +73,20 @@ export interface ToneOpts {
 
 /** A single enveloped oscillator, optionally pitch-gliding and panned. */
 export function tone(opts: ToneOpts): void {
-  const ctx = audioBus.ctx;
-  const out = audioBus.out;
-  if (!ctx || !out) return;
+  const T = getTone();
+  const out = getSfxDestination();
+  if (!T || !out) return;
 
-  const start = ctx.currentTime + (opts.delay ?? 0);
+  // `immediate()` skips Tone's scheduling look-ahead so shots stay snappy.
+  const start = T.immediate() + 0.005 + (opts.delay ?? 0);
   const end = start + opts.duration;
-  const peak = opts.gain ?? 0.3;
+  const peak = Math.max(MIN_GAIN, opts.gain ?? 0.3);
   const attack = Math.min(opts.attack ?? 0.005, opts.duration * 0.5);
 
-  const osc = ctx.createOscillator();
-  osc.type = opts.type ?? "sine";
+  const osc = new T.Oscillator({
+    frequency: opts.freq,
+    type: opts.type ?? "sine",
+  });
   osc.frequency.setValueAtTime(opts.freq, start);
   if (opts.freqEnd != null) {
     const target = Math.max(1, opts.freqEnd);
@@ -130,13 +98,30 @@ export function tone(opts: ToneOpts): void {
   }
   if (opts.detune != null) osc.detune.setValueAtTime(opts.detune, start);
 
-  const env = ctx.createGain();
+  const env = new T.Gain(MIN_GAIN);
   env.gain.setValueAtTime(MIN_GAIN, start);
   env.gain.exponentialRampToValueAtTime(peak, start + attack);
   env.gain.exponentialRampToValueAtTime(MIN_GAIN, end);
 
-  saturate(ctx, osc, opts.drive).connect(env);
-  routeTo(ctx, env, out, opts.pan);
+  let head: ToneNS.ToneAudioNode = osc;
+  let shaper: ToneNS.WaveShaper | null = null;
+  if (opts.drive != null) {
+    shaper = new T.WaveShaper(softClipCurve(), 1024);
+    head.connect(shaper);
+    head = shaper;
+  }
+  head.connect(env);
+
+  let panner: ToneNS.Panner | null = null;
+  if (opts.pan != null) {
+    panner = new T.Panner(clamp(opts.pan, -1, 1));
+    env.connect(panner);
+    panner.connect(out);
+  } else {
+    env.connect(out);
+  }
+
+  osc.onstop = () => disposeLater(osc, env, shaper, panner);
   osc.start(start);
   osc.stop(end + 0.03);
 }
@@ -161,39 +146,59 @@ export interface NoiseOpts {
 
 /** An enveloped white-noise burst through an optional sweeping filter. */
 export function noise(opts: NoiseOpts): void {
-  const ctx = audioBus.ctx;
-  const out = audioBus.out;
-  if (!ctx || !out) return;
+  const T = getTone();
+  const out = getSfxDestination();
+  if (!T || !out) return;
 
-  const start = ctx.currentTime + (opts.delay ?? 0);
+  const start = T.immediate() + 0.005 + (opts.delay ?? 0);
   const end = start + opts.duration;
-  const peak = opts.gain ?? 0.3;
+  const peak = Math.max(MIN_GAIN, opts.gain ?? 0.3);
   const attack = Math.min(opts.attack ?? 0.002, opts.duration * 0.5);
 
-  const src = ctx.createBufferSource();
-  src.buffer = whiteNoise(ctx);
-  src.loop = true;
-
-  const env = ctx.createGain();
+  const src = new T.Noise("white");
+  const env = new T.Gain(MIN_GAIN);
   env.gain.setValueAtTime(MIN_GAIN, start);
   env.gain.exponentialRampToValueAtTime(peak, start + attack);
   env.gain.exponentialRampToValueAtTime(MIN_GAIN, end);
 
-  let head: AudioNode = src;
+  let head: ToneNS.ToneAudioNode = src;
+  let filter: ToneNS.Filter | null = null;
   if (opts.filter) {
-    const f = ctx.createBiquadFilter();
-    f.type = opts.filter;
-    f.frequency.setValueAtTime(opts.freq ?? 1000, start);
+    const freq = opts.freq ?? 1000;
+    filter = new T.Filter({
+      type: opts.filter,
+      frequency: freq,
+      Q: opts.q ?? 1,
+    });
+    filter.frequency.setValueAtTime(freq, start);
     if (opts.freqEnd != null) {
-      f.frequency.exponentialRampToValueAtTime(Math.max(20, opts.freqEnd), end);
+      filter.frequency.exponentialRampToValueAtTime(
+        Math.max(20, opts.freqEnd),
+        end
+      );
     }
-    if (opts.q != null) f.Q.setValueAtTime(opts.q, start);
-    src.connect(f);
-    head = f;
+    src.connect(filter);
+    head = filter;
   }
 
-  saturate(ctx, head, opts.drive).connect(env);
-  routeTo(ctx, env, out, opts.pan);
+  let shaper: ToneNS.WaveShaper | null = null;
+  if (opts.drive != null) {
+    shaper = new T.WaveShaper(softClipCurve(), 1024);
+    head.connect(shaper);
+    head = shaper;
+  }
+  head.connect(env);
+
+  let panner: ToneNS.Panner | null = null;
+  if (opts.pan != null) {
+    panner = new T.Panner(clamp(opts.pan, -1, 1));
+    env.connect(panner);
+    panner.connect(out);
+  } else {
+    env.connect(out);
+  }
+
+  src.onstop = () => disposeLater(src, env, filter, shaper, panner);
   src.start(start);
   src.stop(end + 0.03);
 }

@@ -53,14 +53,9 @@ class AudioBus {
     sfx.connect(master);
     const music = ctx.createGain();
     music.gain.value = this.musicLevel;
-    // Gentle low-pass to round off the soundtrack — warm and soft rather than
-    // bright/8-bit.
-    const warmth = ctx.createBiquadFilter();
-    warmth.type = "lowpass";
-    warmth.frequency.value = 2600;
-    warmth.Q.value = 0.4;
-    music.connect(warmth);
-    warmth.connect(master);
+    // The Tone soundtrack does its own tone-shaping (filter, chorus, reverb),
+    // so the bus stays out of the way and just handles level/mix.
+    music.connect(master);
     this.context = ctx;
     this.master = master;
     this.sfx = sfx;
