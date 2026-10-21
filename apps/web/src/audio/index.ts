@@ -3,7 +3,7 @@
 import { audioBus } from "./AudioBus";
 
 export { audioBus } from "./AudioBus";
-export { playSfx, setSfxVolume, setMusicVolume } from "./play";
+export { playFuseWarning, playSfx, setSfxVolume, setMusicVolume } from "./play";
 
 /**
  * Install a one-time, page-wide gesture listener that unlocks the AudioContext

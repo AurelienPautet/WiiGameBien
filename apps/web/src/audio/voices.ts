@@ -7,14 +7,13 @@
  * Aesthetic: soft and rounded (sine / triangle, gentle noise) — a cute modern
  * io game, not a bright 8-bit arcade.
  */
-import { tone, noise, rand } from "./synth";
+import { clamp, noise, rand, tone } from "./synth";
 
 export type VoiceName =
   // In-game events
   | "shoot"
   | "ricochet"
   | "plant"
-  | "fuse"
   | "explose"
   | "kill"
   // Game-state stingers
@@ -131,44 +130,44 @@ export const voices: Record<VoiceName, Voice> = {
     });
   },
 
-  // Mine placed: a solid mechanical thunk + click.
+  // Mine placed: a solid mechanical clunk, then a dry arming tick a beat later
+  // so the plant reads as "bomb planted", not just another explosion layer.
   plant() {
     noise({
-      duration: 0.025,
+      duration: 0.02,
       gain: 0.3,
       attack: 0.001,
       filter: "bandpass",
-      freq: 1700,
+      freq: 1500,
       q: 0.9,
-      drive: 1.0,
+      drive: 1.1,
     });
     tone({
       type: "sine",
-      freq: 250,
-      freqEnd: 72,
-      duration: 0.18,
-      gain: 0.62,
+      freq: 240,
+      freqEnd: 70,
+      duration: 0.2,
+      gain: 0.7,
       attack: 0.002,
       drive: 0.9,
     });
+    // Arming tick: a short, dry click plus a tiny rise — "fuse is live".
+    noise({
+      duration: 0.008,
+      gain: 0.09,
+      filter: "bandpass",
+      freq: 2600,
+      q: 2.2,
+      delay: 0.055,
+    });
     tone({
       type: "triangle",
-      freq: 500,
+      freq: 620,
+      freqEnd: 880,
       duration: 0.05,
-      gain: 0.1,
-      delay: 0.045,
-    });
-  },
-
-  // Mine fuse tick — a crisp warning click.
-  fuse() {
-    noise({ duration: 0.01, gain: 0.14, filter: "bandpass", freq: 2400, q: 2 });
-    tone({
-      type: "sine",
-      freq: 880,
-      duration: 0.04,
-      gain: 0.12,
-      attack: 0.001,
+      gain: 0.08,
+      delay: 0.055,
+      attack: 0.002,
     });
   },
 
@@ -458,3 +457,49 @@ export const voices: Record<VoiceName, Voice> = {
     tone({ type: "sine", freq: 1110, duration: 0.07, gain: 0.04, delay: 0.05 });
   },
 };
+
+/**
+ * Warning for a mine about to detonate. `urgency` (0..1) raises the pitch and
+ * loudness and tightens the two-beep interval, so the last seconds accelerate
+ * instead of repeating one flat tick.
+ */
+export function fuseWarning(urgency: number): void {
+  const u = clamp(urgency, 0, 1);
+  const base = 620 + u * 420;
+  const gap = 0.075 - u * 0.03;
+  const duration = 0.055 - u * 0.015;
+  const peak = 0.18 + u * 0.08;
+
+  tone({
+    type: "triangle",
+    freq: base,
+    duration,
+    gain: peak,
+    attack: 0.002,
+    drive: 1.1,
+  });
+  tone({
+    type: "sine",
+    freq: base * 2,
+    duration: duration * 0.8,
+    gain: peak * 0.3,
+    attack: 0.002,
+  });
+  tone({
+    type: "triangle",
+    freq: base * 1.335,
+    duration,
+    gain: peak,
+    delay: gap,
+    attack: 0.002,
+    drive: 1.1,
+  });
+  tone({
+    type: "sine",
+    freq: base * 1.335 * 2,
+    duration: duration * 0.8,
+    gain: peak * 0.3,
+    delay: gap,
+    attack: 0.002,
+  });
+}
