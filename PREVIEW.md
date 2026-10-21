@@ -60,17 +60,19 @@ That is a deliberate choice for maximum realism, and it makes two things
 2. **Create a resource** of type **Docker Compose**, pointing at
    `docker-compose.preview.yml`.
 3. **Enable Preview Deployments** on that resource.
-4. **Set the preview domain template** to `pr-{{pr_id}}.<your-base-domain>`
-   (e.g. `pr-{{pr_id}}.preview.pautet.net`). Point a wildcard DNS record
-   `*.preview.pautet.net` at the VPS so every PR resolves.
+4. **Keep Coolify's generated preview domain** (the default). It has the shape
+   `<pr_id>.<resource-uuid>.<server-ip>.sslip.io` and resolves automatically, so
+   no wildcard DNS record is needed. If you prefer a custom domain, set the
+   template to `<pr_id>.<your-base-domain>` and point a wildcard
+   `*.<your-base-domain>` at the VPS instead.
 5. **Enable Basic Auth** on the resource and set a username/password. This is
    the access gate for the full-prod-data previews — do not skip it.
 6. **Fill the snapshot env vars** on the resource (matching the GitHub config
    below): `PREVIEW_DUMP_S3_ENDPOINT`, `PREVIEW_DUMP_S3_BUCKET`,
    `PREVIEW_DUMP_S3_ACCESS_KEY`, `PREVIEW_DUMP_S3_SECRET_KEY`.
 
-Open a PR and Coolify builds `pr-<n>.preview.pautet.net`, tearing it down when
-the PR closes.
+Open a PR and Coolify builds `https://<n>.<resource-uuid>.<server-ip>.sslip.io`,
+tearing it down when the PR closes.
 
 ## Production snapshot pipeline
 
@@ -99,9 +101,12 @@ Two independent paths (use either or both):
 - **Coolify native** — recent Coolify versions can comment the preview URL on
   the PR automatically once deployment succeeds. Enable it on the resource if
   available.
-- **`preview-url.yml`** (included) — posts/updates a sticky comment with the
-  deterministic URL. Requires a repository **variable** `PREVIEW_BASE_DOMAIN`
-  (e.g. `preview.pautet.net`).
+- **`preview-url.yml`** (included) — posts/updates a sticky comment with
+  `https://<pr>.<base>`. Set the repository **variable**
+  `PREVIEW_BASE_DOMAIN` to the suffix Coolify generates after the PR number:
+  `<resource-uuid>.<server-ip>.sslip.io` (for OuiTank:
+  `zu42vrl96ppcku6d21fxbuj4.37.59.112.252.sslip.io`). With a custom domain,
+  use its base instead (e.g. `preview.pautet.net`).
 
 ## Dependabot
 

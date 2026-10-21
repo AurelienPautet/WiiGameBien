@@ -5,10 +5,13 @@
 # link shows up in the PR conversation. It does NOT deploy anything itself.
 #
 # Requirements:
-#   - In Coolify, set the preview domain template to:  pr-{{pr_id}}.<base>
-#   - Add a repository variable PREVIEW_BASE_DOMAIN = <base>
-#     (Settings -> Secrets and variables -> Actions -> Variables),
-#     e.g. PREVIEW_BASE_DOMAIN = preview.pautet.net
+#   - Coolify's generated preview domain has the shape
+#       <pr_id>.<resource-uuid>.<server-ip>.sslip.io
+#     (leave the preview domain template at Coolify's default; sslip.io resolves
+#     the server IP, so no wildcard DNS record is needed).
+#   - Add a repository variable PREVIEW_BASE_DOMAIN = <resource-uuid>.<server-ip>.sslip.io
+#     (Settings -> Secrets and variables -> Actions -> Variables), e.g.
+#       PREVIEW_BASE_DOMAIN = zu42vrl96ppcku6d21fxbuj4.37.59.112.252.sslip.io
 #
 # Dependabot PRs are skipped (no preview is built for them).
 
@@ -31,7 +34,7 @@ jobs:
           script: |
             const pr = context.issue.number;
             const base = process.env.BASE_DOMAIN;
-            const url = `https://pr-${pr}.${base}`;
+            const url = `https://${pr}.${base}`;
             const marker = "<!-- coolify-preview-url -->";
 
             const body =
