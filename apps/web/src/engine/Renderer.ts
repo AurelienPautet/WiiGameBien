@@ -8,7 +8,7 @@
  * theme/palette so the canvas matches the DOM (TankAvatar etc.).
  */
 import { palette, tankColors, mixHex, WRECK_CHAR } from "../theme/palette";
-import { drawTank, paintField, drawBlocks, drawHole } from "./shapes";
+import { drawTank, paintField, drawBlocks, drawHoles } from "./shapes";
 import { drawSpawnTank } from "./spawnAnim";
 
 const INK = palette.ink;
@@ -338,7 +338,8 @@ export class Renderer {
     // Holes + walls are drawn by the WebGL post-processor when it's active
     // (skipEnvironment); otherwise the 2D renderer draws them here.
     if (holes && !this.skipEnvironment) {
-      holes.forEach((h) => this._drawHole(h));
+      drawHoles(this.c, holes);
+      if (this.debugVisual) holes.forEach((h) => this._drawHoleDebug(h));
     }
 
     if (blocks && !this.skipEnvironment) {
@@ -397,16 +398,13 @@ export class Renderer {
     this.c.closePath();
   }
 
-  _drawHole(h: Hole) {
-    drawHole(this.c, h);
-    if (this.debugVisual) {
-      this.c.beginPath();
-      this.c.fillStyle = "rgba(255,0,0,0.4)";
-      this.c.strokeStyle = "red";
-      this.c.rect(h.position.x, h.position.y, h.size.w, h.size.h);
-      this.c.fill();
-      this.c.stroke();
-    }
+  _drawHoleDebug(h: Hole) {
+    this.c.beginPath();
+    this.c.fillStyle = "rgba(255,0,0,0.4)";
+    this.c.strokeStyle = "red";
+    this.c.rect(h.position.x, h.position.y, h.size.w, h.size.h);
+    this.c.fill();
+    this.c.stroke();
   }
 
   _drawBlocks(blocks: Block[]) {

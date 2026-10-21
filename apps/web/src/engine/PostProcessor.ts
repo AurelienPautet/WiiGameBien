@@ -35,7 +35,13 @@ import {
   WALL_FRAG,
   WALL_VERT,
 } from "./postfx/shaders";
-import { BLOCK_RADIUS } from "./shapes";
+import {
+  BLOCK_RADIUS,
+  HOLE_CORE_HEX,
+  HOLE_DEEP_HEX,
+  HOLE_INSET_PX,
+  HOLE_INK_HEX,
+} from "./shapes";
 
 interface Vec2 {
   x: number;
@@ -76,14 +82,16 @@ const WALL_STONE = hexToRgb("#7d848e");
 const WALL_SAND = hexToRgb("#cbb287");
 const INK = hexToRgb(palette.ink);
 
-// Hole vortex palette: a hot cyan event horizon, a teal halo, blue/violet
-// spiral arms and a near-black throat. All pulled from the shared arcade
-// palette (except the tuned rim/core shades) so the pit reads as part of it.
-const HOLE_RIM = hexToRgb("#9ff6ff");
-const HOLE_HALO = hexToRgb(palette.teal);
-const HOLE_SWIRL_A = hexToRgb(palette.blue);
-const HOLE_SWIRL_B = hexToRgb(palette.purple);
-const HOLE_CORE = hexToRgb("#0b0a18");
+// Hole palette: a deep, near-black ink rim (a shade darker than the wall
+// outlines so the void reads as a pit rather than a raised tire), a two-tone
+// throat, and spiral arms in the darker team blue/violet so they read as shaded
+// arcade colour instead of neon.
+const HOLE_INK = hexToRgb(HOLE_INK_HEX);
+const HOLE_CORE = hexToRgb(HOLE_CORE_HEX);
+const HOLE_DEEP = hexToRgb(HOLE_DEEP_HEX);
+const HOLE_SWIRL_A = hexToRgb(palette.blueD);
+const HOLE_SWIRL_B = hexToRgb(palette.purpleD);
+const HOLE_GLINT = hexToRgb(palette.teal);
 
 // Outline thickness (board px), matching the 2D block stroke (lineWidth 4).
 const OUTLINE_PX = 4;
@@ -96,8 +104,8 @@ const WALL_MARGIN = BLOCK_RADIUS + OUTLINE_PX;
 // Hole field: a baked signed-distance field over the whole board. Every hole
 // tile contributes an inscribed circle; adjacent tiles add a stadium capsule
 // between their centres (and a filled 2x2 block adds a diagonal capsule). The
-// union is smooth-min'd, so an isolated hole is a perfect disc, a run becomes a
-// capsule, and a block melts into one rounded pit. The field is stored in an
+// primitives are hard-unioned, so an isolated hole is a perfect disc, a run is
+// a clean capsule, and a block is one rounded pit. The field is stored in an
 // RGBA8 texture:
 //   R — signed distance to the rim in board px, encoded over [-64, +16]
 //   G,B — nearest pit centre, as board UV
@@ -106,11 +114,6 @@ const WALL_MARGIN = BLOCK_RADIUS + OUTLINE_PX;
 const HOLE_CELL = 2;
 const HOLE_SDF_MIN_PX = -64;
 const HOLE_SDF_SPAN_PX = 80;
-// Smooth-union radius (board px) where primitives overlap — just enough to
-// soften the joins, since the capsules already cover the space between tiles.
-const HOLE_MERGE_PX = 10;
-// Quad expansion so the rim halo has room to fade out over the floor.
-const HOLE_MARGIN = 26;
 
 // Screen shake: peak whole-frame offset (UV units) at trauma = 1, and how long
 // trauma takes to bleed off. Offset scales with trauma² so small knocks barely
@@ -393,11 +396,12 @@ export class PostProcessor {
           c.green / 255,
           c.blue / 255
         );
-      setColor("uRim", HOLE_RIM);
-      setColor("uHalo", HOLE_HALO);
+      setColor("uInk", HOLE_INK);
+      setColor("uCore", HOLE_CORE);
+      setColor("uDeep", HOLE_DEEP);
       setColor("uSwirlA", HOLE_SWIRL_A);
       setColor("uSwirlB", HOLE_SWIRL_B);
-      setColor("uCore", HOLE_CORE);
+      setColor("uGlint", HOLE_GLINT);
       // Straight-alpha "over" the field so the rounded, animated rim shows the
       // floor through the corners.
       gl.enable(gl.BLEND);
@@ -626,17 +630,17 @@ export class PostProcessor {
     const cx = (x: number) => (x / W) * 2 - 1;
     const cy = (y: number) => 1 - (y / H) * 2; // board-top → clip-top
 
-    // Holes: a quad per pit, expanded so the rim halo has room to fade over the
-    // floor. Each vertex carries its board-space UV, so all tiles sample one
-    // continuous SDF field (no per-tile seams).
+    // Holes: one quad per tile, exactly covering its cell. Each vertex carries
+    // its board-space UV, so all tiles sample one continuous SDF field and the
+    // pit stays seamless. The quad does not expand past the tile, so the pit
+    // can never tint or overlap a neighbouring block.
     const hole: number[] = [];
-    const M_HOLE = HOLE_MARGIN;
     for (const h of holes) {
       const { x, y } = h.position;
-      const x0 = x - M_HOLE;
-      const y0 = y - M_HOLE;
-      const x1 = x + h.size.w + M_HOLE;
-      const y1 = y + h.size.h + M_HOLE;
+      const x0 = x;
+      const y0 = y;
+      const x1 = x + h.size.w;
+      const y1 = y + h.size.h;
       const ax = cx(x0);
       const bx = cx(x1);
       const ay = cy(y0);
@@ -710,8 +714,8 @@ export class PostProcessor {
    * Each hole tile is an inscribed circle, and every pair of touching tiles
    * adds a stadium capsule between their centres. A filled 2x2 block also gets
    * a diagonal capsule, which fills the little diamond the four edge capsules
-   * leave in its middle. The primitives are smooth-min'd into one distance
-   * field, so:
+   * leave in its middle. The primitives are unioned into one distance field,
+   * so:
    *   - a lone tile is a perfect disc,
    *   - a straight run is a capsule,
    *   - a block is one rounded pit.
@@ -732,7 +736,9 @@ export class PostProcessor {
     const GW = this.hfW;
     const GH = this.hfH;
     const data = new Uint8Array(GW * GH * 4);
-    const K = HOLE_MERGE_PX;
+    // Extra px baked around each primitive so the shader's hand-drawn rim
+    // (and its ~7px wobble band) has a valid distance just outside the pit.
+    const PAD = 10;
 
     interface Primitive {
       ax: number;
@@ -766,10 +772,10 @@ export class PostProcessor {
         vx: bx - ax,
         vy: by - ay,
         len2: (bx - ax) * (bx - ax) + (by - ay) * (by - ay),
-        minX: Math.min(ax, bx) - r - K,
-        maxX: Math.max(ax, bx) + r + K,
-        minY: Math.min(ay, by) - r - K,
-        maxY: Math.max(ay, by) + r + K,
+        minX: Math.min(ax, bx) - r - PAD,
+        maxX: Math.max(ax, bx) + r + PAD,
+        minY: Math.min(ay, by) - r - PAD,
+        maxY: Math.max(ay, by) + r + PAD,
       });
     };
 
@@ -777,7 +783,7 @@ export class PostProcessor {
     const circles = holes.map((h) => ({
       cx: h.position.x + h.size.w * 0.5,
       cy: h.position.y + h.size.h * 0.5,
-      r: Math.min(h.size.w, h.size.h) * 0.5,
+      r: Math.max(1, Math.min(h.size.w, h.size.h) * 0.5 - HOLE_INSET_PX),
     }));
     const gridKey = (x: number, y: number) =>
       `${Math.round(x)},${Math.round(y)}`;
@@ -841,16 +847,12 @@ export class PostProcessor {
           const dy = py - (s.ay + s.vy * t);
           const cd = Math.sqrt(dx * dx + dy * dy) - s.r;
           const i = gy * GW + gx;
-          const cur = sdf[i]!;
-          // The sentinel is far above any real distance, so it doubles as
-          // "first primitive" — which seeds the union — with no extra flag.
-          if (cur === HOLE_SDF_SPAN_PX) {
-            sdf[i] = cd;
-          } else {
-            // Polynomial smooth-min (the GLSL-style smin).
-            const w = Math.max(0, Math.min(1, 0.5 + (0.5 * (cur - cd)) / K));
-            sdf[i] = cur + (cd - cur) * w - K * w * (1 - w);
-          }
+          // Hard union. A smooth-min would bulge outward where a circle and
+          // a capsule coincide at the same centre, turning straight runs into
+          // scalloped chains; min() keeps a run a clean capsule and a 2x2
+          // block a rounded square. The sentinel is far above any real
+          // distance, so min() also seeds the field with no extra flag.
+          sdf[i] = Math.min(sdf[i]!, cd);
         }
       }
     }

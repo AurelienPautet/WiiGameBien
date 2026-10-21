@@ -107,17 +107,19 @@ void main() {
 `;
 
 /**
- * Holes — round, event-horizon pits rather than square tiles.
+ * Holes — round, ink-drawn pits rather than square tiles.
  *
  * A pre-baked signed-distance field (see PostProcessor._ensureHoleField) gives
- * each hole tile an inscribed circle and smooth-unions neighbouring circles, so
- * a lone hole is perfectly round and a cluster melts into one continuous pit.
- * The field also stores the nearest pit centre, letting the shader draw a
- * rotating spiral vortex inside the throat.
+ * each hole tile an inscribed circle and unions neighbouring circles, so a lone
+ * hole is perfectly round and a run becomes one clean capsule. The field also
+ * stores the nearest pit centre, letting the shader draw one continuous spiral
+ * inside the throat.
  *
- * The look: a near-black core, slowly swirling blue/violet arms, drifting
- * glints, a hot cyan event-horizon ring, and a soft outer halo. The bright,
- * saturated rim is picked up by the bloom pass for free.
+ * The look follows the rest of the arcade art: a flat near-black throat, two
+ * posterized blue/violet spiral arms, a thick ink rim matching the wall
+ * outlines, and a thin pale-teal bevel inside it. Everything stays within the
+ * pit silhouette — no outer halo — so the quads never overlap neighbouring
+ * tiles and cannot double-blend into a checkered glow.
  */
 export const HOLE_VERT = `
 attribute vec2 aPos;
@@ -135,11 +137,12 @@ varying vec2 vBoard;       // board-space UV (0..1)
 uniform sampler2D uField;  // R = signed distance to the rim (board px), GB = nearest centre
 uniform vec2 uRes;         // board size in px
 uniform float uTime;
-uniform vec3 uRim;         // hot inner ring
-uniform vec3 uHalo;        // soft outer glow
-uniform vec3 uSwirlA;      // vortex colour A
-uniform vec3 uSwirlB;      // vortex colour B
-uniform vec3 uCore;        // dark throat
+uniform vec3 uInk;         // thick rim, same ink as the walls
+uniform vec3 uCore;        // near-black throat centre
+uniform vec3 uDeep;        // slightly lighter outer throat
+uniform vec3 uSwirlA;      // flat blue arm
+uniform vec3 uSwirlB;      // flat violet arm
+uniform vec3 uGlint;       // pale inner bevel
 
 void main() {
   vec4 field = texture2D(uField, vBoard);
@@ -151,36 +154,40 @@ void main() {
   float a = atan(p.y, p.x);
   float t = uTime;
 
-  // Gentle angular ripple on the rim — alive, but still unmistakably round.
-  d += (sin(a * 5.0 + t * 1.4) * 0.45 + sin(a * 9.0 - t * 2.0) * 0.25)
-       * (1.0 - smoothstep(0.0, 10.0, abs(d)));
+  // Hand-drawn rim: a little wobble, but still unmistakably round.
+  d += (sin(a * 5.0 + t * 1.1) * 0.35 + sin(a * 9.0 - t * 1.7) * 0.18)
+       * (1.0 - smoothstep(0.0, 7.0, abs(d)));
 
-  float inside = 1.0 - smoothstep(-1.25, 1.25, d);
-  float depth = clamp(-d / 30.0, 0.0, 1.0);   // 0 at the rim → 1 deep
+  float inside = 1.0 - smoothstep(-1.0, 1.0, d);
+  float depth = clamp(-d / 20.0, 0.0, 1.0);   // 0 at the rim → 1 deep
 
-  // Log-polar spiral arms rotating into the throat.
-  float spiral = sin(a * 3.0 + log(max(r, 1.0)) * 6.5 - t * 1.5);
-  float arms = smoothstep(0.15, 0.92, spiral);
-  float band = smoothstep(0.02, 0.22, depth) * (1.0 - smoothstep(0.55, 1.0, depth));
-  vec3 vortex = mix(uSwirlA, uSwirlB, 0.5 + 0.5 * sin(a * 2.0 + r * 0.05 - t * 0.7));
-  vec3 col = uCore + vortex * arms * band * 0.45;
+  // Two flat throat tones instead of a smooth gradient — the same posterized
+  // shading the field and walls use.
+  vec3 col = mix(uDeep, uCore, smoothstep(0.42, 0.50, depth));
 
-  // Faint glints sinking through the throat — a smooth lattice, no sharp cells.
-  float glint = pow(max(0.0, sin(p.x * 0.19 + t * 2.0) * sin(p.y * 0.17 - t * 1.7)), 24.0);
-  col += vec3(0.55, 0.9, 1.0) * glint * depth * 0.45;
+  // Two thin, flat spiral ribbons — one blue, one violet — winding through a
+  // mostly dark throat. Keeping them narrow and graphic avoids the busy
+  // hatched look of broad bands.
+  float spiral = sin(a * 2.0 + r * 0.10 - t * 0.9);
+  float blueArm = smoothstep(0.97, 0.997, spiral);
+  float violetArm = smoothstep(0.97, 0.997, -spiral);
+  float band = smoothstep(0.04, 0.20, depth)
+             * (1.0 - smoothstep(0.75, 0.95, depth));
+  col = mix(col, uSwirlA, blueArm * band * 0.75);
+  col = mix(col, uSwirlB, violetArm * band * 0.50);
 
-  // Event horizon: a tight hot ring plus a soft halo that tints the floor just
-  // outside the pit. The halo is offset by its value at the field's far clamp
-  // (+16px) so it reaches exactly zero inside the quad instead of leaving a
-  // faint rectangular veil where the geometry ends.
-  float rim = exp(-abs(d) * 0.55);
-  float halo = max(0.0, exp(-max(d, 0.0) * 0.22) - 0.0296) * (1.0 - inside);
-  col = mix(col, uRim, clamp(rim, 0.0, 1.0) * 0.9);
-  col = mix(col, uHalo, halo * 0.55);
+  // Thick ink rim, fully inside the silhouette so it reads like the bold
+  // outlines on walls and tanks (and never spills into the next tile).
+  float rim = smoothstep(-4.5, -3.2, d) * (1.0 - smoothstep(-0.8, 0.0, d));
+  col = mix(col, uInk, rim);
 
-  float alpha = max(inside, halo * 0.55);
-  if (alpha <= 0.004) discard;
-  gl_FragColor = vec4(col, alpha);
+  // Thin pale bevel just inside the ink, strongest on the upper-left.
+  float bevel = smoothstep(-6.5, -5.2, d) * (1.0 - smoothstep(-4.2, -3.2, d));
+  float lit = smoothstep(-0.15, 0.55, -sin(a + 2.35));
+  col = mix(col, uGlint, bevel * lit * 0.35);
+
+  if (inside <= 0.004) discard;
+  gl_FragColor = vec4(col, inside);
 }
 `;
 

@@ -5,7 +5,7 @@
 // plus one admin click rewrites every stored preview consistently.
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "../constants/canvas";
 import { CELL_SIZE } from "../constants/level";
-import { paintField, drawBlocks, drawHole } from "../engine/shapes";
+import { paintField, drawBlocks, drawHoles } from "../engine/shapes";
 import { drawFlagsAndBots, extractEntities } from "../engine/levelScene";
 
 // JPEG quality for the stored preview — the small-blob budget the levels_img
@@ -22,7 +22,7 @@ export function renderLevelThumbnail(layout: number[]): string | null {
   paintField(ctx, CANVAS_WIDTH, CANVAS_HEIGHT, CELL_SIZE);
   const { blocks, holes, flags, bots } = extractEntities(layout);
   drawBlocks(ctx, blocks);
-  holes.forEach((h) => drawHole(ctx, h));
+  drawHoles(ctx, holes);
   drawFlagsAndBots(ctx, flags, bots);
   return canvas.toDataURL("image/jpeg", THUMBNAIL_QUALITY);
 }
