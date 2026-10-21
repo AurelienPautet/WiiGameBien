@@ -20,7 +20,7 @@ export const BLOCK_RADIUS = 10;
 // A hole's visual disc is inset from its 50px cell by this much. The inset keeps
 // the circle clear of the rounded inner corners of surrounding wall blocks (a
 // full-cell circle gets clipped into a rounded square when ringed by walls) and
-// leaves a clean floor margin instead of touching neighbouring tiles. Collision
+// leaves a clean floor margin, so adjacent holes stay visibly separate. Collision
 // still uses the full cell. Shared with the WebGL SDF bake in PostProcessor.
 export const HOLE_INSET_PX = 5;
 
@@ -28,7 +28,6 @@ export const HOLE_INSET_PX = 5;
 // so both paths stay in sync. The rim is a shade darker than the wall ink so a
 // pit reads as a void rather than a raised tyre.
 export const HOLE_INK_HEX = "#0a0c12";
-export const HOLE_DEEP_HEX = "#10141c";
 export const HOLE_CORE_HEX = "#07080d";
 
 // Lighter floor than the raw palette field, so the in-game board reads whiter.
@@ -162,114 +161,37 @@ export function drawBlocks(
 
 /**
  * Round ink-drawn pits — the 2D twin of the WebGL hole shader (used by the
- * no-WebGL fallback and the static level thumbnails). Adjacent holes are drawn
- * as one merged pit: every pass fills the union of all hole circles plus
- * capsules between touching neighbours, so a run reads as a continuous trench
- * instead of a row of separate dots. The GL path animates the spiral; here it is
- * baked as two flat arcs per tile, with the same two-tone throat and thick ink
- * rim as the shader so thumbnails stay on-style.
+ * no-WebGL fallback and the static level thumbnails). Every hole is drawn
+ * independently as one circle; adjacent holes are never merged into capsules.
+ * The interior is flat: an ink rim and a near-black core, with no spiral,
+ * bevel or other internal pattern.
  */
 export function drawHoles(
   ctx: CanvasRenderingContext2D,
   holes: readonly HoleShape[]
 ): void {
-  if (holes.length === 0) return;
-
-  const pits = holes.map((h) => {
-    const s = Math.min(h.size.w, h.size.h);
-    const inset = Math.min(HOLE_INSET_PX, s * 0.1);
-    return {
-      h,
-      cx: h.position.x + h.size.w / 2,
-      cy: h.position.y + h.size.h / 2,
-      r: Math.max(1, s / 2 - inset),
-    };
-  });
-  const key = (x: number, y: number) => `${Math.round(x)},${Math.round(y)}`;
-  const byKey = new Map<string, number>();
-  pits.forEach((p, i) => byKey.set(key(p.h.position.x, p.h.position.y), i));
-
-  // Touching pairs get a capsule between their centres. A filled 2x2 block also
-  // gets one diagonal capsule, which fills the little diamond left in its
-  // middle (same construction as the GL SDF bake).
-  const links: Array<[number, number]> = [];
-  pits.forEach((p, i) => {
-    const { x, y } = p.h.position;
-    const { w, h } = p.h.size;
-    const right = byKey.get(key(x + w, y));
-    const down = byKey.get(key(x, y + h));
-    if (right !== undefined) links.push([i, right]);
-    if (down !== undefined) links.push([i, down]);
-    if (right !== undefined && down !== undefined) {
-      const diag = byKey.get(key(x + w, y + h));
-      if (diag !== undefined) links.push([i, diag]);
-    }
-  });
-
-  const baseAlpha = ctx.globalAlpha;
-  const t = Math.PI * 2;
-  ctx.save();
-
-  // Fill the union of every pit's circle and capsule at a given radius scale.
-  const fillUnion = (scale: number, color: string) => {
-    ctx.fillStyle = color;
-    for (const p of pits) {
-      ctx.beginPath();
-      ctx.arc(p.cx, p.cy, p.r * scale, 0, t);
-      ctx.fill();
-    }
-    ctx.strokeStyle = color;
-    ctx.lineCap = "round";
-    for (const [a, b] of links) {
-      const ra = pits[a]!.r * scale;
-      const rb = pits[b]!.r * scale;
-      const rr = Math.min(ra, rb);
-      if (rr <= 0) continue;
-      ctx.lineWidth = rr * 2;
-      ctx.beginPath();
-      ctx.moveTo(pits[a]!.cx, pits[a]!.cy);
-      ctx.lineTo(pits[b]!.cx, pits[b]!.cy);
-      ctx.stroke();
-    }
-  };
-
-  ctx.globalAlpha = baseAlpha;
-  fillUnion(1, HOLE_INK_HEX); // ink silhouette
-  fillUnion(0.82, HOLE_DEEP_HEX); // outer throat tone, leaves a rim band
-  fillUnion(0.55, HOLE_CORE_HEX); // near-black centre
-
-  // Two thin, flat spiral ribbons per tile — blue and violet opposite each
-  // other — plus a pale bevel just inside the rim.
-  ctx.lineCap = "round";
-  for (const p of pits) {
-    const r = p.r;
-    ctx.globalAlpha = baseAlpha * 0.8;
-    ctx.lineWidth = Math.max(1.5, r * 0.1);
-    ctx.strokeStyle = palette.blueD;
-    ctx.beginPath();
-    ctx.arc(p.cx, p.cy, r * 0.58, -0.55, 1.75);
-    ctx.stroke();
-
-    ctx.globalAlpha = baseAlpha * 0.65;
-    ctx.strokeStyle = palette.purpleD;
-    ctx.beginPath();
-    ctx.arc(p.cx, p.cy, r * 0.58, 2.6, 4.9);
-    ctx.stroke();
-
-    ctx.globalAlpha = baseAlpha * 0.7;
-    ctx.lineWidth = Math.max(1, r * 0.07);
-    ctx.strokeStyle = palette.teal;
-    ctx.beginPath();
-    ctx.arc(p.cx, p.cy, r * 0.78, -2.55, -1.0);
-    ctx.stroke();
-  }
-
-  ctx.restore();
+  for (const h of holes) drawHole(ctx, h);
 }
 
-/** Draw one hole (palette icons and single-cell previews). */
+/** Draw one hole as a plain round pit. */
 export function drawHole(ctx: CanvasRenderingContext2D, h: HoleShape): void {
-  drawHoles(ctx, [h]);
+  const s = Math.min(h.size.w, h.size.h);
+  const inset = Math.min(HOLE_INSET_PX, s * 0.1);
+  const r = Math.max(1, s / 2 - inset);
+  const cx = h.position.x + h.size.w / 2;
+  const cy = h.position.y + h.size.h / 2;
+  const rim = Math.max(1, r * 0.12);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = HOLE_INK_HEX;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx, cy, Math.max(1, r - rim), 0, Math.PI * 2);
+  ctx.fillStyle = HOLE_CORE_HEX;
+  ctx.fill();
+  ctx.restore();
 }
 
 /** Spawn-point marker — a little yellow pennant on an ink pole (editor only). */

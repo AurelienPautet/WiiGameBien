@@ -107,19 +107,16 @@ void main() {
 `;
 
 /**
- * Holes — round, ink-drawn pits rather than square tiles.
+ * Holes — plain, round ink pits.
  *
  * A pre-baked signed-distance field (see PostProcessor._ensureHoleField) gives
- * each hole tile an inscribed circle and unions neighbouring circles, so a lone
- * hole is perfectly round and a run becomes one clean capsule. The field also
- * stores the nearest pit centre, letting the shader draw one continuous spiral
- * inside the throat.
+ * every hole tile one inscribed circle. Neighbouring circles are deliberately
+ * never unioned, so a run of hole tiles reads as a row of separate discs rather
+ * than one capsule. The quads also cover exactly one tile, keeping the effect
+ * off the surrounding blocks.
  *
- * The look follows the rest of the arcade art: a flat near-black throat, two
- * posterized blue/violet spiral arms, a thick ink rim matching the wall
- * outlines, and a thin pale-teal bevel inside it. Everything stays within the
- * pit silhouette — no outer halo — so the quads never overlap neighbouring
- * tiles and cannot double-blend into a checkered glow.
+ * The interior is a flat near-black fill with a thin ink rim: no spiral, bevel,
+ * highlight, glow or texture. The circle itself is the whole design.
  */
 export const HOLE_VERT = `
 attribute vec2 aPos;
@@ -134,59 +131,23 @@ void main() {
 export const HOLE_FRAG = `
 ${FRAG_PRECISION}
 varying vec2 vBoard;       // board-space UV (0..1)
-uniform sampler2D uField;  // R = signed distance to the rim (board px), GB = nearest centre
-uniform vec2 uRes;         // board size in px
-uniform float uTime;
-uniform vec3 uInk;         // thick rim, same ink as the walls
-uniform vec3 uCore;        // near-black throat centre
-uniform vec3 uDeep;        // slightly lighter outer throat
-uniform vec3 uSwirlA;      // flat blue arm
-uniform vec3 uSwirlB;      // flat violet arm
-uniform vec3 uGlint;       // pale inner bevel
+uniform sampler2D uField;  // R = signed distance to the rim (board px)
+uniform vec3 uInk;         // thin edge, a shade lighter than the core
+uniform vec3 uCore;        // flat near-black pit
 
 void main() {
   vec4 field = texture2D(uField, vBoard);
   // Signed distance in board px: negative inside the pit, 0 on the rim.
   float d = field.r * 80.0 - 64.0;
-  vec2 centre = field.gb * uRes;
-  vec2 p = vBoard * uRes - centre;
-  float r = length(p);
-  float a = atan(p.y, p.x);
-  float t = uTime;
+  float inside = 1.0 - smoothstep(-0.9, 0.9, d);
+  if (inside <= 0.004) discard;
 
-  // Hand-drawn rim: a little wobble, but still unmistakably round.
-  d += (sin(a * 5.0 + t * 1.1) * 0.35 + sin(a * 9.0 - t * 1.7) * 0.18)
-       * (1.0 - smoothstep(0.0, 7.0, abs(d)));
-
-  float inside = 1.0 - smoothstep(-1.0, 1.0, d);
-  float depth = clamp(-d / 20.0, 0.0, 1.0);   // 0 at the rim → 1 deep
-
-  // Two flat throat tones instead of a smooth gradient — the same posterized
-  // shading the field and walls use.
-  vec3 col = mix(uDeep, uCore, smoothstep(0.42, 0.50, depth));
-
-  // Two thin, flat spiral ribbons — one blue, one violet — winding through a
-  // mostly dark throat. Keeping them narrow and graphic avoids the busy
-  // hatched look of broad bands.
-  float spiral = sin(a * 2.0 + r * 0.10 - t * 0.9);
-  float blueArm = smoothstep(0.97, 0.997, spiral);
-  float violetArm = smoothstep(0.97, 0.997, -spiral);
-  float band = smoothstep(0.04, 0.20, depth)
-             * (1.0 - smoothstep(0.75, 0.95, depth));
-  col = mix(col, uSwirlA, blueArm * band * 0.75);
-  col = mix(col, uSwirlB, violetArm * band * 0.50);
-
-  // Thick ink rim, fully inside the silhouette so it reads like the bold
-  // outlines on walls and tanks (and never spills into the next tile).
-  float rim = smoothstep(-4.5, -3.2, d) * (1.0 - smoothstep(-0.8, 0.0, d));
+  // Flat interior. The only detail is a crisp ink edge, fully inside the
+  // silhouette so it cannot bleed into a neighbouring tile.
+  vec3 col = uCore;
+  float rim = smoothstep(-3.0, -1.6, d) * (1.0 - smoothstep(-0.9, 0.0, d));
   col = mix(col, uInk, rim);
 
-  // Thin pale bevel just inside the ink, strongest on the upper-left.
-  float bevel = smoothstep(-6.5, -5.2, d) * (1.0 - smoothstep(-4.2, -3.2, d));
-  float lit = smoothstep(-0.15, 0.55, -sin(a + 2.35));
-  col = mix(col, uGlint, bevel * lit * 0.35);
-
-  if (inside <= 0.004) discard;
   gl_FragColor = vec4(col, inside);
 }
 `;

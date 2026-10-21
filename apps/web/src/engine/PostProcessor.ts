@@ -38,7 +38,6 @@ import {
 import {
   BLOCK_RADIUS,
   HOLE_CORE_HEX,
-  HOLE_DEEP_HEX,
   HOLE_INSET_PX,
   HOLE_INK_HEX,
 } from "./shapes";
@@ -82,16 +81,11 @@ const WALL_STONE = hexToRgb("#7d848e");
 const WALL_SAND = hexToRgb("#cbb287");
 const INK = hexToRgb(palette.ink);
 
-// Hole palette: a deep, near-black ink rim (a shade darker than the wall
-// outlines so the void reads as a pit rather than a raised tire), a two-tone
-// throat, and spiral arms in the darker team blue/violet so they read as shaded
-// arcade colour instead of neon.
+// Hole palette: a flat near-black core with a slightly lighter ink rim, shared
+// with the 2D fallback. There are no gradients or internal markings — a hole is
+// a plain round pit, and the rim is its only edge treatment.
 const HOLE_INK = hexToRgb(HOLE_INK_HEX);
 const HOLE_CORE = hexToRgb(HOLE_CORE_HEX);
-const HOLE_DEEP = hexToRgb(HOLE_DEEP_HEX);
-const HOLE_SWIRL_A = hexToRgb(palette.blueD);
-const HOLE_SWIRL_B = hexToRgb(palette.purpleD);
-const HOLE_GLINT = hexToRgb(palette.teal);
 
 // Outline thickness (board px), matching the 2D block stroke (lineWidth 4).
 const OUTLINE_PX = 4;
@@ -102,13 +96,11 @@ const OUTLINE_PX = 4;
 const WALL_MARGIN = BLOCK_RADIUS + OUTLINE_PX;
 
 // Hole field: a baked signed-distance field over the whole board. Every hole
-// tile contributes an inscribed circle; adjacent tiles add a stadium capsule
-// between their centres (and a filled 2x2 block adds a diagonal capsule). The
-// primitives are hard-unioned, so an isolated hole is a perfect disc, a run is
-// a clean capsule, and a block is one rounded pit. The field is stored in an
-// RGBA8 texture:
+// contributes exactly one independent inscribed circle; neighbouring circles
+// are never joined with capsules, so a hole is always a circle and never grows
+// into a stadium or leaks into the next tile. The field stores only distance:
 //   R — signed distance to the rim in board px, encoded over [-64, +16]
-//   G,B — nearest pit centre, as board UV
+//   G,B — unused (zero)
 // The 2px cell keeps the field cheap while linear filtering + the shader's SDF
 // alpha still resolve a smooth, sub-pixel rim.
 const HOLE_CELL = 2;
@@ -387,8 +379,6 @@ export class PostProcessor {
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, this.holeFieldTex);
       gl.uniform1i(this.holeP.loc("uField"), 0);
-      gl.uniform2f(this.holeP.loc("uRes"), this.W, this.H);
-      gl.uniform1f(this.holeP.loc("uTime"), animT);
       const setColor = (name: string, c: Rgb) =>
         gl.uniform3f(
           this.holeP.loc(name),
@@ -398,12 +388,8 @@ export class PostProcessor {
         );
       setColor("uInk", HOLE_INK);
       setColor("uCore", HOLE_CORE);
-      setColor("uDeep", HOLE_DEEP);
-      setColor("uSwirlA", HOLE_SWIRL_A);
-      setColor("uSwirlB", HOLE_SWIRL_B);
-      setColor("uGlint", HOLE_GLINT);
-      // Straight-alpha "over" the field so the rounded, animated rim shows the
-      // floor through the corners.
+      // Straight-alpha "over" the field so the round rim shows the floor
+      // through the cell corners.
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       this._drawHoles(env.holeVerts);
@@ -631,9 +617,9 @@ export class PostProcessor {
     const cy = (y: number) => 1 - (y / H) * 2; // board-top → clip-top
 
     // Holes: one quad per tile, exactly covering its cell. Each vertex carries
-    // its board-space UV, so all tiles sample one continuous SDF field and the
-    // pit stays seamless. The quad does not expand past the tile, so the pit
-    // can never tint or overlap a neighbouring block.
+    // its board-space UV, so all tiles sample one continuous SDF field while
+    // each pit stays inside its own tile. The quad does not expand past the
+    // tile, so the pit can never tint or overlap a neighbouring block.
     const hole: number[] = [];
     for (const h of holes) {
       const { x, y } = h.position;
@@ -711,20 +697,11 @@ export class PostProcessor {
   /**
    * (Re)build the hole SDF field when the hole set changes.
    *
-   * Each hole tile is an inscribed circle, and every pair of touching tiles
-   * adds a stadium capsule between their centres. A filled 2x2 block also gets
-   * a diagonal capsule, which fills the little diamond the four edge capsules
-   * leave in its middle. The primitives are unioned into one distance field,
-   * so:
-   *   - a lone tile is a perfect disc,
-   *   - a straight run is a capsule,
-   *   - a block is one rounded pit.
-   * Each connected pit is then labelled and its centre-most cell chosen as
-   * the pit's pole. That pole is baked alongside the distance, so the shader
-   * spins one continuous vortex per pit instead of one per tile (which would
-   * leave seams along tile boundaries). Encoded in RGBA8:
-   *   R = signed distance (0..1 over [-64px, +16px])
-   *   G,B = pit pole (board UV)
+   * Every hole contributes one independent inscribed circle. We deliberately
+   * never add capsules between touching holes: a hole is always a circle, even
+   * when it sits directly next to another one. The field is the minimum of
+   * those separate circles, and only the distance is encoded. The shader no
+   * longer needs a pit centre, so G/B stay zero.
    */
   private _ensureHoleField(holes: EnvHole[]): void {
     const sig = holes
@@ -736,237 +713,56 @@ export class PostProcessor {
     const GW = this.hfW;
     const GH = this.hfH;
     const data = new Uint8Array(GW * GH * 4);
-    // Extra px baked around each primitive so the shader's hand-drawn rim
-    // (and its ~7px wobble band) has a valid distance just outside the pit.
+    // Extra px baked around each circle so the shader has a valid distance
+    // just outside the rim.
     const PAD = 10;
 
-    interface Primitive {
-      ax: number;
-      ay: number;
-      bx: number;
-      by: number;
-      r: number;
-      vx: number;
-      vy: number;
-      len2: number;
-      // Pixel bounds grown by K — the only cells that can affect the union.
-      minX: number;
-      maxX: number;
-      minY: number;
-      maxY: number;
-    }
-    const prims: Primitive[] = [];
-    const addPrim = (
-      ax: number,
-      ay: number,
-      bx: number,
-      by: number,
-      r: number
-    ) => {
-      prims.push({
-        ax,
-        ay,
-        bx,
-        by,
+    const circles = holes.map((h) => {
+      const cx = h.position.x + h.size.w * 0.5;
+      const cy = h.position.y + h.size.h * 0.5;
+      const r = Math.max(1, Math.min(h.size.w, h.size.h) * 0.5 - HOLE_INSET_PX);
+      return {
+        cx,
+        cy,
         r,
-        vx: bx - ax,
-        vy: by - ay,
-        len2: (bx - ax) * (bx - ax) + (by - ay) * (by - ay),
-        minX: Math.min(ax, bx) - r - PAD,
-        maxX: Math.max(ax, bx) + r + PAD,
-        minY: Math.min(ay, by) - r - PAD,
-        maxY: Math.max(ay, by) + r + PAD,
-      });
-    };
+        // Only these cells can affect this circle's part of the field.
+        minX: cx - r - PAD,
+        maxX: cx + r + PAD,
+        minY: cy - r - PAD,
+        maxY: cy + r + PAD,
+      };
+    });
 
-    // Flatten the tiles once.
-    const circles = holes.map((h) => ({
-      cx: h.position.x + h.size.w * 0.5,
-      cy: h.position.y + h.size.h * 0.5,
-      r: Math.max(1, Math.min(h.size.w, h.size.h) * 0.5 - HOLE_INSET_PX),
-    }));
-    const gridKey = (x: number, y: number) =>
-      `${Math.round(x)},${Math.round(y)}`;
-    const byGrid = new Map<string, number>();
-    holes.forEach((h, i) => byGrid.set(gridKey(h.position.x, h.position.y), i));
-
-    // A circle is a zero-length capsule, so one SDF covers both primitive kinds.
-    for (const c of circles) addPrim(c.cx, c.cy, c.cx, c.cy, c.r);
-    for (let i = 0; i < holes.length; i++) {
-      const h = holes[i]!;
-      const c = circles[i]!;
-      const right = byGrid.get(gridKey(h.position.x + h.size.w, h.position.y));
-      const down = byGrid.get(gridKey(h.position.x, h.position.y + h.size.h));
-      const diag =
-        right !== undefined && down !== undefined
-          ? byGrid.get(
-              gridKey(h.position.x + h.size.w, h.position.y + h.size.h)
-            )
-          : undefined;
-      if (right !== undefined) {
-        const rc = circles[right]!;
-        addPrim(c.cx, c.cy, rc.cx, rc.cy, c.r);
-      }
-      if (down !== undefined) {
-        const dc = circles[down]!;
-        addPrim(c.cx, c.cy, dc.cx, dc.cy, c.r);
-      }
-      // Fill the middle of a solid 2x2 block (one diagonal is enough).
-      if (diag !== undefined) {
-        const dc = circles[diag]!;
-        addPrim(c.cx, c.cy, dc.cx, dc.cy, c.r);
-      }
-    }
-
-    // Pass 1 — the distance field itself. Accumulate one primitive at a time
-    // over its (small) bounds instead of testing every primitive per cell: a
-    // board is ~230k cells, and most of it is far from any pit.
+    // Build the field one circle at a time. min() with the sentinel seeds the
+    // far field without an extra initialisation pass, and keeping the circles
+    // separate guarantees they can never merge into a capsule.
     const N = GW * GH;
     const sdf = new Float32Array(N).fill(HOLE_SDF_SPAN_PX);
-    for (const s of prims) {
-      const gx0 = Math.max(0, Math.ceil(s.minX / HOLE_CELL - 0.5));
-      const gx1 = Math.min(GW - 1, Math.floor(s.maxX / HOLE_CELL - 0.5));
-      const gy0 = Math.max(0, Math.ceil(s.minY / HOLE_CELL - 0.5));
-      const gy1 = Math.min(GH - 1, Math.floor(s.maxY / HOLE_CELL - 0.5));
+    for (const c of circles) {
+      const gx0 = Math.max(0, Math.ceil(c.minX / HOLE_CELL - 0.5));
+      const gx1 = Math.min(GW - 1, Math.floor(c.maxX / HOLE_CELL - 0.5));
+      const gy0 = Math.max(0, Math.ceil(c.minY / HOLE_CELL - 0.5));
+      const gy1 = Math.min(GH - 1, Math.floor(c.maxY / HOLE_CELL - 0.5));
       for (let gy = gy0; gy <= gy1; gy++) {
         const py = (gy + 0.5) * HOLE_CELL;
         for (let gx = gx0; gx <= gx1; gx++) {
           const px = (gx + 0.5) * HOLE_CELL;
-          // Distance to the capsule's core segment, then its radius.
-          const t =
-            s.len2 > 0
-              ? Math.max(
-                  0,
-                  Math.min(
-                    1,
-                    ((px - s.ax) * s.vx + (py - s.ay) * s.vy) / s.len2
-                  )
-                )
-              : 0;
-          const dx = px - (s.ax + s.vx * t);
-          const dy = py - (s.ay + s.vy * t);
-          const cd = Math.sqrt(dx * dx + dy * dy) - s.r;
+          const dx = px - c.cx;
+          const dy = py - c.cy;
+          const cd = Math.sqrt(dx * dx + dy * dy) - c.r;
           const i = gy * GW + gx;
-          // Hard union. A smooth-min would bulge outward where a circle and
-          // a capsule coincide at the same centre, turning straight runs into
-          // scalloped chains; min() keeps a run a clean capsule and a 2x2
-          // block a rounded square. The sentinel is far above any real
-          // distance, so min() also seeds the field with no extra flag.
           sdf[i] = Math.min(sdf[i]!, cd);
         }
       }
     }
 
-    // Pass 2 — label connected pits and choose one vortex centre per pit: the
-    // inside cell nearest the pit's centroid. A per-tile centre would leave
-    // pattern seams along shared tile edges; one pole per pit keeps the whole
-    // swirl continuous.
-    const labels = new Int32Array(N).fill(-1);
-    const compCount: number[] = [];
-    const compSumX: number[] = [];
-    const compSumY: number[] = [];
-    const stack: number[] = [];
+    // Encode. Only R is read by the shader; G/B remain zero.
     for (let i = 0; i < N; i++) {
-      if (sdf[i]! >= 0 || labels[i] !== -1) continue;
-      const comp = compCount.length;
-      let count = 0;
-      let sumX = 0;
-      let sumY = 0;
-      labels[i] = comp;
-      stack.push(i);
-      while (stack.length > 0) {
-        const ci = stack.pop()!;
-        const cx = ci % GW;
-        const cy = (ci / GW) | 0;
-        count++;
-        sumX += cx;
-        sumY += cy;
-        if (cx > 0 && labels[ci - 1] === -1 && sdf[ci - 1]! < 0) {
-          labels[ci - 1] = comp;
-          stack.push(ci - 1);
-        }
-        if (cx < GW - 1 && labels[ci + 1] === -1 && sdf[ci + 1]! < 0) {
-          labels[ci + 1] = comp;
-          stack.push(ci + 1);
-        }
-        if (cy > 0 && labels[ci - GW] === -1 && sdf[ci - GW]! < 0) {
-          labels[ci - GW] = comp;
-          stack.push(ci - GW);
-        }
-        if (cy < GH - 1 && labels[ci + GW] === -1 && sdf[ci + GW]! < 0) {
-          labels[ci + GW] = comp;
-          stack.push(ci + GW);
-        }
-      }
-      compCount.push(count);
-      compSumX.push(sumX);
-      compSumY.push(sumY);
-    }
-    const poles = compCount.map((count, comp) => ({
-      cx: compSumX[comp]! / count,
-      cy: compSumY[comp]! / count,
-      x: 0,
-      y: 0,
-      best: Infinity,
-    }));
-    // One pass over the grid — not one per pit — to find each pit's pole.
-    for (let i = 0; i < N; i++) {
-      const comp = labels[i]!;
-      if (comp < 0) continue;
-      const p = poles[comp]!;
-      const gx = i % GW;
-      const gy = (i / GW) | 0;
-      const dx = gx - p.cx;
-      const dy = gy - p.cy;
-      const dd = dx * dx + dy * dy;
-      if (dd < p.best) {
-        p.best = dd;
-        p.x = (gx + 0.5) * HOLE_CELL;
-        p.y = (gy + 0.5) * HOLE_CELL;
-      }
-    }
-
-    // Pass 3 — flood the pole outward so every outside cell holds its nearest
-    // pit's centre. The shader needs that for rim wobble across the shoreline;
-    // a multi-source BFS keeps it O(N) even on levels with many separate pits.
-    const queue = new Int32Array(N);
-    let head = 0;
-    let tail = 0;
-    for (let i = 0; i < N; i++) if (labels[i]! >= 0) queue[tail++] = i;
-    while (head < tail) {
-      const ci = queue[head++]!;
-      const comp = labels[ci]!;
-      const gx = ci % GW;
-      const gy = (ci / GW) | 0;
-      if (gx > 0 && labels[ci - 1] === -1) {
-        labels[ci - 1] = comp;
-        queue[tail++] = ci - 1;
-      }
-      if (gx < GW - 1 && labels[ci + 1] === -1) {
-        labels[ci + 1] = comp;
-        queue[tail++] = ci + 1;
-      }
-      if (gy > 0 && labels[ci - GW] === -1) {
-        labels[ci - GW] = comp;
-        queue[tail++] = ci - GW;
-      }
-      if (gy < GH - 1 && labels[ci + GW] === -1) {
-        labels[ci + GW] = comp;
-        queue[tail++] = ci + GW;
-      }
-    }
-
-    // Pass 4 — encode.
-    for (let i = 0; i < N; i++) {
-      const comp = labels[i]!;
-      const p = comp >= 0 ? poles[comp]! : null;
-      const px = p ? p.x : 0;
-      const py = p ? p.y : 0;
       const o = i * 4;
       const sd = (sdf[i]! - HOLE_SDF_MIN_PX) / HOLE_SDF_SPAN_PX;
       data[o] = Math.round(Math.max(0, Math.min(1, sd)) * 255);
-      data[o + 1] = Math.round(Math.max(0, Math.min(1, px / this.W)) * 255);
-      data[o + 2] = Math.round(Math.max(0, Math.min(1, py / this.H)) * 255);
+      data[o + 1] = 0;
+      data[o + 2] = 0;
       data[o + 3] = 255;
     }
 
