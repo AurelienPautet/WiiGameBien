@@ -87,7 +87,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@commitlint/cli": "^21.0.2",
+    "@commitlint/cli": "^21.2.4",
     "@commitlint/config-conventional": "^21.0.2",
     "@eslint/js": "^9.39.4",
     "@ouigame/config-ts": "workspace:*",
