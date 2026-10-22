@@ -48,7 +48,7 @@ export function CampaignCard({
 
   return (
     <Card className="flex gap-4 p-3 group" onClick={onClick}>
-      <div className="shrink-0 w-28 h-24 rounded-lg border-[3px] border-ink bg-field flex items-center justify-center">
+      <div className="shrink-0 w-28 h-24 rounded-lg border-[3px] border-ink bg-field flex items-center justify-center transition-transform duration-300 ease-out group-hover:-rotate-2 group-hover:scale-[1.04]">
         {completed ? (
           <Trophy className="w-12 h-12 text-yellow-d" />
         ) : (

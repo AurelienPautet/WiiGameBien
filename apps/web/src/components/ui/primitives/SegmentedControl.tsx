@@ -63,7 +63,6 @@ export function SegmentedControl<T extends string>({
               ui.tab();
               onValueChange(opt.value);
             }}
-            onMouseEnter={() => ui.hover()}
             className={cn(
               "tab-pressable font-display font-bold text-sm px-5 py-2.5 cursor-pointer transition-colors",
               active ? TONE[tone] : "text-white/70 hover:text-white"

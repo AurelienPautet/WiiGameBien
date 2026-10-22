@@ -37,12 +37,12 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
       {...pressable}
       {...props}
       // Composed after the spread so callers' handlers still fire (see Button).
+      // Hover sound is global — one listener for every control, no double tick.
       onClick={(e) => {
         ui.click();
         onClick?.(e);
       }}
       onHoverStart={(e, info) => {
-        ui.hover();
         onHoverStart?.(e, info);
       }}
     />

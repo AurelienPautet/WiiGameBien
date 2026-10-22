@@ -42,7 +42,7 @@ export function StatCard({
   icon,
 }: StatCardProps) {
   return (
-    <div className="flex items-center gap-3.5 bg-white border-4 border-ink rounded-arcade shadow-arcade px-4 py-3.5">
+    <div className="stat-card flex items-center gap-3.5 bg-white border-4 border-ink rounded-arcade shadow-arcade px-4 py-3.5">
       {icon && (
         <span
           className={cn(

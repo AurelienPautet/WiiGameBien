@@ -75,7 +75,8 @@ export function StarRating({
             onMouseEnter={
               live
                 ? () => {
-                    ui.hover();
+                    // The app-wide hover listener plays the tick; this only
+                    // drives the preview fill.
                     setHovered(i);
                   }
                 : undefined

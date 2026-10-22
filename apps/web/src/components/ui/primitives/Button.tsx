@@ -53,14 +53,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       className={cn(button({ variant, size }), className)}
       {...pressable}
       {...props}
-      // Procedural click/hover feedback, composed so callers' own handlers
-      // still run. Listed after the spread so they aren't clobbered by it.
+      // Procedural click feedback, composed so callers' own handler still runs.
+      // Hover is handled once for every control by the app-wide `useHoverSound`
+      // listener — doing it here too would double-tick every button.
       onClick={(e) => {
         ui.click();
         onClick?.(e);
       }}
       onHoverStart={(e, info) => {
-        ui.hover();
         onHoverStart?.(e, info);
       }}
     />

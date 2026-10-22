@@ -33,6 +33,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
         className
       )}
       {...(disabled ? {} : liftable)}
+      {...(disabled ? {} : { "data-hover-sound": "" })}
       {...props}
       // Composed after the spread so a caller's onClick still runs (see Button).
       // Disabled cards keep inert handlers (no sound, no caller callback) rather
@@ -44,7 +45,8 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       }}
       onHoverStart={(e, info) => {
         if (disabled) return;
-        ui.hover();
+        // Hover sound comes from the app-wide listener; a card is still a
+        // <div> there, so opt it in explicitly via the data hook.
         onHoverStart?.(e, info);
       }}
     >

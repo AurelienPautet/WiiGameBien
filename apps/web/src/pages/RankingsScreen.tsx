@@ -149,7 +149,7 @@ export const RankingsScreen = () => {
               <div
                 key={p.username}
                 className={cn(
-                  "relative bg-white border-4 border-ink rounded-[18px] shadow-arcade text-center px-4 pt-7 pb-4",
+                  "rank-podium-card relative bg-white border-4 border-ink rounded-[18px] shadow-arcade text-center px-4 pt-7 pb-4",
                   first ? "w-[230px] -translate-y-3.5" : "w-[200px]"
                 )}
               >
@@ -204,7 +204,7 @@ export const RankingsScreen = () => {
           rest.map((p) => (
             <div
               key={p.username}
-              className="flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl odd:bg-white/5 hover:bg-white/10"
+              className="rank-row flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl odd:bg-white/5 hover:bg-white/10 transition-colors"
             >
               <span className="text-xl font-bold text-white w-10 text-center">
                 #{p.rank}
@@ -215,7 +215,7 @@ export const RankingsScreen = () => {
               </span>
               <div className="hidden sm:block w-48 h-3.5 rounded-lg border-2 border-ink bg-white/10 overflow-hidden">
                 <span
-                  className="block h-full bg-blue"
+                  className="rank-bar-fill block h-full bg-blue"
                   style={{
                     width: `${Math.max(6, (Number(p.total_data) / maxData) * 100)}%`,
                   }}
@@ -233,7 +233,7 @@ export const RankingsScreen = () => {
       <div
         aria-busy={isRefreshing}
         className={cn(
-          "sticky bottom-3.5 mt-3.5 flex items-center gap-3.5 bg-yellow border-4 border-ink rounded-[14px] shadow-[0_8px_0_rgba(0,0,0,0.25)] px-4 py-3 transition-opacity",
+          "rank-you sticky bottom-3.5 mt-3.5 flex items-center gap-3.5 bg-yellow border-4 border-ink rounded-[14px] shadow-[0_8px_0_rgba(0,0,0,0.25)] px-4 py-3 transition-opacity",
           isRefreshing && "opacity-60"
         )}
       >

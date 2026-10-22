@@ -286,6 +286,7 @@ export const CampaignEditor = () => {
                 <div
                   key={p.id}
                   draggable
+                  data-hover-sound=""
                   onDragStart={(e) => {
                     setDragIndex(index);
                     e.dataTransfer.effectAllowed = "move";
