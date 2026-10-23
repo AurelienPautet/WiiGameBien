@@ -33,8 +33,8 @@ import {
   shockwaveFrag,
   VERT_SRC,
   WALL_FRAG,
-  WALL_VERT,
 } from "./postfx/shaders";
+import { bakeWallMasks, wallSignature } from "./wallTexture";
 import {
   BLOCK_RADIUS,
   HOLE_CORE_HEX,
@@ -90,11 +90,6 @@ const HOLE_CORE = hexToRgb(HOLE_CORE_HEX);
 // Outline thickness (board px), matching the 2D block stroke (lineWidth 4).
 const OUTLINE_PX = 4;
 
-// Margin (board px) each wall quad is expanded by, so the shader has room for
-// the concave fillet (pokes up to a radius into the open diagonal) and the ink
-// straddling the silhouette. One radius plus the outline clears both.
-const WALL_MARGIN = BLOCK_RADIUS + OUTLINE_PX;
-
 // Hole field: a baked signed-distance field over the whole board. Every hole
 // contributes exactly one independent inscribed circle; neighbouring circles
 // are never joined with capsules, so a hole is always a circle and never grows
@@ -141,7 +136,12 @@ export class PostProcessor {
   // Environment geometry buffers, rebuilt each frame from the current blocks
   // and holes (block geometry changes as walls are destroyed).
   private holeBuf: WebGLBuffer | null = null;
-  private wallFillBuf: WebGLBuffer | null = null;
+  // Wall artwork is baked on the CPU into one coverage-mask texture, rebuilt
+  // only when the block set changes (walls are destroyed during play).
+  private wallTex: WebGLTexture | null = null;
+  private wallCanvas: HTMLCanvasElement | null = null;
+  private wallCtx: CanvasRenderingContext2D | null = null;
+  private wallSig = "";
   // Hole SDF-field texture + the signature of the holes it was built from
   // (rebuilt only when the hole set changes — holes are static within a level).
   private holeFieldTex: WebGLTexture | null = null;
@@ -262,18 +262,14 @@ export class PostProcessor {
     this.bright = new Program(gl, VERT_SRC, BRIGHT_FRAG);
     this.blur = new Program(gl, VERT_SRC, BLUR_FRAG);
     this.final = new Program(gl, VERT_SRC, FINAL_FRAG);
-    // Environment geometry programs (their own attribute layouts).
+    // Environment programs: holes use their own board-UV attribute; the wall
+    // pass is a fullscreen sample of the CPU-baked mask texture.
     this.holeP = new Program(gl, HOLE_VERT, HOLE_FRAG, ["aPos", "aBoard"]);
-    this.wallP = new Program(gl, WALL_VERT, WALL_FRAG, [
-      "aPos",
-      "aType",
-      "aRect",
-      "aExp",
-      "aDiag",
-    ]);
+    this.wallP = new Program(gl, VERT_SRC, WALL_FRAG);
 
     this.holeBuf = gl.createBuffer();
-    this.wallFillBuf = gl.createBuffer();
+    this.wallTex = createSourceTexture(gl);
+    this.wallSig = "";
     // Hole SDF texture: linear-filtered so the per-cell distances smooth into a
     // continuous pit. Data is uploaded lazily by _ensureHoleField; reset the
     // signature so a fresh (or context-restored) texture re-uploads.
@@ -372,7 +368,7 @@ export class PostProcessor {
     // 1a2. Environment geometry (holes, then wall fills + ink outlines), drawn
     // opaque over the field — same z-order as the 2D renderer (holes < walls <
     // entities). Rebuilt from current geometry each frame.
-    const env = this._buildEnv(blocks, holes);
+    const env = this._buildEnv(holes);
     if (env.holeVerts > 0) {
       this._ensureHoleField(holes); // (re)build the SDF field if holes changed
       this.holeP.use();
@@ -395,12 +391,11 @@ export class PostProcessor {
       this._drawHoles(env.holeVerts);
       gl.disable(gl.BLEND);
     }
-    if (env.wallVerts > 0) {
+    this._ensureWallMasks(blocks);
+    if (blocks.length > 0) {
       this.wallP.use();
       gl.uniform1f(this.wallP.loc("uTime"), animT);
       gl.uniform2f(this.wallP.loc("uRes"), this.W, this.H);
-      gl.uniform1f(this.wallP.loc("uRadius"), BLOCK_RADIUS);
-      gl.uniform1f(this.wallP.loc("uOutline"), OUTLINE_PX);
       gl.uniform3f(
         this.wallP.loc("uStone"),
         WALL_STONE.red / 255,
@@ -419,11 +414,14 @@ export class PostProcessor {
         INK.green / 255,
         INK.blue / 255
       );
-      // Straight-alpha "over" the field so the rounded corners and the outer
+      // Straight-alpha "over" the field so the baked AA edge and the outer
       // half of the ink show the floor through.
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, this.wallTex);
+      gl.uniform1i(this.wallP.loc("uWall"), 0);
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-      this._drawWallFills(env.wallVerts);
+      this._drawFullscreen();
       gl.disable(gl.BLEND);
     }
 
@@ -518,7 +516,7 @@ export class PostProcessor {
     gl.deleteTexture(this.frontTex);
     if (this.quad) gl.deleteBuffer(this.quad);
     if (this.holeBuf) gl.deleteBuffer(this.holeBuf);
-    if (this.wallFillBuf) gl.deleteBuffer(this.wallFillBuf);
+    if (this.wallTex) gl.deleteTexture(this.wallTex);
     if (this.holeFieldTex) gl.deleteTexture(this.holeFieldTex);
     this.field?.dispose();
     this.holeP?.dispose();
@@ -596,20 +594,13 @@ export class PostProcessor {
   }
 
   /**
-   * Rebuild the environment vertex buffers from the current blocks/holes and
-   * upload them. Returns the vertex counts. Cheap enough to run every frame
-   * (a few hundred floats), and always correct as walls get destroyed.
+   * Rebuild the hole vertex buffer from the current holes. Returns the vertex
+   * count. Cheap enough to run every frame (a few hundred floats). Walls are
+   * baked into a mask texture by `_ensureWallMasks`, only when they change.
    *
-   * Layouts: holes = [clipX, clipY, boardU, boardV]; wall fills = [clipX, clipY,
-   * type, rectX, rectY, rectW, rectH, openT, openR, openB, openL, diagTR, diagBR,
-   * diagBL, diagTL] (15 floats — the rect + open-edge + diagonal masks drive the
-   * per-block rounded SDF, fillets and ink in the wall shader; board px come from
-   * gl_FragCoord, so no UV is stored).
+   * Hole layout: [clipX, clipY, boardU, boardV].
    */
-  private _buildEnv(
-    blocks: EnvBlock[],
-    holes: EnvHole[]
-  ): { holeVerts: number; wallVerts: number } {
+  private _buildEnv(holes: EnvHole[]): { holeVerts: number } {
     const gl = this.gl;
     const W = this.W;
     const H = this.H;
@@ -644,54 +635,47 @@ export class PostProcessor {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.holeBuf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(hole), gl.DYNAMIC_DRAW);
 
-    // Walls: one quad per block, expanded by WALL_MARGIN so the shader has room
-    // for the rounded corners + ink. Each vertex carries the block's rect, the
-    // open-edge mask (no same-type neighbour on that side) and the same-type
-    // diagonal-neighbour mask; the shader derives the convex rounding, concave
-    // fillets and the connected ink from those (see WALL_FRAG). Board px come
-    // from gl_FragCoord in the shader, so no per-vertex UV is needed.
-    const fill: number[] = [];
-    const key = (x: number, y: number) => `${Math.round(x)},${Math.round(y)}`;
-    const occ = new Map<string, number>();
-    for (const b of blocks) occ.set(key(b.position.x, b.position.y), b.type);
-    const has = (x: number, y: number, t: number) =>
-      occ.get(key(x, y)) === t ? 1 : 0;
-    const M = WALL_MARGIN;
-    for (const b of blocks) {
-      const { x, y } = b.position;
-      const { w, h } = b.size;
-      const t = b.type;
-      const ax = cx(x - M);
-      const bx = cx(x + w + M);
-      const ay = cy(y - M);
-      const by = cy(y + h + M);
-      // Open edges (top, right, bottom, left): no same-type neighbour abuts.
-      const eT = 1 - has(x, y - h, t);
-      const eR = 1 - has(x + w, y, t);
-      const eB = 1 - has(x, y + h, t);
-      const eL = 1 - has(x - w, y, t);
-      // Same-type diagonal neighbours (TR, BR, BL, TL).
-      const dTR = has(x + w, y - h, t);
-      const dBR = has(x + w, y + h, t);
-      const dBL = has(x - w, y + h, t);
-      const dTL = has(x - w, y - h, t);
-      // prettier-ignore
-      const vert = (cxv: number, cyv: number) =>
-        fill.push(cxv, cyv, t, x, y, w, h, eT, eR, eB, eL, dTR, dBR, dBL, dTL);
-      vert(ax, ay);
-      vert(bx, ay);
-      vert(ax, by);
-      vert(ax, by);
-      vert(bx, ay);
-      vert(bx, by);
-    }
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.wallFillBuf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(fill), gl.DYNAMIC_DRAW);
+    return { holeVerts: hole.length / 4 };
+  }
 
-    return {
-      holeVerts: hole.length / 4,
-      wallVerts: fill.length / 15,
-    };
+  /**
+   * (Re)bake the wall masks and upload them when the block set changes. The
+   * merged region is drawn with canvas 2D (rounded convex corners, concave
+   * fillets, one continuous stroke) and encoded as coverage masks in RGBA:
+   * R = ink, G = stone × 0.5, B = sand × 0.5, A = coverage.
+   */
+  private _ensureWallMasks(blocks: EnvBlock[]): void {
+    const sig = wallSignature(blocks);
+    if (sig === this.wallSig) return;
+    this.wallSig = sig;
+
+    if (!this.wallCanvas) {
+      this.wallCanvas = document.createElement("canvas");
+      this.wallCanvas.width = this.W;
+      this.wallCanvas.height = this.H;
+      this.wallCtx = this.wallCanvas.getContext("2d", { alpha: true });
+      if (!this.wallCtx)
+        throw new Error("2D context unavailable for wall bake");
+    }
+    const ctx = this.wallCtx;
+    if (!ctx) return;
+    bakeWallMasks(ctx, blocks, this.W, this.H, BLOCK_RADIUS, OUTLINE_PX);
+
+    const gl = this.gl;
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.wallTex);
+    // Canvas-top is board-top; flip so texture v=0 is board-bottom, matching
+    // gl_FragCoord's bottom-left origin in the shader.
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      this.wallCanvas
+    );
   }
 
   /**
@@ -795,26 +779,6 @@ export class PostProcessor {
     gl.vertexAttribPointer(1, 2, gl.FLOAT, false, stride, 8);
     gl.disableVertexAttribArray(2);
     gl.drawArrays(gl.TRIANGLES, 0, verts);
-  }
-
-  private _drawWallFills(verts: number): void {
-    const gl = this.gl;
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.wallFillBuf);
-    const stride = 15 * 4;
-    gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, stride, 0); // aPos
-    gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 1, gl.FLOAT, false, stride, 8); // aType
-    gl.enableVertexAttribArray(2);
-    gl.vertexAttribPointer(2, 4, gl.FLOAT, false, stride, 12); // aRect
-    gl.enableVertexAttribArray(3);
-    gl.vertexAttribPointer(3, 4, gl.FLOAT, false, stride, 28); // aExp
-    gl.enableVertexAttribArray(4);
-    gl.vertexAttribPointer(4, 4, gl.FLOAT, false, stride, 44); // aDiag
-    gl.drawArrays(gl.TRIANGLES, 0, verts);
-    // Leave attributes 3/4 disabled for the single/dual-attribute passes.
-    gl.disableVertexAttribArray(3);
-    gl.disableVertexAttribArray(4);
   }
 }
 

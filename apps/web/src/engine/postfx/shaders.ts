@@ -153,145 +153,53 @@ void main() {
 `;
 
 /**
- * Walls — block fills + ink outline in a single pass, with the animation keyed
- * off the block type so the two read very differently (board-space UV keeps both
- * seamless across merged blocks). Type 1 = STRONG / indestructible: solid steel,
- * mostly static, a fine brushed grain + a slow glint. Type 2 = DESTRUCTIBLE:
- * scrolling diagonal hazard stripes, signalling "this can be broken".
+ * Walls — fills + ink outline, baked on the CPU into one mask texture.
  *
- * Each tile is drawn as its quad expanded by a margin, and the fragment shader
- * builds the *local* rounded silhouette of the merged wall region analytically
- * from the tile's neighbour flags (no per-region distance field needed):
- *  - covered sides (a same-type neighbour abuts) are extended out by the radius,
- *    so the silhouette/ink sits on the outer edges only and merged runs are flush
- *    with no interior seam;
- *  - convex corners (both edges open) are rounded *outward*;
- *  - concave corners (both edges covered but the diagonal is open) are carved
- *    *inward* into the open diagonal as a fillet, so inner corners round too.
- * Because each tile only ever paints its own cell plus the unclaimed open space
- * at its own corners, neighbouring expanded quads never fight over a pixel.
+ * The previous per-tile analytic SDF could not see past its own tile: at a T
+ * junction the edge stroke, inner fillet and suppression region came from
+ * different quads and met at slightly wrong distances, leaving light notches
+ * in the ink and stray rounded corners. The merged region is now rasterised
+ * once per block-set change (see engine/wallTexture.ts) with proper rounded
+ * convex corners, concave fillets and one continuous outline, then sampled
+ * here. This keeps the animated type-specific fill detail on the GPU.
+ *
+ * Texture channels (additive bake):
+ *   R = ink coverage, G = stone fill × 0.5, B = sand fill × 0.5, A = coverage.
  */
-export const WALL_VERT = `
-attribute vec2 aPos;
-attribute float aType;
-attribute vec4 aRect;   // (minX, minY, w, h) board px
-attribute vec4 aExp;    // (top, right, bottom, left) 1 = edge open (no same-type neighbour)
-attribute vec4 aDiag;   // (TR, BR, BL, TL) 1 = same-type diagonal neighbour present
-varying float vType;
-varying vec4 vRect;
-varying vec4 vExp;
-varying vec4 vDiag;
-void main() {
-  vType = aType;
-  vRect = aRect;
-  vExp = aExp;
-  vDiag = aDiag;
-  gl_Position = vec4(aPos, 0.0, 1.0);
-}
-`;
-
 export const WALL_FRAG = `
 ${FRAG_PRECISION}
-varying float vType;
-varying vec4 vRect;     // (minX, minY, w, h) board px
-varying vec4 vExp;      // (top, right, bottom, left) open edges
-varying vec4 vDiag;     // (TR, BR, BL, TL) diagonal present
-uniform float uTime;
-uniform vec2 uRes;
-uniform vec3 uStone;
-uniform vec3 uSand;
-uniform vec3 uInk;
-uniform float uRadius;   // corner radius, board px
-uniform float uOutline;  // ink thickness, board px
-
-// Subtract an open diagonal cell from the wall SDF, giving a rounded inner corner.
-// g>0 points into the diagonal cell; we subtract the cell with its corner (at the
-// tile corner) pre-rounded by k, so the result is a plain max() of real SDFs — the
-// fillet stays correct no matter how deep inside the tile the base distance is
-// (a smooth-min degrades on all-covered tiles, where the base is hugely negative).
-float fillet(float d, vec2 g, float k) {
-  vec2 q = vec2(k) - g;                       // rounded-quadrant (cell) SDF, <0 inside
-  float cell = min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - k;
-  return max(d, -cell);
-}
+uniform sampler2D uWall;
+uniform vec2 uRes;       // board pixels (1150 x 800)
+uniform float uTime;     // seconds
+uniform vec3 uStone;     // indestructible steel
+uniform vec3 uSand;      // destructible hazard block
+uniform vec3 uInk;       // outline
 
 void main() {
-  // Board px straight from the fragment position (the wall pass renders into the
-  // full-board target; gl_FragCoord origin is bottom-left, board y runs down).
+  vec4 mask = texture2D(uWall, gl_FragCoord.xy / uRes);
+  float a = mask.a;
+  if (a <= 0.004) discard;
+
+  float stone = clamp(mask.g * 2.0, 0.0, 1.0);
+  float sand = clamp(mask.b * 2.0, 0.0, 1.0);
+
+  // Board px (gl_FragCoord is bottom-left; the bake is drawn top-down).
   vec2 px = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
 
   vec3 col;
-  if (vType < 1.5) {
-    // STRONG: solid steel — fine brushed grain + a slow broad glint.
-    col = uStone;
-    col += 0.02 * sin(px.y * 0.6);
-    col += 0.035 * smoothstep(0.55, 1.0, sin((px.x - px.y) * 0.02 - uTime * 0.25));
-  } else {
+  if (sand > stone) {
     // DESTRUCTIBLE: scrolling diagonal hazard stripes (~35px, moving).
     float stripe = sin((px.x + px.y) * 0.18 - uTime * 2.2);
     col = mix(uSand * 0.80, uSand, smoothstep(-0.2, 0.5, stripe));
     col += 0.06 * smoothstep(0.82, 1.0, stripe);  // bright crest on each stripe
+  } else {
+    // STRONG: solid steel — fine brushed grain + a slow broad glint.
+    col = uStone;
+    col += 0.02 * sin(px.y * 0.6);
+    col += 0.035 * smoothstep(0.55, 1.0, sin((px.x - px.y) * 0.02 - uTime * 0.25));
   }
 
-  vec2 sz = vRect.zw;
-  vec2 c = (px - vRect.xy) - sz * 0.5;   // centred in the tile (x right, y down)
-  vec2 b = sz * 0.5;
-  float r = min(uRadius, 0.5 * min(sz.x, sz.y));
-
-  // Open (silhouette) vs covered (neighbour abuts) per edge.
-  float eT = vExp.x, eR = vExp.y, eB = vExp.z, eL = vExp.w;
-  float cT = 1.0 - eT, cR = 1.0 - eR, cB = 1.0 - eB, cL = 1.0 - eL;
-
-  // SDF of the local merged wall. Only OPEN edges constrain the region; a covered
-  // edge is left unbounded so the wall flows seamlessly into its neighbour — the
-  // silhouette and ink then live purely on open edges, identical for every tile
-  // along a straight run (no per-tile seam/notch). qx/qy are the signed outside-
-  // distance in each axis (negative = unconstrained on that side).
-  float OUT = -1e4;
-  float qx = max((eL > 0.5) ? (-b.x - c.x) : OUT, (eR > 0.5) ? (c.x - b.x) : OUT);
-  float qy = max((eT > 0.5) ? (-b.y - c.y) : OUT, (eB > 0.5) ? (c.y - b.y) : OUT);
-  // Rounded-box combine: convex corners (both axes constrained) round by r.
-  vec2 aa = vec2(qx, qy) + r;
-  float d = min(max(aa.x, aa.y), 0.0) + length(max(aa, 0.0)) - r;
-
-  // Concave corners: where two covered edges meet an OPEN diagonal, the region
-  // would overrun into that empty diagonal cell, so subtract the cell with its
-  // corner rounded by r — that rounded subtraction is the inner-corner fillet.
-  // g>0 points into the diagonal cell.
-  if (cT * cR * (1.0 - vDiag.x) > 0.5) d = fillet(d, vec2(c.x - b.x, -b.y - c.y), r); // TR
-  if (cB * cR * (1.0 - vDiag.y) > 0.5) d = fillet(d, vec2(c.x - b.x,  c.y - b.y), r); // BR
-  if (cB * cL * (1.0 - vDiag.z) > 0.5) d = fillet(d, vec2(-b.x - c.x, c.y - b.y), r); // BL
-  if (cT * cL * (1.0 - vDiag.w) > 0.5) d = fillet(d, vec2(-b.x - c.x, -b.y - c.y), r); // TL
-
-  float fillA = 1.0 - smoothstep(-1.0, 1.0, d);
-  float ht = uOutline * 0.5;
-  float ink = 1.0 - smoothstep(ht - 1.0, ht + 1.0, abs(d));  // straddles the silhouette
-
-  // An open edge runs unbounded into its covered neighbour, which is right for a
-  // straight corridor — but at a junction that overshoots past the perpendicular
-  // covered edge into the merged *interior* (e.g. a cross arm's side ink crossing
-  // the centre), leaving a stray nub the neighbour can't always overdraw. Kill the
-  // ink there: an open edge that has crossed a covered edge into a cell whose
-  // diagonal is filled is interior, not silhouette. Gated on the diagonal, so a
-  // real corridor (diagonal empty) is never touched — no seam returns.
-  float pastL = 1.0 - smoothstep(-b.x - 1.0, -b.x + 1.0, c.x);
-  float pastR = smoothstep(b.x - 1.0, b.x + 1.0, c.x);
-  float pastT = 1.0 - smoothstep(-b.y - 1.0, -b.y + 1.0, c.y);
-  float pastB = smoothstep(b.y - 1.0, b.y + 1.0, c.y);
-  float sup = 0.0;
-  sup = max(sup, eT * cL * vDiag.w * pastL);  // top edge, past covered left, TL filled
-  sup = max(sup, eT * cR * vDiag.x * pastR);  // top edge, past covered right, TR filled
-  sup = max(sup, eB * cL * vDiag.z * pastL);  // bottom, BL
-  sup = max(sup, eB * cR * vDiag.y * pastR);  // bottom, BR
-  sup = max(sup, eL * cT * vDiag.w * pastT);  // left edge, past covered top, TL
-  sup = max(sup, eL * cB * vDiag.z * pastB);  // left, BL
-  sup = max(sup, eR * cT * vDiag.x * pastT);  // right, TR
-  sup = max(sup, eR * cB * vDiag.y * pastB);  // right, BR
-  ink *= 1.0 - sup;
-
-  col = mix(col, uInk, ink);
-  float a = max(fillA, ink);
-  if (a <= 0.004) discard;
+  col = mix(col, uInk, mask.r);
   gl_FragColor = vec4(col, a);
 }
 `;
