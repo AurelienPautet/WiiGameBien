@@ -655,6 +655,7 @@ export const LevelEditor = () => {
           >
             <div
               ref={stageRef}
+              data-hover-sound=""
               className="relative cursor-crosshair bg-field border-4 border-ink rounded-lg shadow-[0_6px_0_rgba(43,47,54,0.28)] overflow-hidden"
               style={{ width: stageSize.width, height: stageSize.height }}
               onMouseMove={handleMouseMove}

@@ -323,6 +323,29 @@
 .home-play-button svg:last-child {
   margin-left: auto;
 }
+/* A light sweep across the primary CTA on hover — the arcade "insert coin"
+   glint, kept subtle so it never competes with the label. */
+.home-play-button {
+  position: relative;
+  overflow: hidden;
+}
+.home-play-button::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 32%,
+    rgba(255, 255, 255, 0.55) 48%,
+    transparent 62%
+  );
+  transform: translateX(-130%);
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.home-play-button:hover::after {
+  transform: translateX(130%);
+}
 .home-secondary-modes {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -873,8 +896,413 @@
     padding-block: 6px;
   }
 }
+/* ========================================================================
+   MENU JUICE — entrance cascades + idle life.
+   Everything here is decorative: it either has a no-op resting state or an
+   explicit reduced-motion override at the bottom of the file.
+   ======================================================================== */
+
+/* Sidebar: links cascade in, icons react to the pointer. */
+@keyframes sidebarItemIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.sidebar-nav .sidebar-link,
+.sidebar-utilities .sidebar-link {
+  animation: sidebarItemIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.sidebar-nav .sidebar-link:nth-child(2) {
+  animation-delay: 0.05s;
+}
+.sidebar-nav .sidebar-link:nth-child(3) {
+  animation-delay: 0.1s;
+}
+.sidebar-utilities .sidebar-link:nth-child(1) {
+  animation-delay: 0.14s;
+}
+.sidebar-utilities .sidebar-link:nth-child(2) {
+  animation-delay: 0.19s;
+}
+.sidebar-link svg {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sidebar-link:hover svg {
+  transform: rotate(-8deg) scale(1.12);
+}
+.sidebar-brand {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sidebar-brand:hover {
+  transform: translateY(-2px);
+}
+.sidebar-brand canvas {
+  animation: brandBob 4s ease-in-out infinite;
+}
+@keyframes brandBob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(-2deg);
+  }
+}
+.sidebar-account {
+  transition:
+    border-color 0.15s,
+    transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.15s;
+}
+.sidebar-account:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 0 #d9dde3;
+}
+
+/* The live dot breathes so the header never feels frozen. */
+.status-dot {
+  animation: statusDotBreathe 2.2s ease-in-out infinite;
+}
+@keyframes statusDotBreathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.22);
+  }
+}
+
+/* Home: heading, feature panel and secondary modes arrive in sequence. */
+@keyframes homePanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.home-heading h1 {
+  animation: homePanelIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.home-heading .online-status {
+  animation: homePanelIn 0.45s 0.08s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.home-feature {
+  animation: homePanelIn 0.5s 0.04s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.home-secondary-modes .home-mode-card:nth-child(1) {
+  animation: homePanelIn 0.45s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.home-secondary-modes .home-mode-card:nth-child(2) {
+  animation: homePanelIn 0.45s 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.home-tank-panel {
+  animation: homePanelIn 0.5s 0.08s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.home-leaderboard {
+  animation: homePanelIn 0.5s 0.14s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.home-mode-card > svg:first-child {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.home-mode-card:hover > svg:first-child {
+  transform: rotate(-8deg) scale(1.12);
+}
+.home-mode-arrow {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.home-mode-card:hover .home-mode-arrow {
+  transform: translateX(5px);
+}
+
+/* Leaderboard rows cascade in; the heading arrow leans toward the page. */
+@keyframes leaderboardRowIn {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.home-leaderboard li {
+  animation: leaderboardRowIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.home-leaderboard li:nth-child(1) {
+  animation-delay: 0.2s;
+}
+.home-leaderboard li:nth-child(2) {
+  animation-delay: 0.26s;
+}
+.home-leaderboard li:nth-child(3) {
+  animation-delay: 0.32s;
+}
+.home-leaderboard li:nth-child(4) {
+  animation-delay: 0.38s;
+}
+.home-leaderboard-heading {
+  transition: color 0.15s;
+}
+.home-leaderboard-heading:hover {
+  color: var(--color-yellow);
+}
+.home-leaderboard-heading svg:last-child {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.home-leaderboard-heading:hover svg:last-child {
+  transform: translateX(4px);
+}
+
+/* Arena diorama: tanks float, the flag waves, bullets drift, hearts beat. */
+@keyframes tankIdle {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(-1.2deg);
+  }
+}
+.arena-tank--one {
+  animation: tankIdle 3.6s ease-in-out infinite;
+}
+.arena-tank--two {
+  animation: tankIdle 4.4s ease-in-out -1.6s infinite reverse;
+}
+@keyframes flagWave {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-7deg);
+  }
+}
+.arena-flag {
+  transform-origin: 20% 90%;
+  animation: flagWave 3s ease-in-out infinite;
+}
+@keyframes bulletDrift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-4px, -7px) scale(1.08);
+  }
+}
+.arena-bullet {
+  animation: bulletDrift 2.4s ease-in-out infinite;
+}
+.arena-bullet--two {
+  animation-delay: -1.2s;
+}
+@keyframes heartBeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.16);
+  }
+  55% {
+    transform: scale(0.96);
+  }
+}
+.arena-lives svg {
+  animation: heartBeat 2.4s ease-in-out infinite;
+  transform-origin: center;
+}
+.arena-lives svg:nth-child(2) {
+  animation-delay: 0.12s;
+}
+.arena-lives svg:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+/* Rankings: podium pops, list rows slide, bars grow from their origin. */
+@keyframes podiumIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rank-podium-card {
+  animation: podiumIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.rank-podium-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.rank-podium-card:nth-child(2) {
+  animation-delay: 0.02s;
+}
+.rank-podium-card:nth-child(3) {
+  animation-delay: 0.16s;
+}
+@keyframes rankRowIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rank-row {
+  animation: rankRowIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.rank-row:nth-child(1) {
+  animation-delay: 0.04s;
+}
+.rank-row:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.rank-row:nth-child(3) {
+  animation-delay: 0.12s;
+}
+.rank-row:nth-child(4) {
+  animation-delay: 0.16s;
+}
+.rank-row:nth-child(5) {
+  animation-delay: 0.2s;
+}
+.rank-row:nth-child(6) {
+  animation-delay: 0.24s;
+}
+.rank-row:nth-child(7) {
+  animation-delay: 0.28s;
+}
+.rank-row:nth-child(n + 8) {
+  animation-delay: 0.32s;
+}
+@keyframes rankBarFill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.rank-bar-fill {
+  transform-origin: left center;
+  animation: rankBarFill 0.7s 0.12s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes rankYouIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rank-you {
+  animation: rankYouIn 0.45s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Admin KPI tiles lift on hover and cascade into the grid. */
+@keyframes statCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.stat-card {
+  /* `backwards`, not `both`: after the entrance the hover transform must win
+     over the animation's final `transform: none`. */
+  animation: statCardIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  transition:
+    transform 0.16s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.16s;
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 9px 0 rgba(0, 0, 0, 0.18),
+    0 14px 24px rgba(0, 0, 0, 0.16);
+}
+.stat-card:nth-child(2) {
+  animation-delay: 0.04s;
+}
+.stat-card:nth-child(3) {
+  animation-delay: 0.08s;
+}
+.stat-card:nth-child(4) {
+  animation-delay: 0.12s;
+}
+.stat-card:nth-child(5) {
+  animation-delay: 0.16s;
+}
+.stat-card:nth-child(6) {
+  animation-delay: 0.2s;
+}
+.stat-card:nth-child(n + 7) {
+  animation-delay: 0.24s;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-mode-card {
     transition: none;
+  }
+  .sidebar-nav .sidebar-link,
+  .sidebar-utilities .sidebar-link,
+  .sidebar-brand canvas,
+  .status-dot,
+  .home-heading h1,
+  .home-heading .online-status,
+  .home-feature,
+  .home-secondary-modes .home-mode-card,
+  .home-tank-panel,
+  .home-leaderboard,
+  .home-leaderboard li,
+  .arena-tank--one,
+  .arena-tank--two,
+  .arena-flag,
+  .arena-bullet,
+  .arena-lives svg,
+  .rank-podium-card,
+  .rank-row,
+  .rank-bar-fill,
+  .rank-you,
+  .stat-card {
+    animation: none;
+  }
+  .sidebar-link svg,
+  .sidebar-brand,
+  .sidebar-account,
+  .home-mode-card > svg:first-child,
+  .home-mode-arrow,
+  .home-leaderboard-heading svg:last-child,
+  .home-play-button::after,
+  .stat-card {
+    transition: none;
+  }
+  .sidebar-link:hover svg,
+  .sidebar-brand:hover,
+  .sidebar-account:hover,
+  .home-mode-card:hover > svg:first-child,
+  .home-mode-card:hover .home-mode-arrow,
+  .home-leaderboard-heading:hover svg:last-child,
+  .stat-card:hover {
+    transform: none;
   }
 }

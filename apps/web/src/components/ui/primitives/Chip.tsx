@@ -36,14 +36,13 @@ export const Chip = forwardRef<HTMLButtonElement, ChipProps>(
         className
       )}
       {...props}
-      // Procedural click/hover feedback, composed so callers' handlers still run
-      // (matches Button/IconButton/SegmentedControl). Listed after the spread.
+      // Procedural click feedback, composed so callers' handlers still run
+      // (matches Button/IconButton/SegmentedControl). Hover is global.
       onClick={(e) => {
         ui.click();
         onClick?.(e);
       }}
       onMouseEnter={(e) => {
-        ui.hover();
         onMouseEnter?.(e);
       }}
     />

@@ -146,40 +146,43 @@ export const RankingsScreen = () => {
             const place = Number(p.rank);
             const first = place === 1;
             return (
-              <div
-                key={p.username}
-                className={cn(
-                  "relative bg-white border-4 border-ink rounded-[18px] shadow-arcade text-center px-4 pt-7 pb-4",
-                  first ? "w-[230px] -translate-y-3.5" : "w-[200px]"
-                )}
-              >
-                <div
-                  className="absolute left-1/2 -translate-x-1/2 -top-5 flex items-center justify-center rounded-full border-4 border-ink font-bold text-ink"
-                  style={{
-                    width: first ? 52 : 44,
-                    height: first ? 52 : 44,
-                    background: MEDAL_BG[place - 1] ?? "#dfe3e8",
-                  }}
-                >
-                  {place}
-                </div>
-                <div className="flex justify-center my-2">
-                  <TankAvatar
-                    bodyColor={PODIUM_TANK[place - 1] ?? "blue"}
-                    size={first ? 76 : 60}
-                  />
-                </div>
-                <div className="text-lg font-bold truncate">{p.username}</div>
+              // The entrance runs on the wrapper so its transform keyframes can
+              // never clobber the first-place card's own `translate` offset.
+              <div key={p.username} className="rank-podium-card">
                 <div
                   className={cn(
-                    "font-bold text-blue-d",
-                    first ? "text-4xl" : "text-3xl"
+                    "relative bg-white border-4 border-ink rounded-[18px] shadow-arcade text-center px-4 pt-7 pb-4",
+                    first ? "w-[230px] -translate-y-3.5" : "w-[200px]"
                   )}
                 >
-                  {p.total_data}
-                </div>
-                <div className="text-xs text-ink-soft font-semibold uppercase tracking-wide">
-                  {statLabel(activeStat)}
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 -top-5 flex items-center justify-center rounded-full border-4 border-ink font-bold text-ink"
+                    style={{
+                      width: first ? 52 : 44,
+                      height: first ? 52 : 44,
+                      background: MEDAL_BG[place - 1] ?? "#dfe3e8",
+                    }}
+                  >
+                    {place}
+                  </div>
+                  <div className="flex justify-center my-2">
+                    <TankAvatar
+                      bodyColor={PODIUM_TANK[place - 1] ?? "blue"}
+                      size={first ? 76 : 60}
+                    />
+                  </div>
+                  <div className="text-lg font-bold truncate">{p.username}</div>
+                  <div
+                    className={cn(
+                      "font-bold text-blue-d",
+                      first ? "text-4xl" : "text-3xl"
+                    )}
+                  >
+                    {p.total_data}
+                  </div>
+                  <div className="text-xs text-ink-soft font-semibold uppercase tracking-wide">
+                    {statLabel(activeStat)}
+                  </div>
                 </div>
               </div>
             );
@@ -204,7 +207,7 @@ export const RankingsScreen = () => {
           rest.map((p) => (
             <div
               key={p.username}
-              className="flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl odd:bg-white/5 hover:bg-white/10"
+              className="rank-row flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl odd:bg-white/5 hover:bg-white/10 transition-colors"
             >
               <span className="text-xl font-bold text-white w-10 text-center">
                 #{p.rank}
@@ -215,7 +218,7 @@ export const RankingsScreen = () => {
               </span>
               <div className="hidden sm:block w-48 h-3.5 rounded-lg border-2 border-ink bg-white/10 overflow-hidden">
                 <span
-                  className="block h-full bg-blue"
+                  className="rank-bar-fill block h-full bg-blue"
                   style={{
                     width: `${Math.max(6, (Number(p.total_data) / maxData) * 100)}%`,
                   }}
@@ -233,7 +236,7 @@ export const RankingsScreen = () => {
       <div
         aria-busy={isRefreshing}
         className={cn(
-          "sticky bottom-3.5 mt-3.5 flex items-center gap-3.5 bg-yellow border-4 border-ink rounded-[14px] shadow-[0_8px_0_rgba(0,0,0,0.25)] px-4 py-3 transition-opacity",
+          "rank-you sticky bottom-3.5 mt-3.5 flex items-center gap-3.5 bg-yellow border-4 border-ink rounded-[14px] shadow-[0_8px_0_rgba(0,0,0,0.25)] px-4 py-3 transition-opacity",
           isRefreshing && "opacity-60"
         )}
       >

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useHoverSound } from "./audio/useHoverSound";
 import {
   HashRouter,
   Routes,
@@ -111,6 +112,9 @@ const AppRouter = () => {
 };
 
 function App() {
+  // One delegated listener gives every control in the app the hover tick.
+  useHoverSound();
+
   return (
     <HashRouter>
       <MotionConfig reducedMotion="user">

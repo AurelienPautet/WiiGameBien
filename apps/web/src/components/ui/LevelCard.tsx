@@ -57,7 +57,7 @@ export function LevelCard({
   return (
     <Card
       className={cn(
-        "flex flex-wrap gap-x-4 gap-y-2 p-3",
+        "group flex flex-wrap gap-x-4 gap-y-2 p-3",
         selected ? "border-blue ring-3 ring-blue/30" : "border-ink",
         locked && "opacity-80"
       )}
@@ -82,7 +82,7 @@ export function LevelCard({
           loading="lazy"
           width={128}
           height={96}
-          className="w-32 h-24 object-cover rounded-lg border-[3px] border-ink"
+          className="w-32 h-24 object-cover rounded-lg border-[3px] border-ink transition-transform duration-300 ease-out group-hover:scale-[1.04]"
         />
       </div>
 
