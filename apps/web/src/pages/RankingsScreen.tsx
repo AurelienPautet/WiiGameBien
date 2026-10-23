@@ -146,40 +146,43 @@ export const RankingsScreen = () => {
             const place = Number(p.rank);
             const first = place === 1;
             return (
-              <div
-                key={p.username}
-                className={cn(
-                  "rank-podium-card relative bg-white border-4 border-ink rounded-[18px] shadow-arcade text-center px-4 pt-7 pb-4",
-                  first ? "w-[230px] -translate-y-3.5" : "w-[200px]"
-                )}
-              >
-                <div
-                  className="absolute left-1/2 -translate-x-1/2 -top-5 flex items-center justify-center rounded-full border-4 border-ink font-bold text-ink"
-                  style={{
-                    width: first ? 52 : 44,
-                    height: first ? 52 : 44,
-                    background: MEDAL_BG[place - 1] ?? "#dfe3e8",
-                  }}
-                >
-                  {place}
-                </div>
-                <div className="flex justify-center my-2">
-                  <TankAvatar
-                    bodyColor={PODIUM_TANK[place - 1] ?? "blue"}
-                    size={first ? 76 : 60}
-                  />
-                </div>
-                <div className="text-lg font-bold truncate">{p.username}</div>
+              // The entrance runs on the wrapper so its transform keyframes can
+              // never clobber the first-place card's own `translate` offset.
+              <div key={p.username} className="rank-podium-card">
                 <div
                   className={cn(
-                    "font-bold text-blue-d",
-                    first ? "text-4xl" : "text-3xl"
+                    "relative bg-white border-4 border-ink rounded-[18px] shadow-arcade text-center px-4 pt-7 pb-4",
+                    first ? "w-[230px] -translate-y-3.5" : "w-[200px]"
                   )}
                 >
-                  {p.total_data}
-                </div>
-                <div className="text-xs text-ink-soft font-semibold uppercase tracking-wide">
-                  {statLabel(activeStat)}
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 -top-5 flex items-center justify-center rounded-full border-4 border-ink font-bold text-ink"
+                    style={{
+                      width: first ? 52 : 44,
+                      height: first ? 52 : 44,
+                      background: MEDAL_BG[place - 1] ?? "#dfe3e8",
+                    }}
+                  >
+                    {place}
+                  </div>
+                  <div className="flex justify-center my-2">
+                    <TankAvatar
+                      bodyColor={PODIUM_TANK[place - 1] ?? "blue"}
+                      size={first ? 76 : 60}
+                    />
+                  </div>
+                  <div className="text-lg font-bold truncate">{p.username}</div>
+                  <div
+                    className={cn(
+                      "font-bold text-blue-d",
+                      first ? "text-4xl" : "text-3xl"
+                    )}
+                  >
+                    {p.total_data}
+                  </div>
+                  <div className="text-xs text-ink-soft font-semibold uppercase tracking-wide">
+                    {statLabel(activeStat)}
+                  </div>
                 </div>
               </div>
             );
