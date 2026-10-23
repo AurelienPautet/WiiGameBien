@@ -37,7 +37,7 @@ export interface DrawSpawnTankOpts {
 }
 
 // Draw a tank mid-spawn: its planted flag, the descending (or just-landed) tank,
-// its parachute, and the touchdown dust. `progress` runs 0→1 over the countdown.
+// and its parachute. `progress` runs 0→1 over the countdown.
 export function drawSpawnTank(
   c: CanvasRenderingContext2D,
   o: DrawSpawnTankOpts
@@ -58,10 +58,9 @@ export function drawSpawnTank(
   const tx = landed ? cx : cx + swing * r * 0.7;
   const ty = landed ? cy : cy - r * DROP_RADII * (1 - eased);
 
-  // The flag marks the landing spot for the whole animation, and the touchdown
-  // dust sits on the ground — both drawn before the tank so it lands in front.
+  // The flag marks the landing spot for the whole animation; drawn before the
+  // tank so it lands in front.
   drawLandingFlag(c, cx, cy, r, body.fill, progress);
-  if (landed) drawDustRing(c, cx, cy, r, after);
 
   // While descending, the canopy is above (behind) the tank, swaying with the
   // pendulum; drawn before the hull so the shroud-line tops tuck under it.
@@ -187,25 +186,5 @@ function drawParachute(
     c.stroke();
   }
 
-  c.restore();
-}
-
-// An expanding, fading ring kicked up where the tank hits the ground.
-function drawDustRing(
-  c: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  r: number,
-  after: number
-): void {
-  if (after >= 1) return;
-  const ringR = r * (0.5 + after * 1.9);
-  c.save();
-  c.globalAlpha = (1 - after) * 0.7;
-  c.strokeStyle = palette.inkSoft;
-  c.lineWidth = Math.max(2, r * 0.2 * (1 - after));
-  c.beginPath();
-  c.arc(cx, cy + r * 0.6, ringR, 0, Math.PI * 2);
-  c.stroke();
   c.restore();
 }
